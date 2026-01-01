@@ -627,7 +627,7 @@ end
 FlySpeedSlider(MovementPage)
 
 --------------------------------------------------
--- PLAYER LIST SCROLLABLE (Fixed TP + Bring)
+-- PLAYER LIST SCROLLABLE (Fixed TP)
 --------------------------------------------------
 local PlayerListContainer = Instance.new("ScrollingFrame", MovementPage)
 PlayerListContainer.Size = UDim2.new(1,0,0,200)
@@ -659,9 +659,9 @@ local function CreatePlayerButton(player)
     nameLabel.TextSize = 13
     nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 
-    -- Teleport Button
+    -- Teleport Button (widened to fill Bring button space)
     local tpBtn = Instance.new("TextButton", holder)
-    tpBtn.Size = UDim2.new(0.22,0,1,0)
+    tpBtn.Size = UDim2.new(0.45,0,1,0)
     tpBtn.Position = UDim2.new(0.52,0,0,0)
     tpBtn.BackgroundColor3 = Color3.fromRGB(35,35,35)
     tpBtn.Text = "TP"
@@ -673,24 +673,6 @@ local function CreatePlayerButton(player)
         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") 
         and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
             LocalPlayer.Character.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
-        end
-    end)
-
-    -- Bring Button
-    local bringBtn = Instance.new("TextButton", holder)
-    bringBtn.Size = UDim2.new(0.22,0,1,0)
-    bringBtn.Position = UDim2.new(0.76,0,0,0)
-    bringBtn.BackgroundColor3 = Color3.fromRGB(35,35,35)
-    bringBtn.Text = "Bring"
-    bringBtn.TextColor3 = Color3.new(1,1,1)
-    bringBtn.Font = Enum.Font.Gotham
-    bringBtn.TextSize = 12
-    Instance.new("UICorner", bringBtn).CornerRadius = UDim.new(0,6)
-    bringBtn.MouseButton1Click:Connect(function()
-        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") 
-        and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            local offset = Vector3.new(3,0,0) -- small offset so it doesn't stick
-            player.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame + offset
         end
     end)
 
@@ -716,8 +698,6 @@ Players.PlayerRemoving:Connect(function(p)
         end
     end
 end)
-
-
 
 --------------------------------------------------
 --// SHOW / HIDE MENU
