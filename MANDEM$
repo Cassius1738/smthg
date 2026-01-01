@@ -572,26 +572,27 @@ local function FlySpeedSlider(parent)
 end
 FlySpeedSlider(MovementPage)
 
---// PLAYER LIST SCROLLABLE CLEAN
+--// CLEAN SCROLLABLE PLAYER LIST INSIDE GUI
 local PlayerListContainer = Instance.new("ScrollingFrame", MovementPage)
-PlayerListContainer.Size = UDim2.new(1,0,0,200)
-PlayerListContainer.Position = UDim2.new(0,0,0,140)
-PlayerListContainer.BackgroundColor3 = Color3.fromRGB(25,25,25)
+PlayerListContainer.Size = UDim2.new(1,0,0,150) -- adjust height to fit GUI
+PlayerListContainer.Position = UDim2.new(0,0,0,60) -- below other movement controls
+PlayerListContainer.BackgroundColor3 = Color3.fromRGB(35,35,35)
 PlayerListContainer.BorderSizePixel = 0
 PlayerListContainer.CanvasSize = UDim2.new(0,0,0,0)
 PlayerListContainer.ScrollBarThickness = 8
+PlayerListContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
 Instance.new("UICorner", PlayerListContainer).CornerRadius = UDim.new(0,8)
 
 local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
 PlayerLayout.Padding = UDim.new(0,4)
 PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- Update CanvasSize dynamically
+-- Update CanvasSize dynamically to prevent overlap
 PlayerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 	PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y + 8)
 end)
 
--- Create clean player button
+-- Function to create a player button
 local function CreatePlayerButton(player)
 	if player == LocalPlayer then return end
 	local holder = Instance.new("Frame")
@@ -599,31 +600,31 @@ local function CreatePlayerButton(player)
 	holder.BackgroundTransparency = 1
 
 	local nameLabel = Instance.new("TextLabel", holder)
-	nameLabel.Size = UDim2.new(1,0,1,0)
+	nameLabel.Size = UDim2.new(0.55,0,1,0)
+	nameLabel.Position = UDim2.new(0,5,0,0)
 	nameLabel.BackgroundTransparency = 1
 	nameLabel.Text = player.Name
 	nameLabel.TextColor3 = Color3.new(1,1,1)
 	nameLabel.Font = Enum.Font.Gotham
 	nameLabel.TextSize = 13
 	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-	nameLabel.Position = UDim2.new(0,5,0,0)
 
 	local tpBtn = Instance.new("TextButton", holder)
 	tpBtn.Size = UDim2.new(0.4,0,1,0)
-	tpBtn.Position = UDim2.new(0.55,0,0,0)
-	tpBtn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	tpBtn.Position = UDim2.new(0.57,0,0,0)
+	tpBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
 	tpBtn.Text = "Teleport"
 	tpBtn.TextColor3 = Color3.new(1,1,1)
 	tpBtn.Font = Enum.Font.Gotham
 	tpBtn.TextSize = 12
 	Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,6)
 
+	-- Teleport logic
 	tpBtn.MouseButton1Click:Connect(function()
 		if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
 			local targetHRP = player.Character.HumanoidRootPart
 			local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 			local hrp = char:WaitForChild("HumanoidRootPart")
-			-- Teleport slightly above the player to avoid collision
 			hrp.CFrame = targetHRP.CFrame + Vector3.new(0,3,0)
 		end
 	end)
@@ -631,7 +632,7 @@ local function CreatePlayerButton(player)
 	holder.Parent = PlayerListContainer
 end
 
--- Populate all players initially
+-- Populate initial players
 for _,p in pairs(Players:GetPlayers()) do
 	CreatePlayerButton(p)
 end
@@ -641,7 +642,7 @@ Players.PlayerAdded:Connect(function(p)
 	CreatePlayerButton(p)
 end)
 
--- Remove players when they leave
+-- Remove leaving players
 Players.PlayerRemoving:Connect(function(p)
 	for _,frame in pairs(PlayerListContainer:GetChildren()) do
 		if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == p.Name then
@@ -649,6 +650,7 @@ Players.PlayerRemoving:Connect(function(p)
 		end
 	end
 end)
+
 
 
 --------------------------------------------------
