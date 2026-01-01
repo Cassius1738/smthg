@@ -30,6 +30,9 @@ _G.TeamCheck = false
 _G.AimPart = "Head"
 _G.Sensitivity = 0.08
 _G.CameraLockEnabled = false
+local CameraLockActive = false
+local CameraLockPosition = nil
+
 
 
 _G.CircleRadius = 80
@@ -45,21 +48,36 @@ _G.NoclipFlyEnabled = false
 _G.FlySpeed = 50
 
 --------------------------------------------------
---// INPUT HANDLING
+--// INPUT HANDLING (FIXED TOGGLE CAMERA LOCK)
 --------------------------------------------------
 local AimbotDebounce = false
+
 UserInputService.InputBegan:Connect(function(i,gp)
-	if not gp then
-		if i.UserInputType == Enum.UserInputType.MouseButton2 then
-			Holding = true
-		elseif i.UserInputType == Enum.UserInputType.Keyboard and i.KeyCode == _G.AimbotKey then
-			if not AimbotDebounce and _G.AimbotGUIEnabled then
+	if gp then return end
+
+	if i.UserInputType == Enum.UserInputType.MouseButton2 then
+		Holding = true
+
+	elseif i.UserInputType == Enum.UserInputType.Keyboard and i.KeyCode == _G.AimbotKey then
+		if not AimbotDebounce and _G.AimbotGUIEnabled then
+			AimbotDebounce = true
+
+			-- CAMERA LOCK TOGGLE
+			if _G.CameraLockEnabled then
+				CameraLockActive = not CameraLockActive
+				if CameraLockActive then
+					CameraLockPosition = GetMouseWorldPosition()
+				else
+					CameraLockPosition = nil
+				end
+			else
+				-- NORMAL AIMBOT TOGGLE
 				_G.AimbotEnabled = not _G.AimbotEnabled
-				AimbotDebounce = true
 			end
-		elseif i.UserInputType == Enum.UserInputType.Keyboard and i.KeyCode == Enum.KeyCode.N then
-			_G.NoclipFlyEnabled = not _G.NoclipFlyEnabled
 		end
+
+	elseif i.UserInputType == Enum.UserInputType.Keyboard and i.KeyCode == Enum.KeyCode.N then
+		_G.NoclipFlyEnabled = not _G.NoclipFlyEnabled
 	end
 end)
 
@@ -71,9 +89,22 @@ UserInputService.InputEnded:Connect(function(i)
 	end
 end)
 
+
 --------------------------------------------------
 --// GET CLOSEST PLAYER
 --------------------------------------------------
+local function GetMouseWorldPosition()
+	local mousePos = UserInputService:GetMouseLocation()
+	local ray = Camera:ViewportPointToRay(mousePos.X, mousePos.Y)
+
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Blacklist
+	params.FilterDescendantsInstances = {LocalPlayer.Character}
+
+	local result = workspace:Raycast(ray.Origin, ray.Direction * 1000, params)
+	return result and result.Position or nil
+end
+
 local function GetClosestPlayer()
 	local closest, dist = nil, _G.CircleRadius
 	local mouse = UserInputService:GetMouseLocation()
@@ -118,36 +149,20 @@ end
 
 
 --------------------------------------------------
---// AIMBOT + CAMERA LOCK (SAME KEYBIND)
+--// AIMBOT + TOGGLE CAMERA LOCK (FINAL)
 --------------------------------------------------
-local LockedTarget = nil
-
 RunService.RenderStepped:Connect(function()
-	if not Holding or not _G.AimbotGUIEnabled then
-		LockedTarget = nil
+	if not _G.AimbotGUIEnabled then return end
+
+	if _G.CameraLockEnabled and CameraLockActive and CameraLockPosition then
+		Camera.CFrame = CFrame.new(
+			Camera.CFrame.Position,
+			CameraLockPosition
+		)
 		return
 	end
 
-	-- CAMERA LOCK MODE
-	if _G.CameraLockEnabled then
-		if not LockedTarget then
-			LockedTarget = GetPlayerFromCamera()
-		end
-
-		if LockedTarget
-		and LockedTarget.Character
-		and LockedTarget.Character:FindFirstChild(_G.AimPart) then
-			Camera.CFrame = CFrame.new(
-				Camera.CFrame.Position,
-				LockedTarget.Character[_G.AimPart].Position
-			)
-		end
-
-		return
-	end
-
-	-- SMOOTH AIMBOT MODE
-	if _G.AimbotEnabled then
+	if Holding and _G.AimbotEnabled then
 		local target = GetClosestPlayer()
 		if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
 			TweenService:Create(
