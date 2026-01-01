@@ -92,35 +92,73 @@ local function GetClosestPlayer()
 	return closest
 end
 
+local function GetPlayerFromCamera()
+	local rayParams = RaycastParams.new()
+	rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+	rayParams.FilterDescendantsInstances = {LocalPlayer.Character}
+
+	local rayResult = workspace:Raycast(
+		Camera.CFrame.Position,
+		Camera.CFrame.LookVector * 1000,
+		rayParams
+	)
+
+	if rayResult and rayResult.Instance then
+		local model = rayResult.Instance:FindFirstAncestorOfClass("Model")
+		if model then
+			local player = Players:GetPlayerFromCharacter(model)
+			if player and player ~= LocalPlayer then
+				return player
+			end
+		end
+	end
+
+	return nil
+end
+
+
 --------------------------------------------------
---// AIMBOT + CAMERA LOCK LOOP (SHARED KEYBIND)
+--// AIMBOT + CAMERA LOCK (SAME KEYBIND)
 --------------------------------------------------
+local LockedTarget = nil
+
 RunService.RenderStepped:Connect(function()
-	if not Holding or not _G.AimbotGUIEnabled then return end
-
-	local target = GetClosestPlayer()
-	if not target or not target.Character then return end
-	local part = target.Character:FindFirstChild(_G.AimPart)
-	if not part then return end
-
-	-- CAMERA LOCK (PRIORITY)
-	if _G.CameraLockEnabled then
-		Camera.CFrame = CFrame.new(
-			Camera.CFrame.Position,
-			part.Position
-		)
+	if not Holding or not _G.AimbotGUIEnabled then
+		LockedTarget = nil
 		return
 	end
 
-	-- SMOOTH AIMBOT
+	-- CAMERA LOCK MODE
+	if _G.CameraLockEnabled then
+		if not LockedTarget then
+			LockedTarget = GetPlayerFromCamera()
+		end
+
+		if LockedTarget
+		and LockedTarget.Character
+		and LockedTarget.Character:FindFirstChild(_G.AimPart) then
+			Camera.CFrame = CFrame.new(
+				Camera.CFrame.Position,
+				LockedTarget.Character[_G.AimPart].Position
+			)
+		end
+
+		return
+	end
+
+	-- SMOOTH AIMBOT MODE
 	if _G.AimbotEnabled then
-		TweenService:Create(
-			Camera,
-			TweenInfo.new(_G.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
-			{ CFrame = CFrame.new(Camera.CFrame.Position, part.Position) }
-		):Play()
+		local target = GetClosestPlayer()
+		if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
+			TweenService:Create(
+				Camera,
+				TweenInfo.new(_G.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+				{CFrame = CFrame.new(Camera.CFrame.Position, target.Character[_G.AimPart].Position)}
+			):Play()
+		end
 	end
 end)
+
 
 --------------------------------------------------
 --// FOV CIRCLE
