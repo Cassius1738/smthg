@@ -199,7 +199,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
---// GUI SETUP FIXED (Aimbot, ESP, Movement)
+--// GUI SETUP FIXED & MERGED (Aimbot, ESP, Movement)
 --------------------------------------------------
 local UI = Instance.new("ScreenGui")
 UI.ResetOnSpawn = false
@@ -235,7 +235,7 @@ TabLayout.FillDirection = Enum.FillDirection.Horizontal
 TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 TabLayout.Padding = UDim.new(0,8)
 
--- Page creation function
+-- Page creation
 local function Page()
 	local f = Instance.new("Frame", Main)
 	f.Position = UDim2.new(0,15,0,96)
@@ -247,7 +247,6 @@ local function Page()
 	container.Size = UDim2.new(1,0,1,0)
 	container.BackgroundTransparency = 1
 
-	-- Layout for stacking elements
 	local layout = Instance.new("UIListLayout", container)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Padding = UDim.new(0,8)
@@ -281,7 +280,7 @@ Tab("ESP", ESPPage)
 Tab("Movement", MovementPage)
 
 --------------------------------------------------
---// GUI ELEMENTS PARENTED TO CONTAINERS
+--// GUI ELEMENTS (STACKED PROPERLY)
 --------------------------------------------------
 
 -- Aimbot Page
@@ -300,7 +299,7 @@ CircleToggle(ESPContainer,"Team Check","TeamCheck")
 CircleToggle(MovementContainer,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
 FlySpeedSlider(MovementContainer)
 
--- Player List (scrollable at bottom)
+-- Player List (scrollable)
 local PlayerListContainer = Instance.new("ScrollingFrame", MovementContainer)
 PlayerListContainer.Size = UDim2.new(1,0,0,150)
 PlayerListContainer.Position = UDim2.new(0,0,1,-150)
@@ -314,11 +313,11 @@ local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
 PlayerLayout.Padding = UDim.new(0,4)
 PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- Player buttons
 local function CreatePlayerButton(player)
 	local holder = Instance.new("Frame")
 	holder.Size = UDim2.new(1,0,0,28)
 	holder.BackgroundTransparency = 1
+
 	local nameLabel = Instance.new("TextLabel", holder)
 	nameLabel.Size = UDim2.new(0.5,0,1,0)
 	nameLabel.Position = UDim2.new(0,5,0,0)
@@ -362,8 +361,6 @@ Players.PlayerRemoving:Connect(function(p)
 		end
 	end
 end)
-
-
 
 --------------------------------------------------
 --// ESP Page Toggles
