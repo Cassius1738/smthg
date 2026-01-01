@@ -626,7 +626,9 @@ end
 
 FlySpeedSlider(MovementPage)
 
--- PLAYER LIST SCROLLABLE
+--------------------------------------------------
+-- PLAYER LIST SCROLLABLE (Fixed TP + Bring)
+--------------------------------------------------
 local PlayerListContainer = Instance.new("ScrollingFrame", MovementPage)
 PlayerListContainer.Size = UDim2.new(1,0,0,200)
 PlayerListContainer.Position = UDim2.new(0,0,0,140)
@@ -640,12 +642,13 @@ local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
 PlayerLayout.Padding = UDim.new(0,4)
 PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- Player Buttons
+-- Function to create a player button
 local function CreatePlayerButton(player)
     local holder = Instance.new("Frame")
     holder.Size = UDim2.new(1,0,0,28)
     holder.BackgroundTransparency = 1
 
+    -- Player Name
     local nameLabel = Instance.new("TextLabel", holder)
     nameLabel.Size = UDim2.new(0.5,0,1,0)
     nameLabel.Position = UDim2.new(0,5,0,0)
@@ -656,6 +659,7 @@ local function CreatePlayerButton(player)
     nameLabel.TextSize = 13
     nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 
+    -- Teleport Button
     local tpBtn = Instance.new("TextButton", holder)
     tpBtn.Size = UDim2.new(0.22,0,1,0)
     tpBtn.Position = UDim2.new(0.52,0,0,0)
@@ -672,6 +676,7 @@ local function CreatePlayerButton(player)
         end
     end)
 
+    -- Bring Button
     local bringBtn = Instance.new("TextButton", holder)
     bringBtn.Size = UDim2.new(0.22,0,1,0)
     bringBtn.Position = UDim2.new(0.76,0,0,0)
@@ -684,7 +689,7 @@ local function CreatePlayerButton(player)
     bringBtn.MouseButton1Click:Connect(function()
         if player.Character and player.Character:FindFirstChild("HumanoidRootPart") 
         and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            local offset = Vector3.new(3,0,0) -- offset so it doesn’t stick
+            local offset = Vector3.new(3,0,0) -- small offset so it doesn't stick
             player.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame + offset
         end
     end)
@@ -693,15 +698,19 @@ local function CreatePlayerButton(player)
     PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y)
 end
 
--- Populate players
+-- Populate existing players
 for _,p in pairs(Players:GetPlayers()) do
     CreatePlayerButton(p)
 end
 
+-- Add new players dynamically
 Players.PlayerAdded:Connect(CreatePlayerButton)
+
+-- Remove players dynamically
 Players.PlayerRemoving:Connect(function(p)
     for _,frame in pairs(PlayerListContainer:GetChildren()) do
-        if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == p.Name then
+        if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") 
+        and frame:FindFirstChildOfClass("TextLabel").Text == p.Name then
             frame:Destroy()
             PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y)
         end
