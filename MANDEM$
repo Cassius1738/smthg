@@ -44,35 +44,32 @@ _G.NoclipFlyEnabled = false
 _G.FlySpeed = 50
 
 --------------------------------------------------
---// INPUT HANDLING & AIMBOT TOGGLE
+--// INPUT HANDLING (FIXED TOGGLE)
 --------------------------------------------------
 local AimbotDebounce = false
-local LockedTarget = nil
-
-UserInputService.InputBegan:Connect(function(i, gp)
+UserInputService.InputBegan:Connect(function(i,gp)
 	if gp then return end
 
-	-- Right-click hold
 	if i.UserInputType == Enum.UserInputType.MouseButton2 then
 		Holding = true
 
-	-- Aimbot toggle key
-	elseif i.UserInputType == Enum.UserInputType.Keyboard and i.KeyCode == _G.AimbotKey then
-		if not AimbotDebounce and _G.AimbotGUIEnabled then
+	elseif i.UserInputType == Enum.UserInputType.Keyboard then
+		-- Aimbot key
+		if i.KeyCode == _G.AimbotKey and not AimbotDebounce then
 			_G.AimbotEnabled = not _G.AimbotEnabled
+			_G.AimbotGUIEnabled = _G.AimbotEnabled -- keep GUI in sync
 			AimbotDebounce = true
 
 			if _G.AimbotEnabled then
-				-- Lock current closest target
-				LockedTarget = GetClosestPlayer()
+				print("Aimbot Enabled")
 			else
-				LockedTarget = nil
+				print("Aimbot Disabled")
 			end
-		end
 
-	-- Noclip toggle
-	elseif i.UserInputType == Enum.UserInputType.Keyboard and i.KeyCode == Enum.KeyCode.N then
-		_G.NoclipFlyEnabled = not _G.NoclipFlyEnabled
+		-- Noclip toggle
+		elseif i.KeyCode == Enum.KeyCode.N then
+			_G.NoclipFlyEnabled = not _G.NoclipFlyEnabled
+		end
 	end
 end)
 
@@ -109,26 +106,22 @@ end
 --// AIMBOT LOOP
 --------------------------------------------------
 RunService.RenderStepped:Connect(function()
-	local target = LockedTarget or (Holding and GetClosestPlayer())
-
+	local target = GetClosestPlayer()
 	if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
 		-- Right-click hold aimbot
-		if Holding and _G.AimbotEnabled and _G.AimbotGUIEnabled then
+		if Holding and _G.AimbotEnabled then
 			TweenService:Create(
 				Camera,
 				TweenInfo.new(_G.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
 				{CFrame = CFrame.new(Camera.CFrame.Position, target.Character[_G.AimPart].Position)}
 			):Play()
 		end
-
-		-- Camera Lock (works on same locked target)
+		-- Camera Lock (independent toggle)
 		if _G.CameraLockEnabled then
 			Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character[_G.AimPart].Position)
 		end
 	end
 end)
-
-
 
 --------------------------------------------------
 --// FOV CIRCLE
@@ -217,7 +210,6 @@ RunService.RenderStepped:Connect(function()
 		end
 	end
 end)
-
 --------------------------------------------------
 --// GUI
 --------------------------------------------------
