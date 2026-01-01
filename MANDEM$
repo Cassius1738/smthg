@@ -118,23 +118,38 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
---// SINGLE-TARGET CAMERA LOCK
+--// SINGLE-TARGET CAMERA LOCK FIXED
 --------------------------------------------------
-_G.CameraLockTarget = nil
 local CameraLockKey = Enum.KeyCode.E
 local CameraLockDebounce = false
+_G.CameraLockTarget = nil
 
--- Keybind toggle (only if GUI button green)
+-- Toggle keybind
 UserInputService.InputBegan:Connect(function(input, gp)
 	if gp then return end
 	if input.UserInputType == Enum.UserInputType.Keyboard then
 		if input.KeyCode == CameraLockKey and _G.CameraLockAllowed and not CameraLockDebounce then
 			_G.CameraLockEnabled = not _G.CameraLockEnabled
 			CameraLockDebounce = true
+
+			if _G.CameraLockEnabled then
+				-- Pick target immediately when enabling
+				local target = GetClosestPlayer()
+				if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
+					_G.CameraLockTarget = target
+				else
+					_G.CameraLockTarget = nil
+				end
+			else
+				_G.CameraLockTarget = nil
+			end
+
+			-- Update button color
 			if _G.CameraLockButton then
 				_G.CameraLockButton.Text = _G.CameraLockAllowed and (_G.CameraLockEnabled and "●" or "○") or "○"
 				_G.CameraLockButton.TextColor3 = _G.CameraLockEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
 			end
+
 			print("Camera Lock", _G.CameraLockEnabled and "Enabled" or "Disabled")
 		end
 	end
@@ -146,26 +161,15 @@ UserInputService.InputEnded:Connect(function(input)
 	end
 end)
 
--- RenderStepped: lock onto one target only
+-- RenderStepped: lock camera to selected target
 RunService.RenderStepped:Connect(function()
-	if _G.CameraLockEnabled then
-		-- Lock onto a single target once
-		if not _G.CameraLockTarget then
-			local target = GetClosestPlayer()
-			if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
-				_G.CameraLockTarget = target
-			end
-		end
-
-		-- Lock camera to target
+	if _G.CameraLockEnabled and _G.CameraLockTarget then
 		local t = _G.CameraLockTarget
 		if t and t.Character and t.Character:FindFirstChild(_G.AimPart) and t.Character:FindFirstChild("Humanoid") and t.Character.Humanoid.Health > 0 then
 			Camera.CFrame = CFrame.new(Camera.CFrame.Position, t.Character[_G.AimPart].Position)
 		else
 			_G.CameraLockTarget = nil
 		end
-	else
-		_G.CameraLockTarget = nil
 	end
 end)
 
