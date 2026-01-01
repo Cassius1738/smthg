@@ -7,6 +7,7 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
+local Holding = false
 
 --------------------------------------------------
 --// SAFE GUI
@@ -24,6 +25,7 @@ end
 --------------------------------------------------
 _G.AimbotEnabled = false
 _G.AimbotGUIEnabled = false
+_G.CameraLockEnabled = false
 _G.AimbotKey = Enum.KeyCode.Q
 _G.TeamCheck = false
 _G.AimPart = "Head"
@@ -41,36 +43,29 @@ _G.ESP_Tracer = false
 _G.NoclipFlyEnabled = false
 _G.FlySpeed = 50
 
--- CAMERA LOCK
-_G.CameraLockEnabled = false -- NEW: toggleable camera lock
-
 --------------------------------------------------
 --// INPUT HANDLING
 --------------------------------------------------
 local AimbotDebounce = false
 UserInputService.InputBegan:Connect(function(i,gp)
 	if not gp then
-		-- Hold right mouse button (old aimbot hold)
 		if i.UserInputType == Enum.UserInputType.MouseButton2 then
-			-- optional, can keep holding mode
-		elseif i.UserInputType == Enum.UserInputType.Keyboard then
-			-- Toggle Aimbot GUI
-			if i.KeyCode == _G.AimbotKey then
-				if not AimbotDebounce then
-					_G.AimbotEnabled = not _G.AimbotEnabled
-					_G.CameraLockEnabled = _G.AimbotEnabled -- toggle camera lock together
-					AimbotDebounce = true
-				end
-			-- Toggle Noclip/Fly
-			elseif i.KeyCode == Enum.KeyCode.N then
-				_G.NoclipFlyEnabled = not _G.NoclipFlyEnabled
+			Holding = true
+		elseif i.UserInputType == Enum.UserInputType.Keyboard and i.KeyCode == _G.AimbotKey then
+			if not AimbotDebounce and _G.AimbotGUIEnabled then
+				_G.AimbotEnabled = not _G.AimbotEnabled
+				AimbotDebounce = true
 			end
+		elseif i.UserInputType == Enum.UserInputType.Keyboard and i.KeyCode == Enum.KeyCode.N then
+			_G.NoclipFlyEnabled = not _G.NoclipFlyEnabled
 		end
 	end
 end)
 
 UserInputService.InputEnded:Connect(function(i)
-	if i.UserInputType == Enum.UserInputType.Keyboard and i.KeyCode == _G.AimbotKey then
+	if i.UserInputType == Enum.UserInputType.MouseButton2 then
+		Holding = false
+	elseif i.UserInputType == Enum.UserInputType.Keyboard and i.KeyCode == _G.AimbotKey then
 		AimbotDebounce = false
 	end
 end)
@@ -97,22 +92,23 @@ local function GetClosestPlayer()
 end
 
 --------------------------------------------------
---// AIMBOT & CAMERA LOCK LOOP
+--// AIMBOT LOOP
 --------------------------------------------------
 RunService.RenderStepped:Connect(function()
-	if _G.AimbotEnabled and _G.AimbotGUIEnabled and _G.CameraLockEnabled then
-		local target = GetClosestPlayer()
-		if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
-			-- Smoothly move camera to target
+	local target = GetClosestPlayer()
+	if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
+		if Holding and _G.AimbotEnabled and _G.AimbotGUIEnabled then
 			TweenService:Create(
 				Camera,
 				TweenInfo.new(_G.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
 				{CFrame = CFrame.new(Camera.CFrame.Position, target.Character[_G.AimPart].Position)}
 			):Play()
 		end
+		if _G.CameraLockEnabled then
+			Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character[_G.AimPart].Position)
+		end
 	end
 end)
-
 
 --------------------------------------------------
 --// FOV CIRCLE
@@ -203,7 +199,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
---// GUI
+--// GUI SETUP (Aimbot, ESP, Movement Pages)
 --------------------------------------------------
 local UI = Instance.new("ScreenGui")
 UI.ResetOnSpawn = false
@@ -277,6 +273,7 @@ end
 Tab("Aimbot",AimbotPage)
 Tab("ESP",ESPPage)
 Tab("Movement",MovementPage)
+
 
 --------------------------------------------------
 --// HELPER FUNCTIONS
