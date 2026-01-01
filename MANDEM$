@@ -354,7 +354,7 @@ local function AimbotCircleToggle(parent)
 end
 AimbotCircleToggle(AimbotPage)
 
--- Camera Lock GUI Button (controls whether camera lock can be toggled)
+-- Camera Lock GUI Button (enables permission to use keybind)
 local function CameraLockToggle(parent)
 	local holder = Instance.new("Frame", parent)
 	holder.Size = UDim2.new(1,0,0,32)
@@ -363,7 +363,7 @@ local function CameraLockToggle(parent)
 	local label = Instance.new("TextLabel", holder)
 	label.Size = UDim2.new(1,-40,1,0)
 	label.BackgroundTransparency = 1
-	label.Text = "Camera Lock Enabled"
+	label.Text = "Camera Lock Allowed"
 	label.Font = Enum.Font.Gotham
 	label.TextSize = 13
 	label.TextColor3 = Color3.new(1,1,1)
@@ -381,35 +381,33 @@ local function CameraLockToggle(parent)
 
 	-- Save reference globally
 	_G.CameraLockButton = btn
-	_G.CameraLockEnabled = false -- this controls actual camera lock
-	_G.CameraLockAllowed = false -- this controls whether keybind works
+	_G.CameraLockAllowed = false -- permission for keybind
+	_G.CameraLockEnabled = false -- actual lock status
 
 	btn.MouseButton1Click:Connect(function()
-		_G.CameraLockAllowed = not _G.CameraLockAllowed -- toggle allowed
+		_G.CameraLockAllowed = not _G.CameraLockAllowed
 		btn.Text = _G.CameraLockAllowed and "●" or "○"
 		btn.TextColor3 = _G.CameraLockAllowed and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
-
-		-- Optional: automatically enable camera lock when allowed
-		_G.CameraLockEnabled = _G.CameraLockAllowed
 	end)
 end
 
--- Example usage in your AimbotPage
 CameraLockToggle(AimbotPage)
 
--- Camera Lock Keybind (only works if allowed)
+-- Keybind for camera lock (only toggles if allowed)
 local CameraLockKey = Enum.KeyCode.E
 local CameraLockDebounce = false
 
 UserInputService.InputBegan:Connect(function(input, gp)
 	if gp then return end
 	if input.UserInputType == Enum.UserInputType.Keyboard then
+		-- Only toggle if GUI button is green (allowed)
 		if input.KeyCode == CameraLockKey and _G.CameraLockAllowed and not CameraLockDebounce then
 			_G.CameraLockEnabled = not _G.CameraLockEnabled
 			CameraLockDebounce = true
-			-- Update button to match
+
+			-- Update button color to match enabled/disabled
 			if _G.CameraLockButton then
-				_G.CameraLockButton.Text = _G.CameraLockEnabled and "●" or "○"
+				_G.CameraLockButton.Text = _G.CameraLockAllowed and (_G.CameraLockEnabled and "●" or "○") or "○"
 				_G.CameraLockButton.TextColor3 = _G.CameraLockEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
 			end
 			print("Camera Lock", _G.CameraLockEnabled and "Enabled" or "Disabled")
@@ -423,10 +421,10 @@ UserInputService.InputEnded:Connect(function(input)
 	end
 end)
 
--- In your RenderStepped loop:
+-- In RenderStepped: only locks camera on one target
 RunService.RenderStepped:Connect(function()
 	if _G.CameraLockEnabled then
-		local target = GetClosestPlayer()
+		local target = GetClosestPlayer() -- only one target
 		if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
 			Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character[_G.AimPart].Position)
 		end
