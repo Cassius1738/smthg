@@ -642,68 +642,72 @@ PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 -- Player Buttons
 local function CreatePlayerButton(player)
-	local holder = Instance.new("Frame")
-	holder.Size = UDim2.new(1,0,0,28)
-	holder.BackgroundTransparency = 1
+    local holder = Instance.new("Frame")
+    holder.Size = UDim2.new(1,0,0,28)
+    holder.BackgroundTransparency = 1
 
-	local nameLabel = Instance.new("TextLabel", holder)
-	nameLabel.Size = UDim2.new(0.5,0,1,0)
-	nameLabel.BackgroundTransparency = 1
-	nameLabel.Text = player.Name
-	nameLabel.TextColor3 = Color3.new(1,1,1)
-	nameLabel.Font = Enum.Font.Gotham
-	nameLabel.TextSize = 13
-	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-	nameLabel.Position = UDim2.new(0,5,0,0)
+    local nameLabel = Instance.new("TextLabel", holder)
+    nameLabel.Size = UDim2.new(0.5,0,1,0)
+    nameLabel.Position = UDim2.new(0,5,0,0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = player.Name
+    nameLabel.TextColor3 = Color3.new(1,1,1)
+    nameLabel.Font = Enum.Font.Gotham
+    nameLabel.TextSize = 13
+    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 
-	local tpBtn = Instance.new("TextButton", holder)
-	tpBtn.Size = UDim2.new(0.22,0,1,0)
-	tpBtn.Position = UDim2.new(0.52,0,0,0)
-	tpBtn.BackgroundColor3 = Color3.fromRGB(35,35,35)
-	tpBtn.Text = "TP"
-	tpBtn.TextColor3 = Color3.new(1,1,1)
-	tpBtn.Font = Enum.Font.Gotham
-	tpBtn.TextSize = 12
-	Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,6)
-	tpBtn.MouseButton1Click:Connect(function()
-		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-			LocalPlayer.Character.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
-		end
-	end)
+    local tpBtn = Instance.new("TextButton", holder)
+    tpBtn.Size = UDim2.new(0.22,0,1,0)
+    tpBtn.Position = UDim2.new(0.52,0,0,0)
+    tpBtn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    tpBtn.Text = "TP"
+    tpBtn.TextColor3 = Color3.new(1,1,1)
+    tpBtn.Font = Enum.Font.Gotham
+    tpBtn.TextSize = 12
+    Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,6)
+    tpBtn.MouseButton1Click:Connect(function()
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") 
+        and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
+        end
+    end)
 
-	local bringBtn = Instance.new("TextButton", holder)
-	bringBtn.Size = UDim2.new(0.22,0,1,0)
-	bringBtn.Position = UDim2.new(0.76,0,0,0)
-	bringBtn.BackgroundColor3 = Color3.fromRGB(35,35,35)
-	bringBtn.Text = "Bring"
-	bringBtn.TextColor3 = Color3.new(1,1,1)
-	bringBtn.Font = Enum.Font.Gotham
-	bringBtn.TextSize = 12
-	Instance.new("UICorner", bringBtn).CornerRadius = UDim.new(0,6)
-	bringBtn.MouseButton1Click:Connect(function()
-		if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-			player.Character.HumanoidRootPart.CFrame = CFrame.new(0,5,0) -- Move to world origin, not sticking
-		end
-	end)
+    local bringBtn = Instance.new("TextButton", holder)
+    bringBtn.Size = UDim2.new(0.22,0,1,0)
+    bringBtn.Position = UDim2.new(0.76,0,0,0)
+    bringBtn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    bringBtn.Text = "Bring"
+    bringBtn.TextColor3 = Color3.new(1,1,1)
+    bringBtn.Font = Enum.Font.Gotham
+    bringBtn.TextSize = 12
+    Instance.new("UICorner", bringBtn).CornerRadius = UDim.new(0,6)
+    bringBtn.MouseButton1Click:Connect(function()
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") 
+        and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local offset = Vector3.new(3,0,0) -- offset so it doesn’t stick
+            player.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame + offset
+        end
+    end)
 
-	holder.Parent = PlayerListContainer
-	PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y)
+    holder.Parent = PlayerListContainer
+    PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y)
 end
 
 -- Populate players
 for _,p in pairs(Players:GetPlayers()) do
-	CreatePlayerButton(p)
+    CreatePlayerButton(p)
 end
 
 Players.PlayerAdded:Connect(CreatePlayerButton)
 Players.PlayerRemoving:Connect(function(p)
-	for _,frame in pairs(PlayerListContainer:GetChildren()) do
-		if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == p.Name then
-			frame:Destroy()
-			PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y)
-		end
-	end
+    for _,frame in pairs(PlayerListContainer:GetChildren()) do
+        if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == p.Name then
+            frame:Destroy()
+            PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y)
+        end
+    end
 end)
+
 
 
 --------------------------------------------------
