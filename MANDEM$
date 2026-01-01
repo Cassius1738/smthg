@@ -97,6 +97,7 @@ end
 RunService.RenderStepped:Connect(function()
 	local target = GetClosestPlayer()
 	if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
+		-- Right-click hold aimbot
 		if Holding and _G.AimbotEnabled and _G.AimbotGUIEnabled then
 			TweenService:Create(
 				Camera,
@@ -104,6 +105,7 @@ RunService.RenderStepped:Connect(function()
 				{CFrame = CFrame.new(Camera.CFrame.Position, target.Character[_G.AimPart].Position)}
 			):Play()
 		end
+		-- Camera Lock (independent toggle)
 		if _G.CameraLockEnabled then
 			Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character[_G.AimPart].Position)
 		end
@@ -199,7 +201,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
---// GUI SETUP (Aimbot, ESP, Movement Pages)
+--// GUI
 --------------------------------------------------
 local UI = Instance.new("ScreenGui")
 UI.ResetOnSpawn = false
@@ -274,7 +276,6 @@ Tab("Aimbot",AimbotPage)
 Tab("ESP",ESPPage)
 Tab("Movement",MovementPage)
 
-
 --------------------------------------------------
 --// HELPER FUNCTIONS
 --------------------------------------------------
@@ -339,6 +340,36 @@ local function AimbotCircleToggle(parent)
 	end)
 end
 AimbotCircleToggle(AimbotPage)
+
+-- Camera Lock Button
+local function CameraLockToggle(parent)
+	local holder = Instance.new("Frame", parent)
+	holder.Size = UDim2.new(1,0,0,32)
+	holder.BackgroundTransparency = 1
+	local label = Instance.new("TextLabel", holder)
+	label.Size = UDim2.new(1,-40,1,0)
+	label.BackgroundTransparency = 1
+	label.Text = "Camera Lock"
+	label.Font = Enum.Font.Gotham
+	label.TextSize = 13
+	label.TextColor3 = Color3.new(1,1,1)
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	local btn = Instance.new("TextButton", holder)
+	btn.Size = UDim2.new(0,22,0,22)
+	btn.Position = UDim2.new(1,-26,0.5,-11)
+	btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	btn.Text = "○"
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 16
+	btn.TextColor3 = Color3.fromRGB(200,200,200)
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+	btn.MouseButton1Click:Connect(function()
+		_G.CameraLockEnabled = not _G.CameraLockEnabled
+		btn.Text = _G.CameraLockEnabled and "●" or "○"
+		btn.TextColor3 = _G.CameraLockEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+	end)
+end
+CameraLockToggle(AimbotPage)
 
 -- Aim Part Dropdown
 local function AimPartDropdown(parent)
