@@ -572,7 +572,7 @@ local function FlySpeedSlider(parent)
 end
 FlySpeedSlider(MovementPage)
 
--- PLAYER LIST SCROLLABLE
+-- PLAYER LIST SCROLLABLE FIX
 local PlayerListContainer = Instance.new("ScrollingFrame", MovementPage)
 PlayerListContainer.Size = UDim2.new(1,0,0,200)
 PlayerListContainer.Position = UDim2.new(0,0,0,140)
@@ -585,8 +585,14 @@ local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
 PlayerLayout.Padding = UDim.new(0,4)
 PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- Player Buttons (Teleport Only)
+-- Update CanvasSize automatically
+PlayerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y + 8)
+end)
+
+-- PLAYER BUTTON CREATION
 local function CreatePlayerButton(player)
+	if player == LocalPlayer then return end
 	local holder = Instance.new("Frame")
 	holder.Size = UDim2.new(1,0,0,28)
 	holder.BackgroundTransparency = 1
@@ -610,26 +616,39 @@ local function CreatePlayerButton(player)
 	tpBtn.Font = Enum.Font.Gotham
 	tpBtn.TextSize = 12
 	Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,6)
+
 	tpBtn.MouseButton1Click:Connect(function()
-		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-			LocalPlayer.Character.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
+		if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+			local targetHRP = player.Character.HumanoidRootPart
+			local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+			local hrp = char:WaitForChild("HumanoidRootPart")
+			-- Teleport with slight offset above the player
+			hrp.CFrame = targetHRP.CFrame + Vector3.new(0,3,0)
 		end
 	end)
 
 	holder.Parent = PlayerListContainer
-	PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y)
 end
 
-for _,p in pairs(Players:GetPlayers()) do CreatePlayerButton(p) end
-Players.PlayerAdded:Connect(CreatePlayerButton)
+-- INITIAL POPULATE
+for _,p in pairs(Players:GetPlayers()) do
+	CreatePlayerButton(p)
+end
+
+-- ADD NEW PLAYERS
+Players.PlayerAdded:Connect(function(p)
+	CreatePlayerButton(p)
+end)
+
+-- REMOVE LEFT PLAYERS
 Players.PlayerRemoving:Connect(function(p)
 	for _,frame in pairs(PlayerListContainer:GetChildren()) do
 		if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == p.Name then
 			frame:Destroy()
-			PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y)
 		end
 	end
 end)
+
 
 --------------------------------------------------
 --// SHOW / HIDE MENU
