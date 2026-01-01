@@ -249,7 +249,6 @@ local function Page()
 end
 local AimbotPage = Page()
 local ESPPage = Page()
-local VisualPage = Page()
 local MovementPage = Page()
 AimbotPage.Visible = true
 
@@ -269,8 +268,8 @@ local function Tab(name,page)
 end
 Tab("Aimbot",AimbotPage)
 Tab("ESP",ESPPage)
-Tab("Visuals",VisualPage)
 Tab("Movement",MovementPage)
+
 
 --------------------------------------------------
 --// GUI ELEMENTS FUNCTIONS
