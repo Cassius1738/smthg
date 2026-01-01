@@ -270,7 +270,6 @@ Tab("Aimbot",AimbotPage)
 Tab("ESP",ESPPage)
 Tab("Movement",MovementPage)
 
-
 --------------------------------------------------
 --// GUI ELEMENTS FUNCTIONS
 --------------------------------------------------
@@ -487,26 +486,7 @@ CircleToggle(ESPPage,"ESP Tracer","ESP_Tracer")
 CircleToggle(ESPPage,"Team Check","TeamCheck")
 
 --------------------------------------------------
---// Visuals Page
---------------------------------------------------
-local function Btn(parent,text,cb)
-	local b = Instance.new("TextButton", parent)
-	b.Size = UDim2.new(1,0,0,34)
-	b.BackgroundColor3 = Color3.fromRGB(35,35,35)
-	b.TextColor3 = Color3.new(1,1,1)
-	b.Font = Enum.Font.Gotham
-	b.TextSize = 13
-	Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
-	b.Text = text
-	b.MouseButton1Click:Connect(cb)
-	return b
-end
-Btn(VisualPage,"FOV Toggle",function() _G.CircleVisible = not _G.CircleVisible end)
-Btn(VisualPage,"FOV +",function() _G.CircleRadius += 10 end)
-Btn(VisualPage,"FOV -",function() _G.CircleRadius = math.max(20,_G.CircleRadius-10) end)
-
---------------------------------------------------
---// Movement Page Noclip+Fly
+--// MOVEMENT
 --------------------------------------------------
 CircleToggle(MovementPage,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
 
