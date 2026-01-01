@@ -25,7 +25,8 @@ end
 --------------------------------------------------
 _G.AimbotEnabled = false
 _G.AimbotGUIEnabled = false
-_G.CameraLockEnabled = false
+_G.CameraLockAllowed = false -- permission for keybind
+_G.CameraLockEnabled = false -- actual lock status
 _G.AimbotKey = Enum.KeyCode.Q
 _G.TeamCheck = false
 _G.AimPart = "Head"
@@ -56,16 +57,11 @@ UserInputService.InputBegan:Connect(function(i,gp)
 	elseif i.UserInputType == Enum.UserInputType.Keyboard then
 		-- Aimbot key
 		if i.KeyCode == _G.AimbotKey and not AimbotDebounce then
-			_G.AimbotEnabled = not _G.AimbotEnabled
-			_G.AimbotGUIEnabled = _G.AimbotEnabled -- keep GUI in sync
-			AimbotDebounce = true
-
-			if _G.AimbotEnabled then
-				print("Aimbot Enabled")
-			else
-				print("Aimbot Disabled")
+			if _G.AimbotGUIEnabled then -- Only toggle if GUI enabled
+				_G.AimbotEnabled = not _G.AimbotEnabled
+				AimbotDebounce = true
+				print("Aimbot", _G.AimbotEnabled and "Enabled" or "Disabled")
 			end
-
 		-- Noclip toggle
 		elseif i.KeyCode == Enum.KeyCode.N then
 			_G.NoclipFlyEnabled = not _G.NoclipFlyEnabled
@@ -118,11 +114,58 @@ RunService.RenderStepped:Connect(function()
 				{CFrame = CFrame.new(Camera.CFrame.Position, targetPos)}
 			):Play()
 		end
+	end
+end)
 
-		-- CAMERA LOCK: independent of right-click
-		if _G.CameraLockEnabled then
-			Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
+--------------------------------------------------
+--// SINGLE-TARGET CAMERA LOCK
+--------------------------------------------------
+_G.CameraLockTarget = nil
+local CameraLockKey = Enum.KeyCode.E
+local CameraLockDebounce = false
+
+-- Keybind toggle (only if GUI button green)
+UserInputService.InputBegan:Connect(function(input, gp)
+	if gp then return end
+	if input.UserInputType == Enum.UserInputType.Keyboard then
+		if input.KeyCode == CameraLockKey and _G.CameraLockAllowed and not CameraLockDebounce then
+			_G.CameraLockEnabled = not _G.CameraLockEnabled
+			CameraLockDebounce = true
+			if _G.CameraLockButton then
+				_G.CameraLockButton.Text = _G.CameraLockAllowed and (_G.CameraLockEnabled and "●" or "○") or "○"
+				_G.CameraLockButton.TextColor3 = _G.CameraLockEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+			end
+			print("Camera Lock", _G.CameraLockEnabled and "Enabled" or "Disabled")
 		end
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == CameraLockKey then
+		CameraLockDebounce = false
+	end
+end)
+
+-- RenderStepped: lock onto one target only
+RunService.RenderStepped:Connect(function()
+	if _G.CameraLockEnabled then
+		-- Lock onto a single target once
+		if not _G.CameraLockTarget then
+			local target = GetClosestPlayer()
+			if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
+				_G.CameraLockTarget = target
+			end
+		end
+
+		-- Lock camera to target
+		local t = _G.CameraLockTarget
+		if t and t.Character and t.Character:FindFirstChild(_G.AimPart) and t.Character:FindFirstChild("Humanoid") and t.Character.Humanoid.Health > 0 then
+			Camera.CFrame = CFrame.new(Camera.CFrame.Position, t.Character[_G.AimPart].Position)
+		else
+			_G.CameraLockTarget = nil
+		end
+	else
+		_G.CameraLockTarget = nil
 	end
 end)
 
