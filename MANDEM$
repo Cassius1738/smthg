@@ -10,7 +10,7 @@ local Camera = workspace.CurrentCamera
 local Holding = false
 
 --------------------------------------------------
---// SOLARA SAFE HUI
+--// SAFE GUI PARENT
 --------------------------------------------------
 local function safe_gethui()
 	if LocalPlayer and LocalPlayer:FindFirstChild("PlayerGui") then
@@ -40,6 +40,8 @@ _G.ESP_Name = false
 _G.ESP_Tracer = false
 
 _G.NoclipEnabled = false
+_G.NoclipFlyEnabled = false
+_G.FlySpeed = 50
 
 --------------------------------------------------
 --// INPUT HANDLING
@@ -49,17 +51,18 @@ UserInputService.InputBegan:Connect(function(i,gp)
 	if not gp then
 		if i.UserInputType == Enum.UserInputType.MouseButton2 then
 			Holding = true
-		elseif i.UserInputType == Enum.UserInputType.Keyboard and i.KeyCode == _G.AimbotKey then
-			if not AimbotDebounce and _G.AimbotGUIEnabled then
-				_G.AimbotEnabled = not _G.AimbotEnabled
-				AimbotDebounce = true
+		elseif i.UserInputType == Enum.UserInputType.Keyboard then
+			if i.KeyCode == _G.AimbotKey then
+				if not AimbotDebounce and _G.AimbotGUIEnabled then
+					_G.AimbotEnabled = not _G.AimbotEnabled
+					AimbotDebounce = true
+				end
+			elseif i.KeyCode == Enum.KeyCode.N then
+				_G.NoclipEnabled = not _G.NoclipEnabled
 			end
-		elseif i.UserInputType == Enum.UserInputType.Keyboard and i.KeyCode == Enum.KeyCode.N then
-			_G.NoclipEnabled = not _G.NoclipEnabled
 		end
 	end
 end)
-
 UserInputService.InputEnded:Connect(function(i)
 	if i.UserInputType == Enum.UserInputType.MouseButton2 then
 		Holding = false
@@ -75,7 +78,9 @@ local function GetClosestPlayer()
 	local closest, dist = nil, _G.CircleRadius
 	local mouse = UserInputService:GetMouseLocation()
 	for _,v in pairs(Players:GetPlayers()) do
-		if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 and (not _G.TeamCheck or v.Team ~= LocalPlayer.Team) then
+		if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") 
+		and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 
+		and (not _G.TeamCheck or v.Team ~= LocalPlayer.Team) then
 			local pos, onscreen = Camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
 			if onscreen then
 				local mag = (Vector2.new(pos.X,pos.Y) - mouse).Magnitude
@@ -128,7 +133,6 @@ end)
 --// ESP
 --------------------------------------------------
 local ESPObjects = {}
-
 local function CreateESP(p)
 	if p == LocalPlayer then return end
 	local box = Drawing.new("Square")
@@ -148,7 +152,6 @@ local function CreateESP(p)
 	tracer.Thickness = 1
 	ESPObjects[p] = {Box = box, Name = name, Tracer = tracer}
 end
-
 for _,p in pairs(Players:GetPlayers()) do CreateESP(p) end
 Players.PlayerAdded:Connect(CreateESP)
 Players.PlayerRemoving:Connect(function(p)
@@ -157,7 +160,6 @@ Players.PlayerRemoving:Connect(function(p)
 		ESPObjects[p] = nil
 	end
 end)
-
 RunService.RenderStepped:Connect(function()
 	local bottom = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
 	for player, objs in pairs(ESPObjects) do
@@ -197,7 +199,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
---// GUI
+--// GUI SETUP
 --------------------------------------------------
 local UI = Instance.new("ScreenGui")
 UI.ResetOnSpawn = false
@@ -223,7 +225,7 @@ Header.TextSize = 14
 Header.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", Header).CornerRadius = UDim.new(0,14)
 
--- Tabs
+-- Tabs & Pages
 local Tabs = Instance.new("Frame", Main)
 Tabs.Position = UDim2.new(0,0,0,52)
 Tabs.Size = UDim2.new(1,0,0,36)
@@ -233,7 +235,6 @@ TabLayout.FillDirection = Enum.FillDirection.Horizontal
 TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 TabLayout.Padding = UDim.new(0,8)
 
--- Pages
 local Pages = Instance.new("Folder", Main)
 local function Page()
 	local f = Instance.new("Frame", Main)
@@ -241,19 +242,17 @@ local function Page()
 	f.Size = UDim2.new(1,-30,1,-110)
 	f.BackgroundTransparency = 1
 	f.Visible = false
-	Instance.new("UIListLayout", f).Padding = UDim.new(0,8)
-	Instance.new("UIListLayout", f).SortOrder = Enum.SortOrder.LayoutOrder
-	f.Parent = Pages
+	local layout = Instance.new("UIListLayout", f)
+	layout.Padding = UDim.new(0,8)
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	return f
 end
-
 local AimbotPage = Page()
 local ESPPage = Page()
 local VisualPage = Page()
 local MovementPage = Page()
 AimbotPage.Visible = true
 
--- Tab helper
 local function Tab(name,page)
 	local b = Instance.new("TextButton", Tabs)
 	b.Size = UDim2.new(0,100,0,32)
@@ -268,28 +267,15 @@ local function Tab(name,page)
 		page.Visible = true
 	end)
 end
-
 Tab("Aimbot",AimbotPage)
 Tab("ESP",ESPPage)
 Tab("Visuals",VisualPage)
 Tab("Movement",MovementPage)
 
 --------------------------------------------------
---// HELPER FUNCTIONS
+--// GUI ELEMENTS FUNCTIONS
 --------------------------------------------------
-local function Btn(parent,text,cb)
-	local b = Instance.new("TextButton", parent)
-	b.Size = UDim2.new(1,0,0,34)
-	b.BackgroundColor3 = Color3.fromRGB(35,35,35)
-	b.TextColor3 = Color3.new(1,1,1)
-	b.Font = Enum.Font.Gotham
-	b.TextSize = 13
-	Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
-	b.Text = text
-	b.MouseButton1Click:Connect(cb)
-	return b
-end
-
+-- CircleToggle
 local function CircleToggle(parent,text,flag)
 	local holder = Instance.new("Frame", parent)
 	holder.Size = UDim2.new(1,0,0,32)
@@ -318,10 +304,7 @@ local function CircleToggle(parent,text,flag)
 	end)
 end
 
---------------------------------------------------
---// Aimbot Page
---------------------------------------------------
--- Enable Aimbot
+-- Aimbot Toggle
 local function AimbotCircleToggle(parent)
 	local holder = Instance.new("Frame", parent)
 	holder.Size = UDim2.new(1,0,0,32)
@@ -350,7 +333,6 @@ local function AimbotCircleToggle(parent)
 		btn.TextColor3 = _G.AimbotGUIEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
 	end)
 end
-
 AimbotCircleToggle(AimbotPage)
 
 -- Aim Part Dropdown
@@ -407,7 +389,6 @@ local function AimPartDropdown(parent)
 		end
 	end)
 end
-
 AimPartDropdown(AimbotPage)
 
 -- Smoothness Slider
@@ -455,7 +436,6 @@ local function SmoothnessSlider(parent)
 		end
 	end)
 end
-
 SmoothnessSlider(AimbotPage)
 
 -- Keybind Button
@@ -497,11 +477,10 @@ local function KeybindButton(parent)
 		end)
 	end)
 end
-
 KeybindButton(AimbotPage)
 
 --------------------------------------------------
---// ESP Page
+--// ESP Page Toggles
 --------------------------------------------------
 CircleToggle(ESPPage,"ESP Box","ESP_Box")
 CircleToggle(ESPPage,"ESP Name","ESP_Name")
@@ -511,32 +490,36 @@ CircleToggle(ESPPage,"Team Check","TeamCheck")
 --------------------------------------------------
 --// Visuals Page
 --------------------------------------------------
+local function Btn(parent,text,cb)
+	local b = Instance.new("TextButton", parent)
+	b.Size = UDim2.new(1,0,0,34)
+	b.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	b.TextColor3 = Color3.new(1,1,1)
+	b.Font = Enum.Font.Gotham
+	b.TextSize = 13
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
+	b.Text = text
+	b.MouseButton1Click:Connect(cb)
+	return b
+end
 Btn(VisualPage,"FOV Toggle",function() _G.CircleVisible = not _G.CircleVisible end)
 Btn(VisualPage,"FOV +",function() _G.CircleRadius += 10 end)
 Btn(VisualPage,"FOV -",function() _G.CircleRadius = math.max(20,_G.CircleRadius-10) end)
 
 --------------------------------------------------
---// Movement Page
+--// Movement Page Noclip+Fly
 --------------------------------------------------
-
--- Noclip + Fly Combined
-_G.NoclipFlyEnabled = false
-_G.FlySpeed = 50
-
 CircleToggle(MovementPage,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
 
--- Noclip + Fly logic
 RunService.Stepped:Connect(function()
 	if _G.NoclipFlyEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
 		local hrp = LocalPlayer.Character.HumanoidRootPart
-
 		-- Noclip
 		for _,part in pairs(LocalPlayer.Character:GetDescendants()) do
 			if part:IsA("BasePart") then
 				part.CanCollide = false
 			end
 		end
-
 		-- Fly
 		if not hrp:FindFirstChild("FlyVelocity") then
 			local bv = Instance.new("BodyVelocity")
@@ -545,7 +528,6 @@ RunService.Stepped:Connect(function()
 			bv.Velocity = Vector3.zero
 			bv.Parent = hrp
 		end
-
 		local moveDir = Vector3.new()
 		if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + hrp.CFrame.LookVector end
 		if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - hrp.CFrame.LookVector end
@@ -561,13 +543,9 @@ RunService.Stepped:Connect(function()
 	else
 		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
 			local hrp = LocalPlayer.Character.HumanoidRootPart
-			if hrp:FindFirstChild("FlyVelocity") then
-				hrp.FlyVelocity:Destroy()
-			end
+			if hrp:FindFirstChild("FlyVelocity") then hrp.FlyVelocity:Destroy() end
 			for _,part in pairs(LocalPlayer.Character:GetDescendants()) do
-				if part:IsA("BasePart") then
-					part.CanCollide = true
-				end
+				if part:IsA("BasePart") then part.CanCollide = true end
 			end
 		end
 	end
@@ -578,7 +556,6 @@ local function FlySpeedSlider(parent)
 	local holder = Instance.new("Frame", parent)
 	holder.Size = UDim2.new(1,0,0,40)
 	holder.BackgroundTransparency = 1
-
 	local label = Instance.new("TextLabel", holder)
 	label.Size = UDim2.new(0.6,0,1,0)
 	label.BackgroundTransparency = 1
@@ -587,24 +564,20 @@ local function FlySpeedSlider(parent)
 	label.TextSize = 13
 	label.TextColor3 = Color3.new(1,1,1)
 	label.TextXAlignment = Enum.TextXAlignment.Left
-
 	local sliderBar = Instance.new("Frame", holder)
 	sliderBar.Size = UDim2.new(0.35,0,0.3,0)
 	sliderBar.Position = UDim2.new(0.6,0,0.35,0)
 	sliderBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
 	Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1,0)
-
 	local fill = Instance.new("Frame", sliderBar)
 	fill.Size = UDim2.new(_G.FlySpeed/200,0,1,0)
 	fill.BackgroundColor3 = Color3.fromRGB(0,255,120)
 	Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
-
 	local handle = Instance.new("Frame", sliderBar)
 	handle.Size = UDim2.new(0,16,0,16)
 	handle.Position = UDim2.new(fill.Size.X.Scale, 0, 0.5, -8)
 	handle.BackgroundColor3 = Color3.fromRGB(0,255,120)
 	Instance.new("UICorner", handle).CornerRadius = UDim.new(1,0)
-
 	local dragging = false
 	handle.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true Main.Active = false end
@@ -623,11 +596,10 @@ local function FlySpeedSlider(parent)
 		end
 	end)
 end
-
 FlySpeedSlider(MovementPage)
 
 --------------------------------------------------
--- PLAYER LIST SCROLLABLE (Fixed TP)
+-- PLAYER LIST
 --------------------------------------------------
 local PlayerListContainer = Instance.new("ScrollingFrame", MovementPage)
 PlayerListContainer.Size = UDim2.new(1,0,0,200)
@@ -642,65 +614,56 @@ local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
 PlayerLayout.Padding = UDim.new(0,4)
 PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- Function to create a player button
 local function CreatePlayerButton(player)
-    local holder = Instance.new("Frame")
-    holder.Size = UDim2.new(1,0,0,28)
-    holder.BackgroundTransparency = 1
+	local holder = Instance.new("Frame")
+	holder.Size = UDim2.new(1,0,0,28)
+	holder.BackgroundTransparency = 1
+	local nameLabel = Instance.new("TextLabel", holder)
+	nameLabel.Size = UDim2.new(0.5,0,1,0)
+	nameLabel.Position = UDim2.new(0,5,0,0)
+	nameLabel.BackgroundTransparency = 1
+	nameLabel.Text = player.Name
+	nameLabel.TextColor3 = Color3.new(1,1,1)
+	nameLabel.Font = Enum.Font.Gotham
+	nameLabel.TextSize = 13
+	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 
-    -- Player Name
-    local nameLabel = Instance.new("TextLabel", holder)
-    nameLabel.Size = UDim2.new(0.5,0,1,0)
-    nameLabel.Position = UDim2.new(0,5,0,0)
-    nameLabel.BackgroundTransparency = 1
-    nameLabel.Text = player.Name
-    nameLabel.TextColor3 = Color3.new(1,1,1)
-    nameLabel.Font = Enum.Font.Gotham
-    nameLabel.TextSize = 13
-    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+	local tpBtn = Instance.new("TextButton", holder)
+	tpBtn.Size = UDim2.new(0.45,0,1,0)
+	tpBtn.Position = UDim2.new(0.52,0,0,0)
+	tpBtn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	tpBtn.Text = "TP"
+	tpBtn.TextColor3 = Color3.new(1,1,1)
+	tpBtn.Font = Enum.Font.Gotham
+	tpBtn.TextSize = 12
+	Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,6)
+	tpBtn.MouseButton1Click:Connect(function()
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") 
+		and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+			LocalPlayer.Character.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
+		end
+	end)
 
-    -- Teleport Button (widened to fill Bring button space)
-    local tpBtn = Instance.new("TextButton", holder)
-    tpBtn.Size = UDim2.new(0.45,0,1,0)
-    tpBtn.Position = UDim2.new(0.52,0,0,0)
-    tpBtn.BackgroundColor3 = Color3.fromRGB(35,35,35)
-    tpBtn.Text = "TP"
-    tpBtn.TextColor3 = Color3.new(1,1,1)
-    tpBtn.Font = Enum.Font.Gotham
-    tpBtn.TextSize = 12
-    Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,6)
-    tpBtn.MouseButton1Click:Connect(function()
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") 
-        and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            LocalPlayer.Character.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
-        end
-    end)
-
-    holder.Parent = PlayerListContainer
-    PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y)
+	holder.Parent = PlayerListContainer
+	PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y)
 end
 
--- Populate existing players
 for _,p in pairs(Players:GetPlayers()) do
-    CreatePlayerButton(p)
+	CreatePlayerButton(p)
 end
-
--- Add new players dynamically
 Players.PlayerAdded:Connect(CreatePlayerButton)
-
--- Remove players dynamically
 Players.PlayerRemoving:Connect(function(p)
-    for _,frame in pairs(PlayerListContainer:GetChildren()) do
-        if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") 
-        and frame:FindFirstChildOfClass("TextLabel").Text == p.Name then
-            frame:Destroy()
-            PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y)
-        end
-    end
+	for _,frame in pairs(PlayerListContainer:GetChildren()) do
+		if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") 
+		and frame:FindFirstChildOfClass("TextLabel").Text == p.Name then
+			frame:Destroy()
+			PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y)
+		end
+	end
 end)
 
 --------------------------------------------------
---// SHOW / HIDE MENU
+-- MENU TOGGLE
 --------------------------------------------------
 UserInputService.InputBegan:Connect(function(i,gp)
 	if not gp and i.KeyCode == Enum.KeyCode.RightControl then
