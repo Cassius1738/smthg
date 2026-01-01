@@ -29,6 +29,8 @@ _G.AimbotKey = Enum.KeyCode.Q
 _G.TeamCheck = false
 _G.AimPart = "Head"
 _G.Sensitivity = 0.08
+_G.CameraLockEnabled = false
+
 
 _G.CircleRadius = 80
 _G.CircleColor = Color3.fromRGB(255,255,255)
@@ -105,6 +107,22 @@ RunService.RenderStepped:Connect(function()
 		end
 	end
 end)
+
+--------------------------------------------------
+--// CAMERA LOCK AIMBOT LOOP
+--------------------------------------------------
+RunService.RenderStepped:Connect(function()
+	if Holding and _G.AimbotGUIEnabled and _G.CameraLockEnabled then
+		local target = GetClosestPlayer()
+		if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
+			Camera.CFrame = CFrame.new(
+				Camera.CFrame.Position,
+				target.Character[_G.AimPart].Position
+			)
+		end
+	end
+end)
+
 
 --------------------------------------------------
 --// FOV CIRCLE
@@ -334,6 +352,8 @@ local function AimbotCircleToggle(parent)
 	end)
 end
 AimbotCircleToggle(AimbotPage)
+CircleToggle(AimbotPage, "Camera Lock Aimbot", "CameraLockEnabled")
+
 
 -- Aim Part Dropdown
 local function AimPartDropdown(parent)
