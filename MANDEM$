@@ -199,7 +199,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
---// GUI SETUP
+--// GUI SETUP FIXED (Aimbot, ESP, Movement)
 --------------------------------------------------
 local UI = Instance.new("ScreenGui")
 UI.ResetOnSpawn = false
@@ -235,23 +235,30 @@ TabLayout.FillDirection = Enum.FillDirection.Horizontal
 TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 TabLayout.Padding = UDim.new(0,8)
 
-local Pages = Instance.new("Folder", Main)
+-- Page function (container inside page fixes stacking)
 local function Page()
 	local f = Instance.new("Frame", Main)
 	f.Position = UDim2.new(0,15,0,96)
 	f.Size = UDim2.new(1,-30,1,-110)
 	f.BackgroundTransparency = 1
 	f.Visible = false
-	local layout = Instance.new("UIListLayout", f)
+
+	local container = Instance.new("Frame", f)
+	container.Size = UDim2.new(1,0,1,0)
+	container.BackgroundTransparency = 1
+	local layout = Instance.new("UIListLayout", container)
 	layout.Padding = UDim.new(0,8)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	return f
+
+	return f, container
 end
-local AimbotPage = Page()
-local ESPPage = Page()
-local MovementPage = Page()
+
+local AimbotPage, AimbotContainer = Page()
+local ESPPage, ESPContainer = Page()
+local MovementPage, MovementContainer = Page()
 AimbotPage.Visible = true
 
+-- Tabs
 local function Tab(name,page)
 	local b = Instance.new("TextButton", Tabs)
 	b.Size = UDim2.new(0,100,0,32)
@@ -262,13 +269,14 @@ local function Tab(name,page)
 	b.BackgroundColor3 = Color3.fromRGB(35,35,35)
 	Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
 	b.MouseButton1Click:Connect(function()
-		for _,p in pairs(Pages:GetChildren()) do p.Visible = false end
+		for _,p in pairs({AimbotPage, ESPPage, MovementPage}) do p.Visible = false end
 		page.Visible = true
 	end)
 end
-Tab("Aimbot",AimbotPage)
-Tab("ESP",ESPPage)
-Tab("Movement",MovementPage)
+
+Tab("Aimbot", AimbotPage)
+Tab("ESP", ESPPage)
+Tab("Movement", MovementPage)
 
 --------------------------------------------------
 --// GUI ELEMENTS FUNCTIONS
