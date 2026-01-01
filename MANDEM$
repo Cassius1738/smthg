@@ -93,36 +93,34 @@ local function GetClosestPlayer()
 end
 
 --------------------------------------------------
---// AIMBOT LOOP
+--// AIMBOT + CAMERA LOCK LOOP (SHARED KEYBIND)
 --------------------------------------------------
 RunService.RenderStepped:Connect(function()
-	if Holding and _G.AimbotEnabled and _G.AimbotGUIEnabled then
-		local target = GetClosestPlayer()
-		if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
-			TweenService:Create(
-				Camera,
-				TweenInfo.new(_G.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
-				{CFrame = CFrame.new(Camera.CFrame.Position, target.Character[_G.AimPart].Position)}
-			):Play()
-		end
+	if not Holding or not _G.AimbotGUIEnabled then return end
+
+	local target = GetClosestPlayer()
+	if not target or not target.Character then return end
+	local part = target.Character:FindFirstChild(_G.AimPart)
+	if not part then return end
+
+	-- CAMERA LOCK (PRIORITY)
+	if _G.CameraLockEnabled then
+		Camera.CFrame = CFrame.new(
+			Camera.CFrame.Position,
+			part.Position
+		)
+		return
+	end
+
+	-- SMOOTH AIMBOT
+	if _G.AimbotEnabled then
+		TweenService:Create(
+			Camera,
+			TweenInfo.new(_G.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+			{ CFrame = CFrame.new(Camera.CFrame.Position, part.Position) }
+		):Play()
 	end
 end)
-
---------------------------------------------------
---// CAMERA LOCK AIMBOT LOOP
---------------------------------------------------
-RunService.RenderStepped:Connect(function()
-	if Holding and _G.AimbotGUIEnabled and _G.CameraLockEnabled then
-		local target = GetClosestPlayer()
-		if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
-			Camera.CFrame = CFrame.new(
-				Camera.CFrame.Position,
-				target.Character[_G.AimPart].Position
-			)
-		end
-	end
-end)
-
 
 --------------------------------------------------
 --// FOV CIRCLE
