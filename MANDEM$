@@ -572,7 +572,7 @@ local function FlySpeedSlider(parent)
 end
 FlySpeedSlider(MovementPage)
 
--- PLAYER LIST SCROLLABLE FIX
+--// PLAYER LIST SCROLLABLE CLEAN
 local PlayerListContainer = Instance.new("ScrollingFrame", MovementPage)
 PlayerListContainer.Size = UDim2.new(1,0,0,200)
 PlayerListContainer.Position = UDim2.new(0,0,0,140)
@@ -581,16 +581,17 @@ PlayerListContainer.BorderSizePixel = 0
 PlayerListContainer.CanvasSize = UDim2.new(0,0,0,0)
 PlayerListContainer.ScrollBarThickness = 8
 Instance.new("UICorner", PlayerListContainer).CornerRadius = UDim.new(0,8)
+
 local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
 PlayerLayout.Padding = UDim.new(0,4)
 PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- Update CanvasSize automatically
+-- Update CanvasSize dynamically
 PlayerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 	PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y + 8)
 end)
 
--- PLAYER BUTTON CREATION
+-- Create clean player button
 local function CreatePlayerButton(player)
 	if player == LocalPlayer then return end
 	local holder = Instance.new("Frame")
@@ -598,7 +599,7 @@ local function CreatePlayerButton(player)
 	holder.BackgroundTransparency = 1
 
 	local nameLabel = Instance.new("TextLabel", holder)
-	nameLabel.Size = UDim2.new(0.5,0,1,0)
+	nameLabel.Size = UDim2.new(1,0,1,0)
 	nameLabel.BackgroundTransparency = 1
 	nameLabel.Text = player.Name
 	nameLabel.TextColor3 = Color3.new(1,1,1)
@@ -608,8 +609,8 @@ local function CreatePlayerButton(player)
 	nameLabel.Position = UDim2.new(0,5,0,0)
 
 	local tpBtn = Instance.new("TextButton", holder)
-	tpBtn.Size = UDim2.new(0.45,0,1,0)
-	tpBtn.Position = UDim2.new(0.52,0,0,0)
+	tpBtn.Size = UDim2.new(0.4,0,1,0)
+	tpBtn.Position = UDim2.new(0.55,0,0,0)
 	tpBtn.BackgroundColor3 = Color3.fromRGB(35,35,35)
 	tpBtn.Text = "Teleport"
 	tpBtn.TextColor3 = Color3.new(1,1,1)
@@ -622,7 +623,7 @@ local function CreatePlayerButton(player)
 			local targetHRP = player.Character.HumanoidRootPart
 			local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 			local hrp = char:WaitForChild("HumanoidRootPart")
-			-- Teleport with slight offset above the player
+			-- Teleport slightly above the player to avoid collision
 			hrp.CFrame = targetHRP.CFrame + Vector3.new(0,3,0)
 		end
 	end)
@@ -630,17 +631,17 @@ local function CreatePlayerButton(player)
 	holder.Parent = PlayerListContainer
 end
 
--- INITIAL POPULATE
+-- Populate all players initially
 for _,p in pairs(Players:GetPlayers()) do
 	CreatePlayerButton(p)
 end
 
--- ADD NEW PLAYERS
+-- Add new players dynamically
 Players.PlayerAdded:Connect(function(p)
 	CreatePlayerButton(p)
 end)
 
--- REMOVE LEFT PLAYERS
+-- Remove players when they leave
 Players.PlayerRemoving:Connect(function(p)
 	for _,frame in pairs(PlayerListContainer:GetChildren()) do
 		if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == p.Name then
