@@ -103,22 +103,25 @@ local function GetClosestPlayer()
 end
 
 --------------------------------------------------
---// AIMBOT LOOP
+--// AIMBOT LOOP (FIXED CAMERA LOCK)
 --------------------------------------------------
 RunService.RenderStepped:Connect(function()
 	local target = GetClosestPlayer()
 	if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
-		-- Right-click hold aimbot
+		local targetPos = target.Character[_G.AimPart].Position
+
+		-- Smooth aim while holding right-click (optional)
 		if Holding and _G.AimbotEnabled then
 			TweenService:Create(
 				Camera,
 				TweenInfo.new(_G.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
-				{CFrame = CFrame.new(Camera.CFrame.Position, target.Character[_G.AimPart].Position)}
+				{CFrame = CFrame.new(Camera.CFrame.Position, targetPos)}
 			):Play()
 		end
-		-- Camera Lock (independent toggle)
+
+		-- CAMERA LOCK: independent of right-click
 		if _G.CameraLockEnabled then
-			Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character[_G.AimPart].Position)
+			Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
 		end
 	end
 end)
@@ -351,35 +354,85 @@ local function AimbotCircleToggle(parent)
 end
 AimbotCircleToggle(AimbotPage)
 
--- Camera Lock Button
+-- Camera Lock GUI Button (controls whether camera lock can be toggled)
 local function CameraLockToggle(parent)
 	local holder = Instance.new("Frame", parent)
 	holder.Size = UDim2.new(1,0,0,32)
 	holder.BackgroundTransparency = 1
+
 	local label = Instance.new("TextLabel", holder)
 	label.Size = UDim2.new(1,-40,1,0)
 	label.BackgroundTransparency = 1
-	label.Text = "Camera Lock"
+	label.Text = "Camera Lock Enabled"
 	label.Font = Enum.Font.Gotham
 	label.TextSize = 13
 	label.TextColor3 = Color3.new(1,1,1)
 	label.TextXAlignment = Enum.TextXAlignment.Left
+
 	local btn = Instance.new("TextButton", holder)
 	btn.Size = UDim2.new(0,22,0,22)
 	btn.Position = UDim2.new(1,-26,0.5,-11)
 	btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
-	btn.Text = "○"
+	btn.Text = "○" -- starts disabled
 	btn.Font = Enum.Font.GothamBold
 	btn.TextSize = 16
 	btn.TextColor3 = Color3.fromRGB(200,200,200)
 	Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+
+	-- Save reference globally
+	_G.CameraLockButton = btn
+	_G.CameraLockEnabled = false -- this controls actual camera lock
+	_G.CameraLockAllowed = false -- this controls whether keybind works
+
 	btn.MouseButton1Click:Connect(function()
-		_G.CameraLockEnabled = not _G.CameraLockEnabled
-		btn.Text = _G.CameraLockEnabled and "●" or "○"
-		btn.TextColor3 = _G.CameraLockEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+		_G.CameraLockAllowed = not _G.CameraLockAllowed -- toggle allowed
+		btn.Text = _G.CameraLockAllowed and "●" or "○"
+		btn.TextColor3 = _G.CameraLockAllowed and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+
+		-- Optional: automatically enable camera lock when allowed
+		_G.CameraLockEnabled = _G.CameraLockAllowed
 	end)
 end
+
+-- Example usage in your AimbotPage
 CameraLockToggle(AimbotPage)
+
+-- Camera Lock Keybind (only works if allowed)
+local CameraLockKey = Enum.KeyCode.E
+local CameraLockDebounce = false
+
+UserInputService.InputBegan:Connect(function(input, gp)
+	if gp then return end
+	if input.UserInputType == Enum.UserInputType.Keyboard then
+		if input.KeyCode == CameraLockKey and _G.CameraLockAllowed and not CameraLockDebounce then
+			_G.CameraLockEnabled = not _G.CameraLockEnabled
+			CameraLockDebounce = true
+			-- Update button to match
+			if _G.CameraLockButton then
+				_G.CameraLockButton.Text = _G.CameraLockEnabled and "●" or "○"
+				_G.CameraLockButton.TextColor3 = _G.CameraLockEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+			end
+			print("Camera Lock", _G.CameraLockEnabled and "Enabled" or "Disabled")
+		end
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == CameraLockKey then
+		CameraLockDebounce = false
+	end
+end)
+
+-- In your RenderStepped loop:
+RunService.RenderStepped:Connect(function()
+	if _G.CameraLockEnabled then
+		local target = GetClosestPlayer()
+		if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
+			Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character[_G.AimPart].Position)
+		end
+	end
+end)
+
 
 -- Aim Part Dropdown
 local function AimPartDropdown(parent)
