@@ -24,27 +24,23 @@ end
 --// GLOBAL SETTINGS
 --------------------------------------------------
 _G.AimbotEnabled = false
-_G.AimbotGUIEnabled = false
 _G.CameraLockEnabled = false
 _G.AimbotKey = Enum.KeyCode.Q
 _G.TeamCheck = false
 _G.AimPart = "Head"
 _G.Sensitivity = 0.08
-
 _G.CircleRadius = 80
 _G.CircleColor = Color3.fromRGB(255,255,255)
 _G.CircleVisible = true
-
 _G.ESPEnabled = false
 _G.ESP_Box = false
 _G.ESP_Name = false
 _G.ESP_Tracer = false
-
 _G.NoclipFlyEnabled = false
 _G.FlySpeed = 50
 
 --------------------------------------------------
---// INPUT HANDLING (FIXED TOGGLE)
+--// INPUT HANDLING (TOGGLE)
 --------------------------------------------------
 local AimbotDebounce = false
 UserInputService.InputBegan:Connect(function(i,gp)
@@ -54,19 +50,10 @@ UserInputService.InputBegan:Connect(function(i,gp)
 		Holding = true
 
 	elseif i.UserInputType == Enum.UserInputType.Keyboard then
-		-- Aimbot key
 		if i.KeyCode == _G.AimbotKey and not AimbotDebounce then
 			_G.AimbotEnabled = not _G.AimbotEnabled
-			_G.AimbotGUIEnabled = _G.AimbotEnabled -- keep GUI in sync
 			AimbotDebounce = true
-
-			if _G.AimbotEnabled then
-				print("Aimbot Enabled")
-			else
-				print("Aimbot Disabled")
-			end
-
-		-- Noclip toggle
+			print(_G.AimbotEnabled and "Aimbot Enabled" or "Aimbot Disabled")
 		elseif i.KeyCode == Enum.KeyCode.N then
 			_G.NoclipFlyEnabled = not _G.NoclipFlyEnabled
 		end
@@ -78,51 +65,6 @@ UserInputService.InputEnded:Connect(function(i)
 		Holding = false
 	elseif i.UserInputType == Enum.UserInputType.Keyboard and i.KeyCode == _G.AimbotKey then
 		AimbotDebounce = false
-	end
-end)
-
---------------------------------------------------
---// GET CLOSEST PLAYER
---------------------------------------------------
-local function GetClosestPlayer()
-	local closest, dist = nil, _G.CircleRadius
-	local mouse = UserInputService:GetMouseLocation()
-	for _,v in pairs(Players:GetPlayers()) do
-		if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 and (not _G.TeamCheck or v.Team ~= LocalPlayer.Team) then
-			local pos, onscreen = Camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
-			if onscreen then
-				local mag = (Vector2.new(pos.X,pos.Y) - mouse).Magnitude
-				if mag < dist then
-					dist = mag
-					closest = v
-				end
-			end
-		end
-	end
-	return closest
-end
-
---------------------------------------------------
---// AIMBOT LOOP (FIXED CAMERA LOCK)
---------------------------------------------------
-RunService.RenderStepped:Connect(function()
-	local target = GetClosestPlayer()
-	if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
-		local targetPos = target.Character[_G.AimPart].Position
-
-		-- Smooth aim while holding right-click (optional)
-		if Holding and _G.AimbotEnabled then
-			TweenService:Create(
-				Camera,
-				TweenInfo.new(_G.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
-				{CFrame = CFrame.new(Camera.CFrame.Position, targetPos)}
-			):Play()
-		end
-
-		-- CAMERA LOCK: independent of right-click
-		if _G.CameraLockEnabled then
-			Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
-		end
 	end
 end)
 
@@ -231,7 +173,6 @@ Main.BorderSizePixel = 0
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0,14)
 Instance.new("UIStroke", Main).Color = Color3.fromRGB(60,60,60)
 
--- Header
 local Header = Instance.new("TextLabel", Main)
 Header.Size = UDim2.new(1,0,0,42)
 Header.BackgroundColor3 = Color3.fromRGB(25,25,25)
@@ -241,7 +182,6 @@ Header.TextSize = 14
 Header.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", Header).CornerRadius = UDim.new(0,14)
 
--- Tabs
 local Tabs = Instance.new("Frame", Main)
 Tabs.Position = UDim2.new(0,0,0,52)
 Tabs.Size = UDim2.new(1,0,0,36)
@@ -251,7 +191,6 @@ TabLayout.FillDirection = Enum.FillDirection.Horizontal
 TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 TabLayout.Padding = UDim.new(0,8)
 
--- Pages
 local Pages = Instance.new("Folder", Main)
 local function Page()
 	local f = Instance.new("Frame", Main)
@@ -270,7 +209,6 @@ local ESPPage = Page()
 local MovementPage = Page()
 AimbotPage.Visible = true
 
--- Tab helper
 local function Tab(name,page)
 	local b = Instance.new("TextButton", Tabs)
 	b.Size = UDim2.new(0,100,0,32)
@@ -290,9 +228,8 @@ Tab("Aimbot",AimbotPage)
 Tab("ESP",ESPPage)
 Tab("Movement",MovementPage)
 
-
 --------------------------------------------------
---// HELPER FUNCTIONS
+--// HELPER GUI FUNCTION
 --------------------------------------------------
 local function CircleToggle(parent,text,flag)
 	local holder = Instance.new("Frame", parent)
@@ -323,29 +260,218 @@ local function CircleToggle(parent,text,flag)
 end
 
 --------------------------------------------------
---// AIMBOT PAGE (2 COLUMNS WITH CAMERA LOCK)
+--// AIMBOT PAGE GUI
 --------------------------------------------------
 local function CreateAimbotGUI()
-    -- Columns container
-    local Columns = Instance.new("Frame", AimbotPage)
-    Columns.Size = UDim2.new(1,0,1,0)
-    Columns.BackgroundTransparency = 1
+	local Columns = Instance.new("Frame", AimbotPage)
+	Columns.Size = UDim2.new(1,0,1,0)
+	Columns.BackgroundTransparency = 1
 
-    local LeftColumn = Instance.new("Frame", Columns)
-    LeftColumn.Size = UDim2.new(0.48,0,1,0)
-    LeftColumn.Position = UDim2.new(0,0,0,0)
-    LeftColumn.BackgroundTransparency = 1
+	local LeftColumn = Instance.new("Frame", Columns)
+	LeftColumn.Size = UDim2.new(0.48,0,1,0)
+	LeftColumn.Position = UDim2.new(0,0,0,0)
+	LeftColumn.BackgroundTransparency = 1
 
-    local RightColumn = Instance.new("Frame", Columns)
-    RightColumn.Size = UDim2.new(0.48,0,1,0)
-    RightColumn.Position = UDim2.new(0.52,0,0,0)
-    RightColumn.BackgroundTransparency = 1
+	local RightColumn = Instance.new("Frame", Columns)
+	RightColumn.Size = UDim2.new(0.48,0,1,0)
+	RightColumn.Position = UDim2.new(0.52,0,0,0)
+	RightColumn.BackgroundTransparency = 1
 
-    -- LEFT: Regular Aimbot Toggle
-    CircleToggle(LeftColumn,"Enable Aimbot","AimbotEnabled")
+	CircleToggle(LeftColumn,"Enable Aimbot","AimbotEnabled")
+	CircleToggle(RightColumn,"Camera Lock","CameraLockEnabled")
 end
 
 CreateAimbotGUI()
+
+--------------------------------------------------
+--// ESP PAGE GUI
+--------------------------------------------------
+CircleToggle(ESPPage,"ESP Box","ESP_Box")
+CircleToggle(ESPPage,"ESP Name","ESP_Name")
+CircleToggle(ESPPage,"ESP Tracer","ESP_Tracer")
+CircleToggle(ESPPage,"Team Check","TeamCheck")
+
+--------------------------------------------------
+--// MOVEMENT PAGE GUI
+--------------------------------------------------
+CircleToggle(MovementPage,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
+
+RunService.Stepped:Connect(function()
+	if _G.NoclipFlyEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		local hrp = LocalPlayer.Character.HumanoidRootPart
+		for _,part in pairs(LocalPlayer.Character:GetDescendants()) do
+			if part:IsA("BasePart") then part.CanCollide = false end
+		end
+		if not hrp:FindFirstChild("FlyVelocity") then
+			local bv = Instance.new("BodyVelocity")
+			bv.Name = "FlyVelocity"
+			bv.MaxForce = Vector3.new(1e5,1e5,1e5)
+			bv.Velocity = Vector3.zero
+			bv.Parent = hrp
+		end
+		local moveDir = Vector3.new()
+		if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + hrp.CFrame.LookVector end
+		if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - hrp.CFrame.LookVector end
+		if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - hrp.CFrame.RightVector end
+		if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + hrp.CFrame.RightVector end
+		if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0,1,0) end
+		if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir = moveDir - Vector3.new(0,1,0) end
+		if moveDir.Magnitude > 0 then hrp.FlyVelocity.Velocity = moveDir.Unit * _G.FlySpeed else hrp.FlyVelocity.Velocity = Vector3.zero end
+	else
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			local hrp = LocalPlayer.Character.HumanoidRootPart
+			if hrp:FindFirstChild("FlyVelocity") then hrp.FlyVelocity:Destroy() end
+			for _,part in pairs(LocalPlayer.Character:GetDescendants()) do
+				if part:IsA("BasePart") then part.CanCollide = true end
+			end
+		end
+	end
+end)
+
+--------------------------------------------------
+--// PLAYER LIST
+--------------------------------------------------
+local PlayerListContainer = Instance.new("ScrollingFrame", MovementPage)
+PlayerListContainer.Size = UDim2.new(1,0,0,150)
+PlayerListContainer.Position = UDim2.new(0,0,0,60)
+PlayerListContainer.BackgroundColor3 = Color3.fromRGB(35,35,35)
+PlayerListContainer.BorderSizePixel = 0
+PlayerListContainer.CanvasSize = UDim2.new(0,0,0,0)
+PlayerListContainer.ScrollBarThickness = 8
+PlayerListContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
+Instance.new("UICorner", PlayerListContainer).CornerRadius = UDim.new(0,8)
+
+local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
+PlayerLayout.Padding = UDim.new(0,4)
+PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+PlayerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y + 8)
+end)
+
+local function CreatePlayerButton(player)
+	if player == LocalPlayer then return end
+	local holder = Instance.new("Frame")
+	holder.Size = UDim2.new(1,0,0,28)
+	holder.BackgroundTransparency = 1
+
+	local nameLabel = Instance.new("TextLabel", holder)
+	nameLabel.Size = UDim2.new(0.55,0,1,0)
+	nameLabel.Position = UDim2.new(0,5,0,0)
+	nameLabel.BackgroundTransparency = 1
+	nameLabel.Text = player.Name
+	nameLabel.TextColor3 = Color3.new(1,1,1)
+	nameLabel.Font = Enum.Font.Gotham
+	nameLabel.TextSize = 13
+	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+	local tpBtn = Instance.new("TextButton", holder)
+	tpBtn.Size = UDim2.new(0.4,0,1,0)
+	tpBtn.Position = UDim2.new(0.57,0,0,0)
+	tpBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+	tpBtn.Text = "Teleport"
+	tpBtn.TextColor3 = Color3.new(1,1,1)
+	tpBtn.Font = Enum.Font.Gotham
+	tpBtn.TextSize = 12
+	Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,6)
+
+	tpBtn.MouseButton1Click:Connect(function()
+		if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+			local targetHRP = player.Character.HumanoidRootPart
+			local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+			local hrp = char:WaitForChild("HumanoidRootPart")
+			hrp.CFrame = targetHRP.CFrame + Vector3.new(0,3,0)
+		end
+	end)
+
+	holder.Parent = PlayerListContainer
+end
+
+for _,p in pairs(Players:GetPlayers()) do
+	CreatePlayerButton(p)
+end
+
+Players.PlayerAdded:Connect(CreatePlayerButton)
+Players.PlayerRemoving:Connect(function(p)
+	for _,frame in pairs(PlayerListContainer:GetChildren()) do
+		if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == p.Name then
+			frame:Destroy()
+		end
+	end
+end)
+
+--------------------------------------------------
+--// CAMERA AIMBOT (FULL)
+--------------------------------------------------
+local targetHighlight = Instance.new("Highlight")
+targetHighlight.Parent = game.CoreGui
+targetHighlight.FillColor = Color3.fromRGB(168,122,207)
+targetHighlight.OutlineColor = Color3.fromRGB(88,65,108)
+targetHighlight.Enabled = false
+
+local dot = Drawing.new("Circle")
+dot.Visible = false
+dot.Filled = true
+dot.Color = Color3.fromRGB(255,0,0)
+dot.Thickness = 2
+dot.Radius = 6
+
+local function IsAlive(p)
+    return p and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0
+end
+
+local function GetAimbotTarget()
+    local closest, dist = nil, _G.CircleRadius
+    local mousePos = UserInputService:GetMouseLocation()
+    for _,v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and IsAlive(v) and (not _G.TeamCheck or v.Team ~= LocalPlayer.Team) then
+            local pos, onScreen = Camera:WorldToViewportPoint(v.Character[_G.AimPart].Position)
+            if onScreen then
+                local mag = (Vector2.new(pos.X,pos.Y)-mousePos).Magnitude
+                if mag < dist then
+                    dist = mag
+                    closest = v
+                end
+            end
+        end
+    end
+    return closest
+end
+
+RunService.RenderStepped:Connect(function()
+    if _G.AimbotEnabled or _G.CameraLockEnabled then
+        local target = GetAimbotTarget()
+        if target then
+            local targetPos = target.Character[_G.AimPart].Position
+
+            -- CAMERA SMOOTHING
+            if _G.AimbotEnabled then
+                local tween = TweenService:Create(Camera, TweenInfo.new(_G.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {CFrame = CFrame.new(Camera.CFrame.Position, targetPos)})
+                tween:Play()
+            end
+
+            -- CAMERA LOCK
+            if _G.CameraLockEnabled then
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
+            end
+
+            -- HIGHLIGHT TARGET
+            targetHighlight.Adornee = target.Character
+            targetHighlight.Enabled = true
+
+            -- DOT
+            local screenPos, onScreen = Camera:WorldToViewportPoint(target.Character[_G.AimPart].Position)
+            dot.Visible = onScreen
+            dot.Position = Vector2.new(screenPos.X, screenPos.Y)
+        else
+            targetHighlight.Enabled = false
+            dot.Visible = false
+        end
+    else
+        targetHighlight.Enabled = false
+        dot.Visible = false
+    end
+end)
 
 --------------------------------------------------
 --// ESP Page
