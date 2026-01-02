@@ -366,9 +366,10 @@ end
 --------------------------------------------------
 -- Enable Aimbot
 local function AimbotCircleToggle(parent)
-	local holder = Instance.new("Frame", parent)
+	local holder = Instance.new("Frame")
 	holder.Size = UDim2.new(1,0,0,32)
 	holder.BackgroundTransparency = 1
+	holder.AutomaticSize = Enum.AutomaticSize.Y -- allow UIListLayout to position
 	local label = Instance.new("TextLabel", holder)
 	label.Size = UDim2.new(1,-40,1,0)
 	label.BackgroundTransparency = 1
@@ -392,14 +393,16 @@ local function AimbotCircleToggle(parent)
 		btn.Text = _G.AimbotGUIEnabled and "●" or "○"
 		btn.TextColor3 = _G.AimbotGUIEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
 	end)
+	holder.Parent = parent
 end
 AimbotCircleToggle(AimbotScroll)
 
 -- Aim Part Dropdown
 local function AimPartDropdown(parent)
-	local holder = Instance.new("Frame", parent)
+	local holder = Instance.new("Frame")
 	holder.Size = UDim2.new(1,0,0,32)
 	holder.BackgroundTransparency = 1
+	holder.AutomaticSize = Enum.AutomaticSize.Y
 	local label = Instance.new("TextLabel", holder)
 	label.Size = UDim2.new(0.5,0,1,0)
 	label.BackgroundTransparency = 1
@@ -423,7 +426,7 @@ local function AimPartDropdown(parent)
 	dropdown.MouseButton1Click:Connect(function()
 		if open then if listFrame then listFrame:Destroy() end open = false else
 			listFrame = Instance.new("Frame", parent)
-			listFrame.Position = UDim2.new(0,0,0,32)
+			listFrame.Position = UDim2.new(0,0,0,holder.AbsoluteSize.Y)
 			listFrame.Size = UDim2.new(1,0,0,#options*30)
 			listFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
 			Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0,8)
@@ -448,6 +451,7 @@ local function AimPartDropdown(parent)
 			open = true
 		end
 	end)
+	holder.Parent = parent
 end
 AimPartDropdown(AimbotScroll)
 
@@ -456,6 +460,15 @@ SmoothnessSlider(AimbotScroll)
 
 -- Keybind Button
 KeybindButton(AimbotScroll)
+
+--------------------------------------------------
+--// ESP Page
+--------------------------------------------------
+CircleToggle(ESPScroll,"ESP Box","ESP_Box")
+CircleToggle(ESPScroll,"ESP Name","ESP_Name")
+CircleToggle(ESPScroll,"ESP Tracer","ESP_Tracer")
+CircleToggle(ESPScroll,"Team Check","TeamCheck")
+
 
 --------------------------------------------------
 --// ESP Page
