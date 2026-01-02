@@ -592,36 +592,54 @@ end
 FlySpeedSlider(MovementPage)
 
 --------------------------------------------------
---// MOVEMENT PAGE PLAYER LIST (CONSTRAINED)
+--// MOVEMENT PAGE PLAYER LIST (CONSTRAINED FIX)
 --------------------------------------------------
-local function CreateSafePlayerList(parentFrame)
-    local PlayerListContainer = Instance.new("ScrollingFrame", parentFrame)
-    PlayerListContainer.Size = UDim2.new(1, -16, 0, 150) -- full width minus padding
-    PlayerListContainer.Position = UDim2.new(0, 8, 0, 100) -- start below top toggles
+local function CreateConstrainedPlayerList(page)
+    -- Add a UIListLayout to the page
+    local pageLayout = page:FindFirstChildOfClass("UIListLayout")
+    if not pageLayout then
+        pageLayout = Instance.new("UIListLayout", page)
+        pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        pageLayout.Padding = UDim.new(0,8)
+    end
+
+    -- ScrollingFrame container for players
+    local PlayerListContainer = Instance.new("ScrollingFrame", page)
     PlayerListContainer.BackgroundColor3 = Color3.fromRGB(35,35,35)
     PlayerListContainer.BorderSizePixel = 0
     PlayerListContainer.ScrollBarThickness = 8
+    PlayerListContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    PlayerListContainer.Size = UDim2.new(1,0,0,100) -- temporary initial height
+    PlayerListContainer.BackgroundTransparency = 0
     Instance.new("UICorner", PlayerListContainer).CornerRadius = UDim.new(0,8)
+    PlayerListContainer.LayoutOrder = 999 -- always at the bottom of layout
 
+    -- UIListLayout inside scrolling frame
     local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
-    PlayerLayout.Padding = UDim.new(0,4)
     PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    PlayerLayout.Padding = UDim.new(0,4)
 
-    -- update canvas size dynamically
-    PlayerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y + 8)
-    end)
-
-    -- constrain the height so it never goes outside parentFrame
+    -- Adjust PlayerListContainer height to fill remaining space
     local function UpdateHeight()
-        local maxHeight = parentFrame.AbsoluteSize.Y - PlayerListContainer.Position.Y.Offset - 8
-        PlayerListContainer.Size = UDim2.new(1, -16, 0, math.clamp(PlayerListContainer.AbsoluteSize.Y, 50, maxHeight))
+        local usedHeight = 0
+        for _, child in pairs(page:GetChildren()) do
+            if child ~= PlayerListContainer and child:IsA("Frame") then
+                usedHeight = usedHeight + child.AbsoluteSize.Y + 8
+            end
+        end
+        local remaining = page.AbsoluteSize.Y - usedHeight - 8
+        PlayerListContainer.Size = UDim2.new(1,0,0,math.max(50, remaining))
     end
 
-    parentFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateHeight)
+    page:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateHeight)
+    for _, child in pairs(page:GetChildren()) do
+        if child:IsA("Frame") then
+            child:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateHeight)
+        end
+    end
     UpdateHeight()
 
-    -- create player button
+    -- Function to create a player button
     local function CreatePlayerButton(player)
         if player == LocalPlayer then return end
         local holder = Instance.new("Frame")
@@ -660,22 +678,27 @@ local function CreateSafePlayerList(parentFrame)
         holder.Parent = PlayerListContainer
     end
 
-    for _,p in pairs(Players:GetPlayers()) do
-        CreatePlayerButton(p)
+    -- Populate current players
+    for _, player in pairs(Players:GetPlayers()) do
+        CreatePlayerButton(player)
     end
 
+    -- Listen for new players
     Players.PlayerAdded:Connect(CreatePlayerButton)
-    Players.PlayerRemoving:Connect(function(p)
-        for _,frame in pairs(PlayerListContainer:GetChildren()) do
-            if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == p.Name then
+
+    -- Remove players leaving
+    Players.PlayerRemoving:Connect(function(player)
+        for _, frame in pairs(PlayerListContainer:GetChildren()) do
+            if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == player.Name then
                 frame:Destroy()
             end
         end
     end)
 end
 
--- initialize inside Main frame
-CreateSafePlayerList(MovementPage)
+-- Call it for MovementPage
+CreateConstrainedPlayerList(MovementPage)
+
 
 --------------------------------------------------
 --// UNIVERSAL BIG HEAD (R6 + R15 + CUSTOM RIGS)
