@@ -8,161 +8,346 @@ local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 
 --------------------------------------------------
---// GLOBALS
+--// GLOBAL VARIABLES
 --------------------------------------------------
-_G.AimbotEnabled = false
-_G.AimbotGUIEnabled = false
-_G.AimbotKey = Enum.KeyCode.Q
-_G.TeamCheck = false
-_G.AimPart = "Head"
-_G.Sensitivity = 0.08
-_G.CircleRadius = 80
-_G.CircleColor = Color3.fromRGB(255,255,255)
-_G.CircleVisible = true
-_G.ESPEnabled = false
-_G.ESP_Box = false
-_G.ESP_Name = false
-_G.ESP_Tracer = false
-_G.NoclipFlyEnabled = false
-_G.FlySpeed = 50
-_G.SpeedEnabled = false
-_G.WalkSpeedValue = 16
-_G.NoCooldownJumpEnabled = false
-_G.VisualBigHead = false
-
---------------------------------------------------
---// SAFE GUI
---------------------------------------------------
-local function safe_gethui()
-	if LocalPlayer and LocalPlayer:FindFirstChild("PlayerGui") then
-		return LocalPlayer.PlayerGui
-	else
-		return game:GetService("CoreGui")
-	end
-end
+_G.NoclipFlyEnabled = _G.NoclipFlyEnabled or false
+_G.FlySpeed = _G.FlySpeed or 50
+_G.VisualBigHead = _G.VisualBigHead or false
+_G.AutoJumpEnabled = _G.AutoJumpEnabled or false
+_G.NoCooldownJumpEnabled = _G.NoCooldownJumpEnabled or false
+_G.SpeedEnabled = _G.SpeedEnabled or false
+_G.WalkSpeedValue = _G.WalkSpeedValue or 16
+_G.AimbotGUIEnabled = _G.AimbotGUIEnabled or false
+_G.AimbotEnabled = _G.AimbotEnabled or false
+_G.AimPart = _G.AimPart or "Head"
+_G.Sensitivity = _G.Sensitivity or 0.1
+_G.AimbotKey = _G.AimbotKey or Enum.KeyCode.E
+_G.ESP_Box = _G.ESP_Box or false
+_G.ESP_Name = _G.ESP_Name or false
+_G.ESP_Tracer = _G.ESP_Tracer or false
+_G.TeamCheck = _G.TeamCheck or false
 
 --------------------------------------------------
 --// MAIN GUI
 --------------------------------------------------
-local UI = Instance.new("ScreenGui")
-UI.ResetOnSpawn = false
-UI.Parent = safe_gethui()
-
-local Main = Instance.new("Frame", UI)
-Main.Size = UDim2.new(0,750,0,350)
-Main.Position = UDim2.new(0.15,0,0.25,0)
-Main.BackgroundColor3 = Color3.fromRGB(18,18,18)
-Main.Active = true
-Main.Draggable = true
+local Main = Instance.new("Frame")
+Main.Name = "MANDEM$ - Cassius1738"
+Main.Size = UDim2.new(0,650,0,400)
+Main.Position = UDim2.new(0.2,0,0.2,0)
+Main.BackgroundColor3 = Color3.fromRGB(25,25,25)
 Main.BorderSizePixel = 0
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0,14)
-Instance.new("UIStroke", Main).Color = Color3.fromRGB(60,60,60)
+Main.Visible = true
+local UICorner = Instance.new("UICorner", Main)
+UICorner.CornerRadius = UDim.new(0,12)
 
--- Header
 local Header = Instance.new("TextLabel", Main)
 Header.Size = UDim2.new(1,0,0,36)
+Header.Position = UDim2.new(0,0,0,0)
 Header.BackgroundTransparency = 1
 Header.Text = "MANDEM$ - Cassius1738"
+Header.TextColor3 = Color3.fromRGB(0,255,120)
 Header.Font = Enum.Font.GothamBold
 Header.TextSize = 18
-Header.TextColor3 = Color3.fromRGB(0,255,120)
-Header.TextXAlignment = Enum.TextXAlignment.Center
-Header.TextYAlignment = Enum.TextYAlignment.Center
 
--- Left Panel
+-- Left tab panel
 local LeftPanel = Instance.new("Frame", Main)
-LeftPanel.Size = UDim2.new(0,140,1,0)
+LeftPanel.Size = UDim2.new(0,120,1,0)
 LeftPanel.Position = UDim2.new(0,0,0,36)
-LeftPanel.BackgroundColor3 = Color3.fromRGB(25,25,25)
-Instance.new("UICorner", LeftPanel).CornerRadius = UDim.new(0,14)
+LeftPanel.BackgroundTransparency = 1
 
--- Avatar
-local avatar = Instance.new("ImageLabel", LeftPanel)
-avatar.Size = UDim2.new(0,100,0,100)
-avatar.Position = UDim2.new(0.5,0,0.2,0)
-avatar.AnchorPoint = Vector2.new(0.5,0.5)
-avatar.BackgroundTransparency = 1
-avatar.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
-avatar.ScaleType = Enum.ScaleType.Fit
-
--- Name Label
-local NameLabel = Instance.new("TextLabel", LeftPanel)
-NameLabel.Size = UDim2.new(1,-10,0,30)
-NameLabel.Position = UDim2.new(0.5,0,0.45,0)
-NameLabel.AnchorPoint = Vector2.new(0.5,0)
-NameLabel.BackgroundTransparency = 1
-NameLabel.Text = LocalPlayer.Name
-NameLabel.Font = Enum.Font.GothamBold
-NameLabel.TextSize = 16
-NameLabel.TextColor3 = Color3.new(1,1,1)
-NameLabel.TextXAlignment = Enum.TextXAlignment.Center
-
--- Credit Label
-local CreditLabel = Instance.new("TextLabel", LeftPanel)
-CreditLabel.Size = UDim2.new(1,-10,0,20)
-CreditLabel.Position = UDim2.new(0.5,0,0.9,0)
-CreditLabel.AnchorPoint = Vector2.new(0.5,0)
-CreditLabel.BackgroundTransparency = 1
-CreditLabel.Text = "Made by | Cassius1738"
-CreditLabel.Font = Enum.Font.Gotham
-CreditLabel.TextSize = 12
-CreditLabel.TextColor3 = Color3.fromRGB(120,120,120)
-CreditLabel.TextXAlignment = Enum.TextXAlignment.Center
-
--- Right Panel
+-- Right page panel
 local RightPanel = Instance.new("Frame", Main)
-RightPanel.Size = UDim2.new(1,-140,1,0)
-RightPanel.Position = UDim2.new(0,140,0,36)
+RightPanel.Size = UDim2.new(1,-120,1,0)
+RightPanel.Position = UDim2.new(0,120,0,36)
 RightPanel.BackgroundTransparency = 1
-
--- Tabs
-local Tabs = Instance.new("Frame", RightPanel)
-Tabs.Position = UDim2.new(0,0,0,0)
-Tabs.Size = UDim2.new(1,0,0,32)
-Tabs.BackgroundTransparency = 1
-local TabLayout = Instance.new("UIListLayout", Tabs)
-TabLayout.FillDirection = Enum.FillDirection.Horizontal
-TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-TabLayout.Padding = UDim.new(0,6)
 
 -- Pages container
 local Pages = Instance.new("Folder", RightPanel)
-local function Page()
-	local f = Instance.new("Frame", RightPanel)
-	f.Position = UDim2.new(0,0,0,32)
-	f.Size = UDim2.new(1,0,1,-32)
-	f.BackgroundTransparency = 1
-	local layout = Instance.new("UIListLayout", f)
-	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.Padding = UDim.new(0,8)
-	f.Parent = Pages
-	return f
+
+--------------------------------------------------
+--// CREATE PAGES
+--------------------------------------------------
+local function CreatePage(name)
+    local frame = Instance.new("Frame")
+    frame.Name = name
+    frame.Size = UDim2.new(1,0,1,-42)
+    frame.Position = UDim2.new(0,0,0,42)
+    frame.BackgroundTransparency = 1
+    frame.Visible = false
+
+    local layout = Instance.new("UIListLayout", frame)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0,6)
+
+    local padding = Instance.new("UIPadding", frame)
+    padding.PaddingTop = UDim.new(0,4)
+    padding.PaddingBottom = UDim.new(0,4)
+    padding.PaddingLeft = UDim.new(0,4)
+    padding.PaddingRight = UDim.new(0,17)
+
+    frame.Parent = Pages
+    return frame
 end
 
-local AimbotPage = Page()
-local ESPPage = Page()
-local MovementPage = Page()
-AimbotPage.Visible = true
+local MovementPage = CreatePage("MovementPage")
+local AimbotPage = CreatePage("AimbotPage")
+local ESPPage = CreatePage("ESPPage")
 
--- Tabs helper
-local function Tab(name,page)
-	local b = Instance.new("TextButton", Tabs)
-	b.Size = UDim2.new(0,100,1,0)
-	b.Text = name
-	b.Font = Enum.Font.GothamBold
-	b.TextSize = 14
-	b.TextColor3 = Color3.new(1,1,1)
-	b.BackgroundColor3 = Color3.fromRGB(35,35,35)
-	Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
-	b.MouseButton1Click:Connect(function()
-		for _,p in pairs(Pages:GetChildren()) do p.Visible = false end
-		page.Visible = true
-	end)
+--------------------------------------------------
+--// HELPER FUNCTIONS
+--------------------------------------------------
+local function CircleToggle(parent,text,flag)
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,0,0,32)
+    holder.BackgroundTransparency = 1
+
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(1,-40,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local btn = Instance.new("TextButton", holder)
+    btn.Size = UDim2.new(0,22,0,22)
+    btn.Position = UDim2.new(1,-26,0.5,-11)
+    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    btn.Text = "○"
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.TextColor3 = Color3.fromRGB(200,200,200)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+
+    btn.MouseButton1Click:Connect(function()
+        _G[flag] = not _G[flag]
+        btn.Text = _G[flag] and "●" or "○"
+        btn.TextColor3 = _G[flag] and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+    end)
 end
 
-Tab("Aimbot",AimbotPage)
-Tab("ESP",ESPPage)
-Tab("Movement",MovementPage)
+local function Slider(parent,text,flag,min,max)
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,0,0,40)
+    holder.BackgroundTransparency = 1
+
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(0.6,0,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = text..": ".._G[flag]
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local sliderBar = Instance.new("Frame", holder)
+    sliderBar.Size = UDim2.new(0.35,0,0.3,0)
+    sliderBar.Position = UDim2.new(0.6,0,0.35,0)
+    sliderBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
+    Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1,0)
+
+    local fill = Instance.new("Frame", sliderBar)
+    fill.Size = UDim2.new((_G[flag]-min)/(max-min),0,1,0)
+    fill.BackgroundColor3 = Color3.fromRGB(0,255,120)
+    Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
+
+    local handle = Instance.new("Frame", sliderBar)
+    handle.Size = UDim2.new(0,16,0,16)
+    handle.Position = UDim2.new(fill.Size.X.Scale,0,0.5,-8)
+    handle.BackgroundColor3 = Color3.fromRGB(0,255,120)
+    Instance.new("UICorner", handle).CornerRadius = UDim.new(1,0)
+
+    local dragging = false
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end
+    end)
+    handle.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local mouseX = math.clamp(input.Position.X - sliderBar.AbsolutePosition.X,0,sliderBar.AbsoluteSize.X)
+            local val = mouseX / sliderBar.AbsoluteSize.X
+            _G[flag] = math.clamp(math.floor(val*(max-min)+min),min,max)
+            fill.Size = UDim2.new(val,0,1,0)
+            handle.Position = UDim2.new(val,0,0.5,-8)
+            label.Text = text..": ".._G[flag]
+        end
+    end)
+end
+
+--------------------------------------------------
+--// MOVEMENT PAGE CONTENT
+--------------------------------------------------
+-- Scrollable frame
+local ScrollFrame = Instance.new("ScrollingFrame", MovementPage)
+ScrollFrame.Size = UDim2.new(1,0,1,0)
+ScrollFrame.Position = UDim2.new(0,0,0,0)
+ScrollFrame.BackgroundTransparency = 1
+ScrollFrame.ScrollBarThickness = 8
+ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+local Layout = Instance.new("UIListLayout", ScrollFrame)
+Layout.SortOrder = Enum.SortOrder.LayoutOrder
+Layout.Padding = UDim.new(0,6)
+
+-- Movement toggles/sliders
+CircleToggle(ScrollFrame,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
+Slider(ScrollFrame,"Fly Speed","FlySpeed",10,200)
+CircleToggle(ScrollFrame,"No Jump Cooldown","NoCooldownJumpEnabled")
+CircleToggle(ScrollFrame,"Enable Walk Speed","SpeedEnabled")
+Slider(ScrollFrame,"Walk Speed","WalkSpeedValue",16,100)
+
+-- Player header
+local PlayerHeader = Instance.new("TextLabel", ScrollFrame)
+PlayerHeader.Size = UDim2.new(1,0,0,28)
+PlayerHeader.BackgroundTransparency = 1
+PlayerHeader.Text = "Players"
+PlayerHeader.Font = Enum.Font.GothamBold
+PlayerHeader.TextSize = 14
+PlayerHeader.TextColor3 = Color3.fromRGB(0,255,120)
+PlayerHeader.TextXAlignment = Enum.TextXAlignment.Left
+
+--------------------------------------------------
+--// AIMBOT PAGE CONTENT
+--------------------------------------------------
+-- Enable Aimbot toggle
+local function AimbotCircleToggle(parent)
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,0,0,32)
+    holder.BackgroundTransparency = 1
+
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(1,-40,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = "Enable Aimbot"
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local btn = Instance.new("TextButton", holder)
+    btn.Size = UDim2.new(0,22,0,22)
+    btn.Position = UDim2.new(1,-26,0.5,-11)
+    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    btn.Text = "○"
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.TextColor3 = Color3.fromRGB(200,200,200)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+
+    btn.MouseButton1Click:Connect(function()
+        _G.AimbotGUIEnabled = not _G.AimbotGUIEnabled
+        if not _G.AimbotGUIEnabled then _G.AimbotEnabled = false end
+        btn.Text = _G.AimbotGUIEnabled and "●" or "○"
+        btn.TextColor3 = _G.AimbotGUIEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+    end)
+end
+AimbotCircleToggle(AimbotPage)
+
+-- Aim Part Dropdown
+local function AimPartDropdown(parent)
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,0,0,32)
+    holder.BackgroundTransparency = 1
+
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(0.5,0,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = "Aim Part"
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local dropdown = Instance.new("TextButton", holder)
+    dropdown.Size = UDim2.new(0.45,0,1,0)
+    dropdown.Position = UDim2.new(0.5,0,0,0)
+    dropdown.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    dropdown.Text = _G.AimPart
+    dropdown.TextColor3 = Color3.new(1,1,1)
+    dropdown.Font = Enum.Font.Gotham
+    dropdown.TextSize = 13
+    Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0,8)
+
+    local options = {"Head","UpperTorso","LowerTorso"}
+    local open = false
+    local listFrame
+
+    dropdown.MouseButton1Click:Connect(function()
+        if open then
+            if listFrame then listFrame:Destroy() end
+            open = false
+        else
+            listFrame = Instance.new("Frame", parent)
+            listFrame.Position = UDim2.new(0,0,0,32)
+            listFrame.Size = UDim2.new(1,0,0,#options*30)
+            listFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
+            Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0,8)
+            local layout = Instance.new("UIListLayout", listFrame)
+            layout.Padding = UDim.new(0,2)
+
+            for _, opt in pairs(options) do
+                local btn = Instance.new("TextButton", listFrame)
+                btn.Size = UDim2.new(1,0,0,30)
+                btn.BackgroundColor3 = Color3.fromRGB(45,45,45)
+                btn.Text = opt
+                btn.TextColor3 = Color3.new(1,1,1)
+                btn.Font = Enum.Font.Gotham
+                btn.TextSize = 13
+                Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
+
+                btn.MouseButton1Click:Connect(function()
+                    _G.AimPart = opt
+                    dropdown.Text = opt
+                    listFrame:Destroy()
+                    open = false
+                end)
+            end
+            open = true
+        end
+    end)
+end
+AimPartDropdown(AimbotPage)
+
+-- ESP Page toggles
+local function ESPToggle(parent, text, flag)
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,0,0,32)
+    holder.BackgroundTransparency = 1
+
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(1,-40,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local btn = Instance.new("TextButton", holder)
+    btn.Size = UDim2.new(0,22,0,22)
+    btn.Position = UDim2.new(1,-26,0.5,-11)
+    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    btn.Text = "○"
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.TextColor3 = Color3.fromRGB(200,200,200)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+
+    btn.MouseButton1Click:Connect(function()
+        _G[flag] = not _G[flag]
+        btn.Text = _G[flag] and "●" or "○"
+        btn.TextColor3 = _G[flag] and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+    end)
+end
+
+ESPToggle(ESPPage,"ESP Box","ESP_Box")
+ESPToggle(ESPPage,"ESP Name","ESP_Name")
+ESPToggle(ESPPage,"ESP Tracer","ESP_Tracer")
+ESPToggle(ESPPage,"Team Check","TeamCheck")
 
 --------------------------------------------------
 --// Helper: Circle Toggle
