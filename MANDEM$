@@ -591,87 +591,74 @@ local function FlySpeedSlider(parent)
 end
 FlySpeedSlider(MovementPage)
 
----------------------------------------------------
---// CLEAN MOVEMENT PAGE LAYOUT
 --------------------------------------------------
--- Clear existing children (optional, safe if running once)
-for _, c in pairs(MovementPage:GetChildren()) do c:Destroy() end
+--// CLEAN SCROLLABLE MOVEMENT PAGE (FULL SCROLLABLE)
+--------------------------------------------------
 
--- Main container for stacking all movement elements
-local MovementContainer = Instance.new("Frame", MovementPage)
-MovementContainer.Size = UDim2.new(1,0,1,0)
-MovementContainer.BackgroundTransparency = 1
-MovementContainer.Position = UDim2.new(0,0,0,0)
+-- Clear previous children
+for _,c in pairs(MovementPage:GetChildren()) do c:Destroy() end
 
--- Stack everything vertically
-local Layout = Instance.new("UIListLayout", MovementContainer)
+-- Scrollable container for the whole page
+local Scroll = Instance.new("ScrollingFrame", MovementPage)
+Scroll.Size = UDim2.new(1,0,1,0)
+Scroll.BackgroundTransparency = 1
+Scroll.BorderSizePixel = 0
+Scroll.CanvasSize = UDim2.new(0,0,0,0)
+Scroll.ScrollBarThickness = 8
+Scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y -- auto-adjust
+
+-- Layout to stack everything vertically
+local Layout = Instance.new("UIListLayout", Scroll)
 Layout.SortOrder = Enum.SortOrder.LayoutOrder
-Layout.Padding = UDim.new(0,8) -- spacing between elements
+Layout.Padding = UDim.new(0,8)
 
--- Helper to add existing frames to container
-local function AddToContainer(frame)
-	frame.Parent = MovementContainer
+--------------------------------------------------
+-- Helper function to add elements to scroll
+--------------------------------------------------
+local function AddToScroll(element)
+	element.Parent = Scroll
 end
 
--- Noclip + Fly toggle
-local NoclipFlyFrame = Instance.new("Frame")
-NoclipFlyFrame.Size = UDim2.new(1,0,0,32)
-NoclipFlyFrame.BackgroundTransparency = 1
-local labelNF = Instance.new("TextLabel", NoclipFlyFrame)
-labelNF.Size = UDim2.new(1,-40,1,0)
-labelNF.BackgroundTransparency = 1
-labelNF.Text = "Noclip + Fly (WASD + Space/Shift)"
-labelNF.Font = Enum.Font.Gotham
-labelNF.TextSize = 13
-labelNF.TextColor3 = Color3.new(1,1,1)
-labelNF.TextXAlignment = Enum.TextXAlignment.Left
-local btnNF = Instance.new("TextButton", NoclipFlyFrame)
-btnNF.Size = UDim2.new(0,22,0,22)
-btnNF.Position = UDim2.new(1,-26,0.5,-11)
-btnNF.BackgroundColor3 = Color3.fromRGB(35,35,35)
-btnNF.Text = _G.NoclipFlyEnabled and "●" or "○"
-btnNF.Font = Enum.Font.GothamBold
-btnNF.TextSize = 16
-btnNF.TextColor3 = _G.NoclipFlyEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
-Instance.new("UICorner", btnNF).CornerRadius = UDim.new(1,0)
-btnNF.MouseButton1Click:Connect(function()
-	_G.NoclipFlyEnabled = not _G.NoclipFlyEnabled
-	btnNF.Text = _G.NoclipFlyEnabled and "●" or "○"
-	btnNF.TextColor3 = _G.NoclipFlyEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
-end)
-AddToContainer(NoclipFlyFrame)
+--------------------------------------------------
+-- Noclip + Fly Toggle
+--------------------------------------------------
+CircleToggle(Scroll,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
 
--- Fly Speed slider (reuse your existing slider code)
-FlySpeedSlider(MovementContainer)
+-- Fly Speed Slider
+FlySpeedSlider(Scroll)
 
--- Big Head toggle
-BigHeadCircleToggle(MovementContainer)
+-- Big Head Toggle
+BigHeadCircleToggle(Scroll)
 
--- Player List (scrollable)
-local PlayerList = Instance.new("ScrollingFrame", MovementContainer)
-PlayerList.Size = UDim2.new(1,0,0,200)
-PlayerList.BackgroundColor3 = Color3.fromRGB(35,35,35)
-PlayerList.BorderSizePixel = 0
-PlayerList.ScrollBarThickness = 8
-Instance.new("UICorner", PlayerList).CornerRadius = UDim.new(0,8)
-local ListLayout = Instance.new("UIListLayout", PlayerList)
-ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ListLayout.Padding = UDim.new(0,4)
-ListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	PlayerList.CanvasSize = UDim2.new(0,0,0,ListLayout.AbsoluteContentSize.Y + 8)
+--------------------------------------------------
+-- Player List Container
+--------------------------------------------------
+local PlayerListContainer = Instance.new("Frame")
+PlayerListContainer.Size = UDim2.new(1,0,0,0) -- dynamic height
+PlayerListContainer.BackgroundTransparency = 1
+AddToScroll(PlayerListContainer)
+
+local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
+PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+PlayerLayout.Padding = UDim.new(0,4)
+
+-- Update PlayerListContainer height dynamically
+PlayerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	PlayerListContainer.Size = UDim2.new(1,0,0,PlayerLayout.AbsoluteContentSize.Y)
 end)
 
--- Add all players dynamically
-local function AddPlayer(p)
-	if p == LocalPlayer then return end
+-- Function to create a player button
+local function CreatePlayerButton(player)
+	if player == LocalPlayer then return end
 	local holder = Instance.new("Frame")
 	holder.Size = UDim2.new(1,0,0,28)
 	holder.BackgroundTransparency = 1
+
 	local nameLabel = Instance.new("TextLabel", holder)
 	nameLabel.Size = UDim2.new(0.55,0,1,0)
 	nameLabel.Position = UDim2.new(0,5,0,0)
 	nameLabel.BackgroundTransparency = 1
-	nameLabel.Text = p.Name
+	nameLabel.Text = player.Name
 	nameLabel.TextColor3 = Color3.new(1,1,1)
 	nameLabel.Font = Enum.Font.Gotham
 	nameLabel.TextSize = 13
@@ -688,27 +675,27 @@ local function AddPlayer(p)
 	Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,6)
 
 	tpBtn.MouseButton1Click:Connect(function()
-		if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-			local hrp = LocalPlayer.Character:WaitForChild("HumanoidRootPart")
-			hrp.CFrame = p.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
+		if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+			local targetHRP = player.Character.HumanoidRootPart
+			local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+			local hrp = char:WaitForChild("HumanoidRootPart")
+			hrp.CFrame = targetHRP.CFrame + Vector3.new(0,3,0)
 		end
 	end)
 
-	holder.Parent = PlayerList
+	holder.Parent = PlayerListContainer
 end
 
--- Populate existing players
-for _,p in pairs(Players:GetPlayers()) do AddPlayer(p) end
-Players.PlayerAdded:Connect(AddPlayer)
+-- Populate player buttons
+for _,p in pairs(Players:GetPlayers()) do CreatePlayerButton(p) end
+Players.PlayerAdded:Connect(CreatePlayerButton)
 Players.PlayerRemoving:Connect(function(p)
-	for _,f in pairs(PlayerList:GetChildren()) do
+	for _,f in pairs(PlayerListContainer:GetChildren()) do
 		if f:IsA("Frame") and f:FindFirstChildOfClass("TextLabel") and f:FindFirstChildOfClass("TextLabel").Text == p.Name then
 			f:Destroy()
 		end
 	end
 end)
-
-
 
 
 --------------------------------------------------
