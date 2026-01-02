@@ -523,7 +523,6 @@ ScrollFrame.Position = UDim2.new(0,0,0,0)
 ScrollFrame.BackgroundTransparency = 1
 ScrollFrame.ScrollBarThickness = 8
 ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-ScrollFrame.CanvasSize = UDim2.new(0,0,0,0)
 
 -- UIListLayout inside scrolling frame
 local Layout = Instance.new("UIListLayout", ScrollFrame)
@@ -625,15 +624,6 @@ _G.AutoJumpEnabled = _G.AutoJumpEnabled or false
 _G.NoCooldownJumpEnabled = _G.NoCooldownJumpEnabled or false
 _G.SpeedEnabled = _G.SpeedEnabled or false
 _G.WalkSpeedValue = _G.WalkSpeedValue or 16
-
---------------------------------------------------
---// Add Movement Toggles + Sliders
---------------------------------------------------
-CircleToggle(ScrollFrame,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
-Slider(ScrollFrame,"Fly Speed","FlySpeed",10,200)
-CircleToggle(ScrollFrame,"No Jump Cooldown","NoCooldownJumpEnabled")
-CircleToggle(ScrollFrame,"Enable Walk Speed","SpeedEnabled")
-Slider(ScrollFrame,"Walk Speed","WalkSpeedValue",16,100)
 
 --------------------------------------------------
 --// UNIVERSAL BIG HEAD (R6 + R15 + CUSTOM RIGS)
@@ -756,6 +746,25 @@ local function BigHeadCircleToggle(parent)
     end)
 end
 
+--------------------------------------------------
+--// Initialize Globals
+--------------------------------------------------
+_G.NoclipFlyEnabled = _G.NoclipFlyEnabled or false
+_G.FlySpeed = _G.FlySpeed or 50
+_G.VisualBigHead = _G.VisualBigHead or false
+_G.AutoJumpEnabled = _G.AutoJumpEnabled or false
+_G.NoCooldownJumpEnabled = _G.NoCooldownJumpEnabled or false
+_G.SpeedEnabled = _G.SpeedEnabled or false
+_G.WalkSpeedValue = _G.WalkSpeedValue or 16
+
+--------------------------------------------------
+--// Add Movement Toggles + Sliders
+--------------------------------------------------
+CircleToggle(ScrollFrame,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
+Slider(ScrollFrame,"Fly Speed","FlySpeed",10,200)
+CircleToggle(ScrollFrame,"No Jump Cooldown","NoCooldownJumpEnabled")
+CircleToggle(ScrollFrame,"Enable Walk Speed","SpeedEnabled")
+Slider(ScrollFrame,"Walk Speed","WalkSpeedValue",16,100)
 BigHeadCircleToggle(ScrollFrame)
 
 --------------------------------------------------
