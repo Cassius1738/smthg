@@ -635,6 +635,7 @@ CircleToggle(ScrollFrame,"No Jump Cooldown","NoCooldownJumpEnabled")
 CircleToggle(ScrollFrame,"Enable Walk Speed","SpeedEnabled")
 Slider(ScrollFrame,"Walk Speed","WalkSpeedValue",16,100)
 
+BigHeadCircleToggle(ScrollFrame)
 --------------------------------------------------
 --// PLAYER LIST HEADER
 --------------------------------------------------
@@ -831,8 +832,6 @@ local function BigHeadCircleToggle(parent)
     end)
 end
 
-BigHeadCircleToggle(ScrollFrame)
-
 --------------------------------------------------
 --// WalkSpeed & No Jump Cooldown Fix
 --------------------------------------------------
@@ -853,16 +852,22 @@ end)
 -- No Jump Cooldown (spacebar auto jump)
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
-    if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.Space then
+
+    if input.UserInputType == Enum.UserInputType.Keyboard
+    and input.KeyCode == Enum.KeyCode.Space then
+
         local char = LocalPlayer.Character
         if char then
             local humanoid = char:FindFirstChildOfClass("Humanoid")
             if humanoid and _G.NoCooldownJumpEnabled then
+                humanoid.UseJumpPower = true
+                humanoid.JumpPower = 50
                 humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
             end
         end
     end
 end)
+
 
 --------------------------------------------------
 --// SHOW / HIDE MENU
