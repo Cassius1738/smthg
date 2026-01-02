@@ -659,7 +659,7 @@ local function ApplyBigHead(character)
         while character.Parent and _G.VisualBigHead do
             head.Size = BIG_HEAD_SIZE
             head.CanCollide = false
-            head.Transparency = 0.5
+            head.Transparency = 0.3
 
             local mesh = head:FindFirstChildOfClass("SpecialMesh")
             if not mesh then
