@@ -509,7 +509,23 @@ CircleToggle(ESPPage,"Team Check","TeamCheck")
 --------------------------------------------------
 --// MOVEMENT PAGE
 --------------------------------------------------
-CircleToggle(MovementPage,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
+
+-- Container for toggles
+local ToggleContainer = Instance.new("Frame", MovementPage)
+ToggleContainer.Size = UDim2.new(1,0,0,140) -- enough height for toggles
+ToggleContainer.Position = UDim2.new(0,0,0,0)
+ToggleContainer.BackgroundTransparency = 1
+
+local ToggleLayout = Instance.new("UIListLayout", ToggleContainer)
+ToggleLayout.Padding = UDim.new(0,8)
+ToggleLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- Noclip + Fly Toggle
+CircleToggle(ToggleContainer,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
+-- Fly Speed Slider
+FlySpeedSlider(ToggleContainer)
+-- Big Head Toggle
+BigHeadCircleToggle(ToggleContainer)
 
 -- Noclip + Fly logic
 RunService.Stepped:Connect(function()
@@ -544,65 +560,14 @@ RunService.Stepped:Connect(function()
 	end
 end)
 
--- Fly Speed Slider
-local function FlySpeedSlider(parent)
-	local holder = Instance.new("Frame", parent)
-	holder.Size = UDim2.new(1,0,0,40)
-	holder.BackgroundTransparency = 1
-	local label = Instance.new("TextLabel", holder)
-	label.Size = UDim2.new(0.6,0,1,0)
-	label.BackgroundTransparency = 1
-	label.Text = "Fly Speed: ".._G.FlySpeed
-	label.Font = Enum.Font.Gotham
-	label.TextSize = 13
-	label.TextColor3 = Color3.new(1,1,1)
-	label.TextXAlignment = Enum.TextXAlignment.Left
-	local sliderBar = Instance.new("Frame", holder)
-	sliderBar.Size = UDim2.new(0.35,0,0.3,0)
-	sliderBar.Position = UDim2.new(0.6,0,0.35,0)
-	sliderBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
-	Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1,0)
-	local fill = Instance.new("Frame", sliderBar)
-	fill.Size = UDim2.new(_G.FlySpeed/200,0,1,0)
-	fill.BackgroundColor3 = Color3.fromRGB(0,255,120)
-	Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
-	local handle = Instance.new("Frame", sliderBar)
-	handle.Size = UDim2.new(0,16,0,16)
-	handle.Position = UDim2.new(fill.Size.X.Scale, 0, 0.5, -8)
-	handle.BackgroundColor3 = Color3.fromRGB(0,255,120)
-	Instance.new("UICorner", handle).CornerRadius = UDim.new(1,0)
-	local dragging = false
-	handle.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true Main.Active = false end
-	end)
-	handle.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false Main.Active = true end
-	end)
-	UserInputService.InputChanged:Connect(function(input)
-		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-			local mouseX = math.clamp(input.Position.X - sliderBar.AbsolutePosition.X,0,sliderBar.AbsoluteSize.X)
-			local val = mouseX / sliderBar.AbsoluteSize.X
-			_G.FlySpeed = math.clamp(val*200,10,200)
-			fill.Size = UDim2.new(val,0,1,0)
-			handle.Position = UDim2.new(val,0,0.5,-8)
-			label.Text = "Fly Speed: "..math.floor(_G.FlySpeed)
-		end
-	end)
-end
-FlySpeedSlider(MovementPage)
-
 --------------------------------------------------
---// CLEAN SCROLLABLE PLAYER LIST
+--// CLEAN SCROLLABLE PLAYER LIST BELOW TOGGLES
 --------------------------------------------------
 
--- MovementPage layout
-local MovementLayout = Instance.new("UIListLayout", MovementPage)
-MovementLayout.Padding = UDim.new(0,8)
-MovementLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
--- Wrapper frame that clips content
+-- Wrapper frame for player list
 local PlayerListWrapper = Instance.new("Frame", MovementPage)
 PlayerListWrapper.Size = UDim2.new(1, 0, 0, 150) -- initial height
+PlayerListWrapper.Position = UDim2.new(0,0,0,ToggleContainer.Size.Y.Offset + 8)
 PlayerListWrapper.BackgroundTransparency = 1
 PlayerListWrapper.ClipsDescendants = true
 
@@ -619,7 +584,6 @@ local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
 PlayerLayout.Padding = UDim.new(0,4)
 PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- Update CanvasSize dynamically
 PlayerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 	PlayerListContainer.CanvasSize = UDim2.new(0,0,0, PlayerLayout.AbsoluteContentSize.Y + 8)
 end)
@@ -678,35 +642,24 @@ Players.PlayerRemoving:Connect(function(p)
 	end
 end)
 
--- Make PlayerListWrapper fill remaining space in MovementPage
+-- Make PlayerListWrapper fill remaining space
 local function UpdateWrapperSize()
-	local usedSpace = 0
-	for _,child in pairs(MovementPage:GetChildren()) do
-		if child:IsA("Frame") and child ~= PlayerListWrapper then
-			usedSpace = usedSpace + child.Size.Y.Offset + 8
-		end
-	end
+	local usedSpace = ToggleContainer.Size.Y.Offset + 8
 	local maxHeight = MovementPage.AbsoluteSize.Y - usedSpace
+	PlayerListWrapper.Position = UDim2.new(0,0,0,usedSpace)
 	PlayerListWrapper.Size = UDim2.new(1,0,0, math.max(150, maxHeight))
 end
 
 MovementPage:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateWrapperSize)
-for _,child in pairs(MovementPage:GetChildren()) do
-	if child:IsA("Frame") and child ~= PlayerListWrapper then
-		child:GetPropertyChangedSignal("Size"):Connect(UpdateWrapperSize)
-	end
-end
 UpdateWrapperSize()
 
---------------------------------------------------
---// MOUSE WHEEL SCROLLING
---------------------------------------------------
-local scrollSpeed = 40 -- pixels per scroll
+-- Mouse wheel scrolling
+local scrollSpeed = 40
 PlayerListWrapper.InputChanged:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseWheel then
 		local current = PlayerListContainer.CanvasPosition
 		local newY = math.clamp(current.Y - input.Position.Z * scrollSpeed, 0, PlayerListContainer.CanvasSize.Y.Offset - PlayerListContainer.AbsoluteSize.Y)
-		PlayerListContainer.CanvasPosition = Vector2.new(0, newY)
+		PlayerListContainer.CanvasPosition = Vector2.new(0,newY)
 	end
 end)
 
