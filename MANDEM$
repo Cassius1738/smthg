@@ -563,19 +563,8 @@ CircleToggle(ScrollFrame,"Enable Walk Speed","SpeedEnabled")
 Slider(ScrollFrame,"Walk Speed","WalkSpeedValue",16,100)
 BigHeadCircleToggle(ScrollFrame)
 
--- Player list container
-local PlayerContainer = Instance.new("Frame")
-PlayerContainer.Size = UDim2.new(1,0,0,0) -- height will expand automatically
-PlayerContainer.BackgroundTransparency = 1
-PlayerContainer.Parent = ScrollFrame
-
-local PlayerLayout = Instance.new("UIListLayout", PlayerContainer)
-PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
-PlayerLayout.Padding = UDim.new(0,4)
-PlayerContainer.AutomaticSize = Enum.AutomaticSize.Y
-
 -- Player list header
-local PlayerHeader = Instance.new("TextLabel", PlayerContainer)
+local PlayerHeader = Instance.new("TextLabel", ScrollFrame)
 PlayerHeader.Size = UDim2.new(1,0,0,28)
 PlayerHeader.BackgroundTransparency = 1
 PlayerHeader.Text = "Players"
@@ -584,10 +573,11 @@ PlayerHeader.TextSize = 14
 PlayerHeader.TextColor3 = Color3.fromRGB(0,255,120)
 PlayerHeader.TextXAlignment = Enum.TextXAlignment.Left
 
--- Add teleport buttons
+-- Add teleport buttons directly to ScrollFrame
 local function AddPlayerTeleportButtons(parent)
     local function CreatePlayerButton(player)
         if player == LocalPlayer then return end
+
         local holder = Instance.new("Frame")
         holder.Size = UDim2.new(1,0,0,28)
         holder.BackgroundTransparency = 1
@@ -637,7 +627,7 @@ local function AddPlayerTeleportButtons(parent)
     end)
 end
 
-AddPlayerTeleportButtons(PlayerContainer)
+AddPlayerTeleportButtons(ScrollFrame)
 
 --------------------------------------------------
 --// Helper Functions
