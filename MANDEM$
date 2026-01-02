@@ -712,8 +712,6 @@ _G.WalkSpeedValue = _G.WalkSpeedValue or 16
 --------------------------------------------------
 CircleToggle(ScrollFrame,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
 Slider(ScrollFrame,"Fly Speed","FlySpeed",10,200)
-CircleToggle(ScrollFrame,"Big Head (Visual & Hitbox)","VisualBigHead")
-CircleToggle(ScrollFrame,"Auto Jump","AutoJumpEnabled")
 CircleToggle(ScrollFrame,"No Jump Cooldown","NoCooldownJumpEnabled")
 Slider(ScrollFrame,"Walk Speed","WalkSpeedValue",16,100)
 
