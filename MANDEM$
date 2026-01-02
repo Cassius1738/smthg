@@ -113,45 +113,91 @@ local function GetClosestPlayer()
 	return closest
 end
 
+local function GetMouseTarget()
+	local mousePos = UserInputService:GetMouseLocation()
+	local ray = Camera:ViewportPointToRay(mousePos.X, mousePos.Y)
+
+	local rayParams = RaycastParams.new()
+	rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+	rayParams.FilterDescendantsInstances = {LocalPlayer.Character}
+	rayParams.IgnoreWater = true
+
+	local result = workspace:Raycast(ray.Origin, ray.Direction * 5000, rayParams)
+	if not result then return nil end
+
+	local hit = result.Instance
+	local model = hit:FindFirstAncestorOfClass("Model")
+	if not model then return nil end
+
+	local humanoid = model:FindFirstChild("Humanoid")
+	if not humanoid or humanoid.Health <= 0 then return nil end
+
+	local player = Players:GetPlayerFromCharacter(model)
+	if not player or player == LocalPlayer then return nil end
+	if _G.TeamCheck and player.Team == LocalPlayer.Team then return nil end
+
+	return player
+end
+
+
 --------------------------------------------------
 --// AIMBOT LOOP
 --------------------------------------------------
 RunService.RenderStepped:Connect(function()
-	local target = GetClosestPlayer()
+	if not (_G.AimbotEnabled and Holding) then return end
+
+	local target = GetMouseTarget()
 	if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
-		local targetPos = target.Character[_G.AimPart].Position
-		if Holding and _G.AimbotEnabled then
-			TweenService:Create(
-				Camera,
-				TweenInfo.new(_G.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
-				{CFrame = CFrame.new(Camera.CFrame.Position, targetPos)}
-			):Play()
-		end
+		local camPos = Camera.CFrame.Position
+		local targetCF = CFrame.new(camPos, target.Character[_G.AimPart].Position)
+		Camera.CFrame = Camera.CFrame:Lerp(
+			targetCF,
+			math.clamp(_G.Sensitivity * 5, 0.05, 0.25)
+		)
 	end
 end)
+
 
 --------------------------------------------------
 --// CAMERA LOCK LOOP
 --------------------------------------------------
 RunService.RenderStepped:Connect(function()
-	if _G.CameraLockEnabled then
-		if not _G.CameraLockTarget then
-			local target = GetClosestPlayer()
-			if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
-				_G.CameraLockTarget = target
-			end
-		end
-
-		local t = _G.CameraLockTarget
-		if t and t.Character and t.Character:FindFirstChild(_G.AimPart) and t.Character:FindFirstChild("Humanoid") and t.Character.Humanoid.Health > 0 then
-			Camera.CFrame = CFrame.new(Camera.CFrame.Position, t.Character[_G.AimPart].Position)
-		else
-			_G.CameraLockTarget = nil
-		end
-	else
+	if not _G.CameraLockEnabled then
 		_G.CameraLockTarget = nil
+		return
 	end
+
+	-- Acquire target ONCE via mouse raycast
+	if not _G.CameraLockTarget then
+		local t = GetMouseTarget()
+		if t and t.Character and t.Character:FindFirstChild(_G.AimPart) then
+			_G.CameraLockTarget = t
+		end
+	end
+
+	local target = _G.CameraLockTarget
+	if not target or not target.Character then
+		_G.CameraLockTarget = nil
+		return
+	end
+
+	local humanoid = target.Character:FindFirstChild("Humanoid")
+	local part = target.Character:FindFirstChild(_G.AimPart)
+
+	if not humanoid or humanoid.Health <= 0 or not part then
+		_G.CameraLockTarget = nil
+		return
+	end
+
+	-- Smooth camera lock (no snap)
+	local camPos = Camera.CFrame.Position
+	local targetCF = CFrame.new(camPos, part.Position)
+	Camera.CFrame = Camera.CFrame:Lerp(
+		targetCF,
+		math.clamp(_G.Sensitivity * 5, 0.05, 0.25)
+	)
 end)
+
 
 --------------------------------------------------
 --// FOV CIRCLE
