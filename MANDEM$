@@ -227,14 +227,14 @@ avatar.ScaleType = Enum.ScaleType.Fit
 
 -- Header Text
 local HeaderText = Instance.new("TextLabel", Header)
-HeaderText.Size = UDim2.new(0,200,0,42) -- fixed width, same height as header
-HeaderText.Position = UDim2.new(0,42,0,0) -- right next to avatar
+HeaderText.Size = UDim2.new(1,-42,1,0) -- full width minus avatar width + padding
+HeaderText.Position = UDim2.new(0,42,0,0) -- start right next to avatar
 HeaderText.BackgroundTransparency = 1
 HeaderText.Text = "MANDEM$ - Cassius1738"
 HeaderText.Font = Enum.Font.GothamBold
 HeaderText.TextSize = 14
 HeaderText.TextColor3 = Color3.new(1,1,1)
-HeaderText.TextXAlignment = Enum.TextXAlignment.Left
+HeaderText.TextXAlignment = Enum.TextXAlignment.Center -- horizontally centered in remaining space
 HeaderText.TextYAlignment = Enum.TextYAlignment.Center -- vertically centered
 
 
