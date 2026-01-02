@@ -44,8 +44,10 @@ _G.ESP_Tracer = false
 _G.NoclipFlyEnabled = false
 _G.FlySpeed = 50
 
+local LockedTarget = nil -- single target for camera lock
+
 --------------------------------------------------
---// INPUT HANDLING (FIXED TOGGLE)
+--// INPUT HANDLING
 --------------------------------------------------
 local AimbotDebounce = false
 UserInputService.InputBegan:Connect(function(i,gp)
@@ -55,7 +57,7 @@ UserInputService.InputBegan:Connect(function(i,gp)
 		Holding = true
 
 	elseif i.UserInputType == Enum.UserInputType.Keyboard then
-		-- Aimbot key
+		-- Toggle Aimbot
 		if i.KeyCode == _G.AimbotKey and not AimbotDebounce then
 			_G.AimbotEnabled = not _G.AimbotEnabled
 			_G.AimbotGUIEnabled = _G.AimbotEnabled
@@ -99,14 +101,43 @@ local function GetClosestPlayer()
 end
 
 --------------------------------------------------
---// AIMBOT LOOP (FIXED CAMERA LOCK)
+--// CAMERA LOCK FUNCTION
+--------------------------------------------------
+local CameraLockKey = Enum.KeyCode.E
+local CameraLockDebounce = false
+
+UserInputService.InputBegan:Connect(function(input,gp)
+	if gp then return end
+	if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == CameraLockKey and _G.CameraLockAllowed and not CameraLockDebounce then
+		_G.CameraLockEnabled = not _G.CameraLockEnabled
+		if _G.CameraLockEnabled then
+			LockedTarget = GetClosestPlayer() -- lock onto closest player when enabled
+		else
+			LockedTarget = nil
+		end
+		if _G.CameraLockButton then
+			_G.CameraLockButton.Text = _G.CameraLockEnabled and "●" or "○"
+		end
+		CameraLockDebounce = true
+		print("Camera Lock", _G.CameraLockEnabled and "Enabled" or "Disabled")
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == CameraLockKey then
+		CameraLockDebounce = false
+	end
+end)
+
+--------------------------------------------------
+--// AIMBOT + CAMERA LOCK LOOP
 --------------------------------------------------
 RunService.RenderStepped:Connect(function()
 	local target = GetClosestPlayer()
 	if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
 		local targetPos = target.Character[_G.AimPart].Position
 
-		-- Smooth aim while holding right-click (optional)
+		-- Smooth aimbot while holding right-click
 		if Holding and _G.AimbotEnabled then
 			TweenService:Create(
 				Camera,
@@ -114,10 +145,14 @@ RunService.RenderStepped:Connect(function()
 				{CFrame = CFrame.new(Camera.CFrame.Position, targetPos)}
 			):Play()
 		end
+	end
 
-		-- CAMERA LOCK: independent of right-click
+	-- CAMERA LOCK on LockedTarget (sticks to one target)
+	if _G.CameraLockEnabled and LockedTarget and LockedTarget.Character and LockedTarget.Character:FindFirstChild("HumanoidRootPart") and LockedTarget.Character.Humanoid.Health > 0 then
+		Camera.CFrame = CFrame.new(Camera.CFrame.Position, LockedTarget.Character.HumanoidRootPart.Position)
+	else
 		if _G.CameraLockEnabled then
-			Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
+			LockedTarget = GetClosestPlayer() -- auto find new target if old one dies
 		end
 	end
 end)
@@ -145,7 +180,6 @@ end)
 --// ESP
 --------------------------------------------------
 local ESPObjects = {}
-
 local function CreateESP(p)
 	if p == LocalPlayer then return end
 	local box = Drawing.new("Square")
@@ -211,7 +245,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
---// GUI
+--// GUI SETUP
 --------------------------------------------------
 local UI = Instance.new("ScreenGui")
 UI.ResetOnSpawn = false
@@ -227,7 +261,6 @@ Main.BorderSizePixel = 0
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0,14)
 Instance.new("UIStroke", Main).Color = Color3.fromRGB(60,60,60)
 
--- Header
 local Header = Instance.new("TextLabel", Main)
 Header.Size = UDim2.new(1,0,0,42)
 Header.BackgroundColor3 = Color3.fromRGB(25,25,25)
