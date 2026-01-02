@@ -194,119 +194,115 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
---------------------------------------------------
---// MAIN GUI (Bigger, Avatar + Name Left, Footer)
---------------------------------------------------
+--// GUI SETUP
 local UI = Instance.new("ScreenGui")
 UI.ResetOnSpawn = false
 UI.Parent = safe_gethui()
 
 local Main = Instance.new("Frame", UI)
-Main.Size = UDim2.new(0,520,0,400)  -- bigger width and height
-Main.Position = UDim2.new(0.25,0,0.2,0)  -- centered-ish
+Main.Size = UDim2.new(0,500,0,420) -- bigger GUI
+Main.Position = UDim2.new(0.25,0,0.2,0)
 Main.BackgroundColor3 = Color3.fromRGB(18,18,18)
 Main.Active = true
 Main.Draggable = true
 Main.BorderSizePixel = 0
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0,16)
-local mainStroke = Instance.new("UIStroke", Main)
-mainStroke.Color = Color3.fromRGB(60,60,60)
-mainStroke.Thickness = 2
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0,14)
+Instance.new("UIStroke", Main).Color = Color3.fromRGB(60,60,60)
 
--- LEFT PANEL (Avatar + Name + Footer)
+-- Left side panel for avatar + credit
 local LeftPanel = Instance.new("Frame", Main)
-LeftPanel.Size = UDim2.new(0,150,1,0)
+LeftPanel.Size = UDim2.new(0,120,1,0)
 LeftPanel.Position = UDim2.new(0,0,0,0)
 LeftPanel.BackgroundColor3 = Color3.fromRGB(25,25,25)
-Instance.new("UICorner", LeftPanel).CornerRadius = UDim.new(0,16)
+Instance.new("UICorner", LeftPanel).CornerRadius = UDim.new(0,14)
 
 -- Avatar
 local avatar = Instance.new("ImageLabel", LeftPanel)
-avatar.Size = UDim2.new(0,64,0,64)
-avatar.Position = UDim2.new(0.5,-32,0,20)
+avatar.Size = UDim2.new(0,80,0,80)
+avatar.Position = UDim2.new(0.5,0,0.2,0)
+avatar.AnchorPoint = Vector2.new(0.5,0.5)
 avatar.BackgroundTransparency = 1
 avatar.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
 avatar.ScaleType = Enum.ScaleType.Fit
-Instance.new("UICorner", avatar).CornerRadius = UDim.new(1,0)
 
--- Player Name
+-- Player name
 local NameLabel = Instance.new("TextLabel", LeftPanel)
-NameLabel.Size = UDim2.new(1,0,0,30)
-NameLabel.Position = UDim2.new(0,0,0,90)
+NameLabel.Size = UDim2.new(1,-10,0,30)
+NameLabel.Position = UDim2.new(0.5,0,0.4,0)
+NameLabel.AnchorPoint = Vector2.new(0.5,0)
 NameLabel.BackgroundTransparency = 1
 NameLabel.Text = LocalPlayer.Name
 NameLabel.Font = Enum.Font.GothamBold
 NameLabel.TextSize = 16
-NameLabel.TextColor3 = Color3.fromRGB(0,255,120)
+NameLabel.TextColor3 = Color3.new(1,1,1)
 NameLabel.TextXAlignment = Enum.TextXAlignment.Center
 
--- Footer (Made by)
-local Footer = Instance.new("TextLabel", LeftPanel)
-Footer.Size = UDim2.new(1,0,0,20)
-Footer.Position = UDim2.new(0,0,1,-30)
-Footer.BackgroundTransparency = 1
-Footer.Text = "Made by | Cassius1738"
-Footer.Font = Enum.Font.Gotham
-Footer.TextSize = 12
-Footer.TextColor3 = Color3.fromRGB(200,200,200)
-Footer.TextXAlignment = Enum.TextXAlignment.Center
+-- Credit label
+local CreditLabel = Instance.new("TextLabel", LeftPanel)
+CreditLabel.Size = UDim2.new(1,-10,0,20)
+CreditLabel.Position = UDim2.new(0.5,0,0.9,0)
+CreditLabel.AnchorPoint = Vector2.new(0.5,0)
+CreditLabel.BackgroundTransparency = 1
+CreditLabel.Text = "Made by | Cassius1738"
+CreditLabel.Font = Enum.Font.Gotham
+CreditLabel.TextSize = 12
+CreditLabel.TextColor3 = Color3.fromRGB(120,120,120)
+CreditLabel.TextXAlignment = Enum.TextXAlignment.Center
 
--- RIGHT PANEL (Tabs + Pages)
+-- Right side container for tabs and pages
 local RightPanel = Instance.new("Frame", Main)
-RightPanel.Size = UDim2.new(1,-160,1,0)
-RightPanel.Position = UDim2.new(0,160,0,0)
+RightPanel.Size = UDim2.new(1,-120,1,0)
+RightPanel.Position = UDim2.new(0,120,0,0)
 RightPanel.BackgroundTransparency = 1
 
--- Tabs Container
+-- Tabs
 local Tabs = Instance.new("Frame", RightPanel)
-Tabs.Size = UDim2.new(1,0,0,36)
 Tabs.Position = UDim2.new(0,0,0,0)
+Tabs.Size = UDim2.new(1,0,0,36)
 Tabs.BackgroundTransparency = 1
 local TabLayout = Instance.new("UIListLayout", Tabs)
 TabLayout.FillDirection = Enum.FillDirection.Horizontal
 TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-TabLayout.Padding = UDim.new(0,8)
+TabLayout.Padding = UDim.new(0,6)
 
--- Pages Folder
+-- Pages container
 local Pages = Instance.new("Folder", RightPanel)
-
-local function CreatePage()
-    local page = Instance.new("Frame", RightPanel)
-    page.Size = UDim2.new(1,0,1,-46)  -- leave space for tabs
-    page.Position = UDim2.new(0,0,0,40)
-    page.BackgroundTransparency = 1
-    page.Visible = false
-    local layout = Instance.new("UIListLayout", page)
-    layout.Padding = UDim.new(0,8)
-    layout.SortOrder = Enum.SortOrder.LayoutOrder
-    return page
+local function Page()
+	local f = Instance.new("Frame", RightPanel)
+	f.Position = UDim2.new(0,0,0,42)
+	f.Size = UDim2.new(1,0,1,-42)
+	f.BackgroundTransparency = 1
+	f.Visible = false
+	Instance.new("UIListLayout", f).Padding = UDim.new(0,8)
+	Instance.new("UIListLayout", f).SortOrder = Enum.SortOrder.LayoutOrder
+	f.Parent = Pages
+	return f
 end
 
-local AimbotPage = CreatePage()
-local ESPPage = CreatePage()
-local MovementPage = CreatePage()
+local AimbotPage = Page()
+local ESPPage = Page()
+local MovementPage = Page()
 AimbotPage.Visible = true
 
 -- Tab helper
 local function Tab(name,page)
-    local b = Instance.new("TextButton", Tabs)
-    b.Size = UDim2.new(0,100,0,32)
-    b.Text = name
-    b.Font = Enum.Font.GothamBold
-    b.TextSize = 12
-    b.TextColor3 = Color3.new(1,1,1)
-    b.BackgroundColor3 = Color3.fromRGB(35,35,35)
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
-    b.MouseButton1Click:Connect(function()
-        for _,p in pairs(Pages:GetChildren()) do p.Visible = false end
-        page.Visible = true
-    end)
+	local b = Instance.new("TextButton", Tabs)
+	b.Size = UDim2.new(0,100,0,32)
+	b.Text = name
+	b.Font = Enum.Font.GothamBold
+	b.TextSize = 12
+	b.TextColor3 = Color3.new(1,1,1)
+	b.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
+	b.MouseButton1Click:Connect(function()
+		for _,p in pairs(Pages:GetChildren()) do p.Visible = false end
+		page.Visible = true
+	end)
 end
 
 Tab("Aimbot",AimbotPage)
 Tab("ESP",ESPPage)
 Tab("Movement",MovementPage)
-
 
 --------------------------------------------------
 --// HELPER FUNCTIONS
@@ -525,7 +521,9 @@ CircleToggle(ESPPage,"ESP Name","ESP_Name")
 CircleToggle(ESPPage,"ESP Tracer","ESP_Tracer")
 CircleToggle(ESPPage,"Team Check","TeamCheck")
 
---// MOVEMENT PAGE (clean + scrollable)
+--------------------------------------------------
+--// MOVEMENT PAGE (clean scrollable)
+--------------------------------------------------
 for _,c in pairs(MovementPage:GetChildren()) do
     c:Destroy()
 end
@@ -548,7 +546,7 @@ Padding.PaddingBottom = UDim.new(0,4)
 Padding.PaddingLeft = UDim.new(0,4)
 Padding.PaddingRight = UDim.new(0,4)
 
--- Add movement toggles and sliders directly
+-- Add movement toggles + sliders
 CircleToggle(ScrollFrame,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
 Slider(ScrollFrame,"Fly Speed","FlySpeed",10,200)
 CircleToggle(ScrollFrame,"No Jump Cooldown","NoCooldownJumpEnabled")
@@ -566,47 +564,8 @@ PlayerHeader.TextSize = 14
 PlayerHeader.TextColor3 = Color3.fromRGB(0,255,120)
 PlayerHeader.TextXAlignment = Enum.TextXAlignment.Left
 
--- Player buttons (directly in ScrollFrame)
-local function AddPlayerTeleportButtons(parent)
-    local function CreatePlayerButton(player)
-        if player == LocalPlayer then return end
-
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(1,0,0,28)
-        btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
-        btn.TextColor3 = Color3.new(1,1,1)
-        btn.Font = Enum.Font.Gotham
-        btn.TextSize = 13
-        btn.Text = player.Name.." | Teleport"
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
-        btn.Parent = parent
-
-        btn.MouseButton1Click:Connect(function()
-            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local targetHRP = player.Character.HumanoidRootPart
-                local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-                local hrp = char:WaitForChild("HumanoidRootPart")
-                hrp.CFrame = targetHRP.CFrame + Vector3.new(0,3,0)
-            end
-        end)
-    end
-
-    for _, p in pairs(Players:GetPlayers()) do
-        CreatePlayerButton(p)
-    end
-
-    Players.PlayerAdded:Connect(CreatePlayerButton)
-    Players.PlayerRemoving:Connect(function(player)
-        for _, frame in pairs(parent:GetChildren()) do
-            if frame:IsA("TextButton") and frame.Text:find(player.Name) then
-                frame:Destroy()
-            end
-        end
-    end)
-end
-
+-- Add player teleport buttons
 AddPlayerTeleportButtons(ScrollFrame)
-
 
 --------------------------------------------------
 --// Helper Functions
