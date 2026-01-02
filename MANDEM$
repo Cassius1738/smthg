@@ -592,112 +592,180 @@ end
 FlySpeedSlider(MovementPage)
 
 --------------------------------------------------
---// MOVEMENT PAGE PLAYER LIST (CONSTRAINED FIX)
+--// MOVEMENT PAGE SCROLLABLE (ALL TOGETHERS)
 --------------------------------------------------
-local function CreateConstrainedPlayerList(page)
-    -- Add a UIListLayout to the page
-    local pageLayout = page:FindFirstChildOfClass("UIListLayout")
-    if not pageLayout then
-        pageLayout = Instance.new("UIListLayout", page)
-        pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        pageLayout.Padding = UDim.new(0,8)
+-- Clear previous children if reloading
+for _,c in pairs(MovementPage:GetChildren()) do
+    if not c:IsA("UIListLayout") then
+        c:Destroy()
     end
+end
 
-    -- ScrollingFrame container for players
-    local PlayerListContainer = Instance.new("ScrollingFrame", page)
-    PlayerListContainer.BackgroundColor3 = Color3.fromRGB(35,35,35)
-    PlayerListContainer.BorderSizePixel = 0
-    PlayerListContainer.ScrollBarThickness = 8
-    PlayerListContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    PlayerListContainer.Size = UDim2.new(1,0,0,100) -- temporary initial height
-    PlayerListContainer.BackgroundTransparency = 0
-    Instance.new("UICorner", PlayerListContainer).CornerRadius = UDim.new(0,8)
-    PlayerListContainer.LayoutOrder = 999 -- always at the bottom of layout
+-- ScrollingFrame container
+local ScrollFrame = Instance.new("ScrollingFrame")
+ScrollFrame.Parent = MovementPage
+ScrollFrame.Size = UDim2.new(1,0,1,0)
+ScrollFrame.BackgroundTransparency = 1
+ScrollFrame.ScrollBarThickness = 8
+ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+ScrollFrame.CanvasSize = UDim2.new(0,0,0,0)
 
-    -- UIListLayout inside scrolling frame
-    local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
-    PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    PlayerLayout.Padding = UDim.new(0,4)
+-- UIListLayout inside ScrollFrame
+local Layout = Instance.new("UIListLayout", ScrollFrame)
+Layout.SortOrder = Enum.SortOrder.LayoutOrder
+Layout.Padding = UDim.new(0,8)
 
-    -- Adjust PlayerListContainer height to fill remaining space
-    local function UpdateHeight()
-        local usedHeight = 0
-        for _, child in pairs(page:GetChildren()) do
-            if child ~= PlayerListContainer and child:IsA("Frame") then
-                usedHeight = usedHeight + child.AbsoluteSize.Y + 8
-            end
-        end
-        local remaining = page.AbsoluteSize.Y - usedHeight - 8
-        PlayerListContainer.Size = UDim2.new(1,0,0,math.max(50, remaining))
-    end
+-- Helper: Toggle Button
+local function CircleToggle(parent,text,flag)
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,0,0,32)
+    holder.BackgroundTransparency = 1
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(1,-40,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    local btn = Instance.new("TextButton", holder)
+    btn.Size = UDim2.new(0,22,0,22)
+    btn.Position = UDim2.new(1,-26,0.5,-11)
+    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    btn.Text = "○"
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.TextColor3 = Color3.fromRGB(200,200,200)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+    btn.MouseButton1Click:Connect(function()
+        _G[flag] = not _G[flag]
+        btn.Text = _G[flag] and "●" or "○"
+        btn.TextColor3 = _G[flag] and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+    end)
+end
 
-    page:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateHeight)
-    for _, child in pairs(page:GetChildren()) do
-        if child:IsA("Frame") then
-            child:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateHeight)
-        end
-    end
-    UpdateHeight()
-
-    -- Function to create a player button
-    local function CreatePlayerButton(player)
-        if player == LocalPlayer then return end
-        local holder = Instance.new("Frame")
-        holder.Size = UDim2.new(1,0,0,28)
-        holder.BackgroundTransparency = 1
-
-        local nameLabel = Instance.new("TextLabel", holder)
-        nameLabel.Size = UDim2.new(0.55,0,1,0)
-        nameLabel.Position = UDim2.new(0,5,0,0)
-        nameLabel.BackgroundTransparency = 1
-        nameLabel.Text = player.Name
-        nameLabel.TextColor3 = Color3.new(1,1,1)
-        nameLabel.Font = Enum.Font.Gotham
-        nameLabel.TextSize = 13
-        nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-
-        local tpBtn = Instance.new("TextButton", holder)
-        tpBtn.Size = UDim2.new(0.4,0,1,0)
-        tpBtn.Position = UDim2.new(0.57,0,0,0)
-        tpBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
-        tpBtn.Text = "Teleport"
-        tpBtn.TextColor3 = Color3.new(1,1,1)
-        tpBtn.Font = Enum.Font.Gotham
-        tpBtn.TextSize = 12
-        Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,6)
-
-        tpBtn.MouseButton1Click:Connect(function()
-            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local targetHRP = player.Character.HumanoidRootPart
-                local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-                local hrp = char:WaitForChild("HumanoidRootPart")
-                hrp.CFrame = targetHRP.CFrame + Vector3.new(0,3,0)
-            end
-        end)
-
-        holder.Parent = PlayerListContainer
-    end
-
-    -- Populate current players
-    for _, player in pairs(Players:GetPlayers()) do
-        CreatePlayerButton(player)
-    end
-
-    -- Listen for new players
-    Players.PlayerAdded:Connect(CreatePlayerButton)
-
-    -- Remove players leaving
-    Players.PlayerRemoving:Connect(function(player)
-        for _, frame in pairs(PlayerListContainer:GetChildren()) do
-            if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == player.Name then
-                frame:Destroy()
-            end
+-- Helper: Slider
+local function Slider(parent,text,flag,min,max)
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,0,0,40)
+    holder.BackgroundTransparency = 1
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(0.6,0,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = text..": ".._G[flag]
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    local sliderBar = Instance.new("Frame", holder)
+    sliderBar.Size = UDim2.new(0.35,0,0.3,0)
+    sliderBar.Position = UDim2.new(0.6,0,0.35,0)
+    sliderBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
+    Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1,0)
+    local fill = Instance.new("Frame", sliderBar)
+    fill.Size = UDim2.new((_G[flag]-min)/(max-min),0,1,0)
+    fill.BackgroundColor3 = Color3.fromRGB(0,255,120)
+    Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
+    local handle = Instance.new("Frame", sliderBar)
+    handle.Size = UDim2.new(0,16,0,16)
+    handle.Position = UDim2.new(fill.Size.X.Scale,0,0.5,-8)
+    handle.BackgroundColor3 = Color3.fromRGB(0,255,120)
+    Instance.new("UICorner", handle).CornerRadius = UDim.new(1,0)
+    local dragging = false
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true Main.Active = false end
+    end)
+    handle.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false Main.Active = true end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local mouseX = math.clamp(input.Position.X - sliderBar.AbsolutePosition.X,0,sliderBar.AbsoluteSize.X)
+            local val = mouseX / sliderBar.AbsoluteSize.X
+            _G[flag] = math.clamp(math.floor(val*(max-min)+min),min,max)
+            fill.Size = UDim2.new(val,0,1,0)
+            handle.Position = UDim2.new(val,0,0.5,-8)
+            label.Text = text..": ".._G[flag]
         end
     end)
 end
 
--- Call it for MovementPage
-CreateConstrainedPlayerList(MovementPage)
+-- Initialize Globals
+_G.NoclipFlyEnabled = _G.NoclipFlyEnabled or false
+_G.FlySpeed = _G.FlySpeed or 50
+_G.VisualBigHead = _G.VisualBigHead or false
+_G.AutoJumpEnabled = _G.AutoJumpEnabled or false
+_G.NoCooldownJumpEnabled = _G.NoCooldownJumpEnabled or false
+_G.SpeedEnabled = _G.SpeedEnabled or false
+_G.WalkSpeedValue = _G.WalkSpeedValue or 16
+
+-- Add Toggles and Sliders
+CircleToggle(ScrollFrame,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
+Slider(ScrollFrame,"Fly Speed","FlySpeed",10,200)
+CircleToggle(ScrollFrame,"Big Head (Visual & Hitbox)","VisualBigHead")
+CircleToggle(ScrollFrame,"Auto Jump","AutoJumpEnabled")
+CircleToggle(ScrollFrame,"No Jump Cooldown","NoCooldownJumpEnabled")
+Slider(ScrollFrame,"Walk Speed","WalkSpeedValue",16,100)
+
+-- Player List Section
+local PlayerListContainer = Instance.new("Frame", ScrollFrame)
+PlayerListContainer.Size = UDim2.new(1,0,0,0)
+PlayerListContainer.BackgroundTransparency = 1
+PlayerListContainer.LayoutOrder = 999
+
+local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
+PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+PlayerLayout.Padding = UDim.new(0,4)
+
+-- Function to add player button
+local function AddPlayerButton(player)
+    if player == LocalPlayer then return end
+    local holder = Instance.new("Frame")
+    holder.Size = UDim2.new(1,0,0,28)
+    holder.BackgroundTransparency = 1
+
+    local nameLabel = Instance.new("TextLabel", holder)
+    nameLabel.Size = UDim2.new(0.55,0,1,0)
+    nameLabel.Position = UDim2.new(0,5,0,0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = player.Name
+    nameLabel.TextColor3 = Color3.new(1,1,1)
+    nameLabel.Font = Enum.Font.Gotham
+    nameLabel.TextSize = 13
+    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+    local tpBtn = Instance.new("TextButton", holder)
+    tpBtn.Size = UDim2.new(0.4,0,1,0)
+    tpBtn.Position = UDim2.new(0.57,0,0,0)
+    tpBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    tpBtn.Text = "Teleport"
+    tpBtn.TextColor3 = Color3.new(1,1,1)
+    tpBtn.Font = Enum.Font.Gotham
+    tpBtn.TextSize = 12
+    Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,6)
+
+    tpBtn.MouseButton1Click:Connect(function()
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local targetHRP = player.Character.HumanoidRootPart
+            local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+            local hrp = char:WaitForChild("HumanoidRootPart")
+            hrp.CFrame = targetHRP.CFrame + Vector3.new(0,3,0)
+        end
+    end)
+
+    holder.Parent = PlayerListContainer
+end
+
+-- Populate players
+for _,player in pairs(Players:GetPlayers()) do AddPlayerButton(player) end
+Players.PlayerAdded:Connect(AddPlayerButton)
+Players.PlayerRemoving:Connect(function(player)
+    for _,f in pairs(PlayerListContainer:GetChildren()) do
+        if f:IsA("Frame") and f:FindFirstChildOfClass("TextLabel") and f:FindFirstChildOfClass("TextLabel").Text == player.Name then
+            f:Destroy()
+        end
+    end
+end)
 
 
 --------------------------------------------------
