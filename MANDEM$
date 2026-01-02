@@ -202,7 +202,7 @@ UI.ResetOnSpawn = false
 UI.Parent = safe_gethui()
 
 local Main = Instance.new("Frame", UI)
-Main.Size = UDim2.new(0,620,0,360)
+Main.Size = UDim2.new(0,620,0,360) -- landscape & bigger
 Main.Position = UDim2.new(0.25,0,0.25,0)
 Main.BackgroundColor3 = Color3.fromRGB(18,18,18)
 Main.Active = true
@@ -241,69 +241,88 @@ avatar.Image = Players:GetUserThumbnailAsync(
 avatar.ScaleType = Enum.ScaleType.Fit
 Instance.new("UICorner", avatar).CornerRadius = UDim.new(1,0)
 
--- Name, Username, YouTube, Discord
-local function createLabel(parent,posY,text,size,color)
-	local lbl = Instance.new("TextLabel", parent)
-	lbl.Position = UDim2.new(0,60,0,posY)
-	lbl.Size = size
-	lbl.BackgroundTransparency = 1
-	lbl.Text = text
-	lbl.Font = Enum.Font.Gotham
-	lbl.TextSize = 12
-	lbl.TextColor3 = color
-	lbl.TextXAlignment = Enum.TextXAlignment.Left
-	return lbl
-end
+-- Name
+local Name = Instance.new("TextLabel", Profile)
+Name.Position = UDim2.new(0,60,0,8)
+Name.Size = UDim2.new(1,-60,0,18)
+Name.BackgroundTransparency = 1
+Name.Text = "Cassius1738"
+Name.Font = Enum.Font.GothamBold
+Name.TextSize = 14
+Name.TextColor3 = Color3.new(1,1,1)
+Name.TextXAlignment = Enum.TextXAlignment.Left
 
-createLabel(Profile,8,"Cassius1738",UDim2.new(1,-60,0,18),Color3.new(1,1,1)).Font = Enum.Font.GothamBold
-createLabel(Profile,26,"@Cassius1738",UDim2.new(1,-60,0,14),Color3.fromRGB(170,170,170))
-createLabel(Profile,42,"YouTube: Cassius1337",UDim2.new(1,-60,0,14),Color3.fromRGB(200,200,200))
-createLabel(Profile,56,"discord.gg/M3Wr8ZcJQA",UDim2.new(1,-60,0,14),Color3.fromRGB(120,180,255))
+-- Username
+local Handle = Instance.new("TextLabel", Profile)
+Handle.Position = UDim2.new(0,60,0,26)
+Handle.Size = UDim2.new(1,-60,0,14)
+Handle.BackgroundTransparency = 1
+Handle.Text = "@Cassius1738"
+Handle.Font = Enum.Font.Gotham
+Handle.TextSize = 12
+Handle.TextColor3 = Color3.fromRGB(170,170,170)
+Handle.TextXAlignment = Enum.TextXAlignment.Left
+
+-- YouTube
+local YouTube = Instance.new("TextLabel", Profile)
+YouTube.Position = UDim2.new(0,60,0,42)
+YouTube.Size = UDim2.new(1,-60,0,14)
+YouTube.BackgroundTransparency = 1
+YouTube.Text = "YouTube: Cassius1337"
+YouTube.Font = Enum.Font.Gotham
+YouTube.TextSize = 11
+YouTube.TextColor3 = Color3.fromRGB(200,200,200)
+YouTube.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Discord
+local Discord = Instance.new("TextLabel", Profile)
+Discord.Position = UDim2.new(0,60,0,56)
+Discord.Size = UDim2.new(1,-60,0,14)
+Discord.BackgroundTransparency = 1
+Discord.Text = "discord.gg/M3Wr8ZcJQA"
+Discord.Font = Enum.Font.Gotham
+Discord.TextSize = 11
+Discord.TextColor3 = Color3.fromRGB(120,180,255)
+Discord.TextXAlignment = Enum.TextXAlignment.Left
 
 --------------------------------------------------
 -- TABS
 --------------------------------------------------
 local Tabs = Instance.new("Frame", Main)
-Tabs.Position = UDim2.new(0,10,0,82)
+Tabs.Position = UDim2.new(0,10,0,82) -- small left padding
 Tabs.Size = UDim2.new(1,0,0,36)
 Tabs.BackgroundTransparency = 1
 
 local TabLayout = Instance.new("UIListLayout", Tabs)
 TabLayout.FillDirection = Enum.FillDirection.Horizontal
-TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-TabLayout.Padding = UDim.new(0,6)
+TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left -- left-aligned
+TabLayout.Padding = UDim.new(0,6) 
 
 --------------------------------------------------
--- PAGES
+-- PAGES 
 --------------------------------------------------
 local Pages = Instance.new("Folder", Main)
 
--- Function to create a scrollable page
 local function Page()
-	local f = Instance.new("Frame", Pages)
-	f.Size = UDim2.new(1, -20, 1, -138)
-	f.Position = UDim2.new(0, 10, 0, 128)
-	f.BackgroundTransparency = 1
-	f.Visible = false
+    local f = Instance.new("Frame", Main)
+    f.Position = UDim2.new(0,10,0,128)   -- start below header & tabs
+    f.Size = UDim2.new(1,-20,1,-138)     -- fills main, with some padding
+    f.BackgroundTransparency = 1
+    f.Visible = false
 
-	local ScrollFrame = Instance.new("ScrollingFrame", f)
-	ScrollFrame.Size = UDim2.new(1,0,1,0)
-	ScrollFrame.Position = UDim2.new(0,0,0,0)
-	ScrollFrame.BackgroundTransparency = 1
-	ScrollFrame.ScrollBarThickness = 8
-	ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    -- Use vertical layout for controls
+    local layout = Instance.new("UIListLayout", f)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0,8) -- spacing between buttons/sliders
 
-	local layout = Instance.new("UIListLayout", ScrollFrame)
-	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.Padding = UDim.new(0,8)
-
-	return f, ScrollFrame
+    f.Parent = Pages
+    return f
 end
 
-local AimbotPage, AimbotScroll = Page()
-local ESPPage, ESPScroll = Page()
-local MovementPage, MovementScroll = Page()
-AimbotPage.Visible = true -- default
+local AimbotPage = Page()
+local ESPPage = Page()
+local MovementPage = Page()
+AimbotPage.Visible = true
 
 --------------------------------------------------
 -- TAB FUNCTION
@@ -366,43 +385,45 @@ end
 --------------------------------------------------
 -- Enable Aimbot
 local function AimbotCircleToggle(parent)
-	local holder = Instance.new("Frame")
-	holder.Size = UDim2.new(1,0,0,32)
-	holder.BackgroundTransparency = 1
-	holder.AutomaticSize = Enum.AutomaticSize.Y -- allow UIListLayout to position
-	local label = Instance.new("TextLabel", holder)
-	label.Size = UDim2.new(1,-40,1,0)
-	label.BackgroundTransparency = 1
-	label.Text = "Enable Aimbot"
-	label.Font = Enum.Font.Gotham
-	label.TextSize = 13
-	label.TextColor3 = Color3.new(1,1,1)
-	label.TextXAlignment = Enum.TextXAlignment.Left
-	local btn = Instance.new("TextButton", holder)
-	btn.Size = UDim2.new(0,22,0,22)
-	btn.Position = UDim2.new(1,-26,0.5,-11)
-	btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
-	btn.Text = "○"
-	btn.Font = Enum.Font.GothamBold
-	btn.TextSize = 16
-	btn.TextColor3 = Color3.fromRGB(200,200,200)
-	Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
-	btn.MouseButton1Click:Connect(function()
-		_G.AimbotGUIEnabled = not _G.AimbotGUIEnabled
-		if not _G.AimbotGUIEnabled then _G.AimbotEnabled = false end
-		btn.Text = _G.AimbotGUIEnabled and "●" or "○"
-		btn.TextColor3 = _G.AimbotGUIEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
-	end)
-	holder.Parent = parent
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,0,0,32) -- full width of page
+    holder.BackgroundTransparency = 1
+    holder.LayoutOrder = 1 -- ensures it's on top
+
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(1,-40,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = "Enable Aimbot"
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local btn = Instance.new("TextButton", holder)
+    btn.Size = UDim2.new(0,22,0,22)
+    btn.Position = UDim2.new(1,-26,0.5,-11)
+    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    btn.Text = "○"
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.TextColor3 = Color3.fromRGB(200,200,200)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+
+    btn.MouseButton1Click:Connect(function()
+        _G.AimbotGUIEnabled = not _G.AimbotGUIEnabled
+        if not _G.AimbotGUIEnabled then _G.AimbotEnabled = false end
+        btn.Text = _G.AimbotGUIEnabled and "●" or "○"
+        btn.TextColor3 = _G.AimbotGUIEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+    end)
 end
-AimbotCircleToggle(AimbotScroll)
+
+AimbotCircleToggle(AimbotPage)
 
 -- Aim Part Dropdown
 local function AimPartDropdown(parent)
-	local holder = Instance.new("Frame")
+	local holder = Instance.new("Frame", parent)
 	holder.Size = UDim2.new(1,0,0,32)
 	holder.BackgroundTransparency = 1
-	holder.AutomaticSize = Enum.AutomaticSize.Y
 	local label = Instance.new("TextLabel", holder)
 	label.Size = UDim2.new(0.5,0,1,0)
 	label.BackgroundTransparency = 1
@@ -426,7 +447,7 @@ local function AimPartDropdown(parent)
 	dropdown.MouseButton1Click:Connect(function()
 		if open then if listFrame then listFrame:Destroy() end open = false else
 			listFrame = Instance.new("Frame", parent)
-			listFrame.Position = UDim2.new(0,0,0,holder.AbsoluteSize.Y)
+			listFrame.Position = UDim2.new(0,0,0,32)
 			listFrame.Size = UDim2.new(1,0,0,#options*30)
 			listFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
 			Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0,8)
@@ -451,33 +472,104 @@ local function AimPartDropdown(parent)
 			open = true
 		end
 	end)
-	holder.Parent = parent
 end
-AimPartDropdown(AimbotScroll)
+AimPartDropdown(AimbotPage)
 
 -- Smoothness Slider
-SmoothnessSlider(AimbotScroll)
+local function SmoothnessSlider(parent)
+	local holder = Instance.new("Frame", parent)
+	holder.Size = UDim2.new(1,0,0,40)
+	holder.BackgroundTransparency = 1
+	local label = Instance.new("TextLabel", holder)
+	label.Size = UDim2.new(0.6,0,1,0)
+	label.BackgroundTransparency = 1
+	label.Text = "Smoothness: "..string.format("%.2f", _G.Sensitivity)
+	label.Font = Enum.Font.Gotham
+	label.TextSize = 13
+	label.TextColor3 = Color3.new(1,1,1)
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	local sliderBar = Instance.new("Frame", holder)
+	sliderBar.Size = UDim2.new(0.35,0,0.3,0)
+	sliderBar.Position = UDim2.new(0.6,0,0.35,0)
+	sliderBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
+	Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1,0)
+	local fill = Instance.new("Frame", sliderBar)
+	fill.Size = UDim2.new((_G.Sensitivity-0.01)/0.19,0,1,0)
+	fill.BackgroundColor3 = Color3.fromRGB(0,255,120)
+	Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
+	local handle = Instance.new("Frame", sliderBar)
+	handle.Size = UDim2.new(0,16,0,16)
+	handle.Position = UDim2.new(fill.Size.X.Scale, 0, 0.5, -8)
+	handle.BackgroundColor3 = Color3.fromRGB(0,255,120)
+	Instance.new("UICorner", handle).CornerRadius = UDim.new(1,0)
+	local dragging = false
+	handle.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true Main.Active = false end
+	end)
+	handle.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false Main.Active = true end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+			local mouseX = math.clamp(input.Position.X - sliderBar.AbsolutePosition.X,0,sliderBar.AbsoluteSize.X)
+			local val = mouseX / sliderBar.AbsoluteSize.X
+			_G.Sensitivity = math.clamp(val*0.19+0.01, 0.01, 0.2)
+			fill.Size = UDim2.new(val,0,1,0)
+			handle.Position = UDim2.new(val,0,0.5,-8)
+			label.Text = "Smoothness: "..string.format("%.2f", _G.Sensitivity)
+		end
+	end)
+end
+SmoothnessSlider(AimbotPage)
 
 -- Keybind Button
-KeybindButton(AimbotScroll)
+local function KeybindButton(parent)
+	local holder = Instance.new("Frame", parent)
+	holder.Size = UDim2.new(1,0,0,32)
+	holder.BackgroundTransparency = 1
+	local label = Instance.new("TextLabel", holder)
+	label.Size = UDim2.new(0.5,0,1,0)
+	label.BackgroundTransparency = 1
+	label.Text = "Aimbot Key: ".._G.AimbotKey.Name
+	label.Font = Enum.Font.Gotham
+	label.TextSize = 13
+	label.TextColor3 = Color3.new(1,1,1)
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	local btn = Instance.new("TextButton", holder)
+	btn.Size = UDim2.new(0.45,0,1,0)
+	btn.Position = UDim2.new(0.5,0,0,0)
+	btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	btn.Text = "Set Key"
+	btn.TextColor3 = Color3.new(1,1,1)
+	btn.Font = Enum.Font.Gotham
+	btn.TextSize = 13
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
+	local waiting = false
+	btn.MouseButton1Click:Connect(function()
+		if waiting then return end
+		waiting = true
+		btn.Text = "Press Key..."
+		local conn
+		conn = UserInputService.InputBegan:Connect(function(input,gp)
+			if input.UserInputType == Enum.UserInputType.Keyboard then
+				_G.AimbotKey = input.KeyCode
+				label.Text = "Aimbot Key: ".._G.AimbotKey.Name
+				btn.Text = "Set Key"
+				waiting = false
+				conn:Disconnect()
+			end
+		end)
+	end)
+end
+KeybindButton(AimbotPage)
 
 --------------------------------------------------
 --// ESP Page
 --------------------------------------------------
-CircleToggle(ESPScroll,"ESP Box","ESP_Box")
-CircleToggle(ESPScroll,"ESP Name","ESP_Name")
-CircleToggle(ESPScroll,"ESP Tracer","ESP_Tracer")
-CircleToggle(ESPScroll,"Team Check","TeamCheck")
-
-
---------------------------------------------------
---// ESP Page
---------------------------------------------------
-CircleToggle(ESPScroll,"ESP Box","ESP_Box")
-CircleToggle(ESPScroll,"ESP Name","ESP_Name")
-CircleToggle(ESPScroll,"ESP Tracer","ESP_Tracer")
-CircleToggle(ESPScroll,"Team Check","TeamCheck")
-
+CircleToggle(ESPPage,"ESP Box","ESP_Box")
+CircleToggle(ESPPage,"ESP Name","ESP_Name")
+CircleToggle(ESPPage,"ESP Tracer","ESP_Tracer")
+CircleToggle(ESPPage,"Team Check","TeamCheck")
 
 --------------------------------------------------
 --// MOVEMENT PAGE CLEAN SCROLLABLE
