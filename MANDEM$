@@ -685,6 +685,83 @@ Players.PlayerRemoving:Connect(function(p)
 end)
 
 --------------------------------------------------
+--// BIG HEAD (VISUAL + HITBOX)
+--------------------------------------------------
+_G.VisualBigHead = false
+
+local function ApplyBigHead(player)
+	if player == LocalPlayer then return end
+	local character = player.Character
+	if not character then return end
+
+	local head = character:FindFirstChild("Head")
+	if head then
+		local size = _G.VisualBigHead and Vector3.new(4,4,4) or Vector3.new(2,1,1)
+		head.Size = size
+		head.CanCollide = false
+		head.Transparency = _G.VisualBigHead and 0.5 or 0
+
+		local mesh = head:FindFirstChildOfClass("SpecialMesh")
+		if mesh then
+			mesh.Scale = Vector3.new(1,1,1)
+		else
+			local newMesh = Instance.new("SpecialMesh")
+			newMesh.MeshType = Enum.MeshType.Head
+			newMesh.Scale = Vector3.new(1,1,1)
+			newMesh.Parent = head
+		end
+	end
+end
+
+local function ApplyBigHeadToAll()
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer and player.Character then
+			ApplyBigHead(player)
+		end
+	end
+end
+
+Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function()
+		task.wait(0.5)
+		ApplyBigHead(player)
+	end)
+end)
+
+-- Create toggle circle in MovementPage
+local function BigHeadCircleToggle(parent)
+	local holder = Instance.new("Frame", parent)
+	holder.Size = UDim2.new(1,0,0,32)
+	holder.BackgroundTransparency = 1
+	local label = Instance.new("TextLabel", holder)
+	label.Size = UDim2.new(1,-40,1,0)
+	label.BackgroundTransparency = 1
+	label.Text = "Big Head (Visual & Hitbox)"
+	label.Font = Enum.Font.Gotham
+	label.TextSize = 13
+	label.TextColor3 = Color3.new(1,1,1)
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	local btn = Instance.new("TextButton", holder)
+	btn.Size = UDim2.new(0,22,0,22)
+	btn.Position = UDim2.new(1,-26,0.5,-11)
+	btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	btn.Text = "○"
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 16
+	btn.TextColor3 = Color3.fromRGB(200,200,200)
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+	btn.MouseButton1Click:Connect(function()
+		_G.VisualBigHead = not _G.VisualBigHead
+		btn.Text = _G.VisualBigHead and "●" or "○"
+		btn.TextColor3 = _G.VisualBigHead and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+		ApplyBigHeadToAll()
+	end)
+end
+
+BigHeadCircleToggle(MovementPage)
+
+
+--------------------------------------------------
 --// SHOW / HIDE MENU
 --------------------------------------------------
 UserInputService.InputBegan:Connect(function(i,gp)
