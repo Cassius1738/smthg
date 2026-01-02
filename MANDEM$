@@ -592,7 +592,7 @@ end
 FlySpeedSlider(MovementPage)
 
 --------------------------------------------------
---// CLEAN SCROLLABLE MOVEMENT PAGE (FULL SCROLLABLE)
+--// CLEAN SCROLLABLE MOVEMENT PAGE
 --------------------------------------------------
 
 -- Clear previous children
@@ -605,16 +605,14 @@ Scroll.BackgroundTransparency = 1
 Scroll.BorderSizePixel = 0
 Scroll.CanvasSize = UDim2.new(0,0,0,0)
 Scroll.ScrollBarThickness = 8
-Scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y -- auto-adjust
+Scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
 -- Layout to stack everything vertically
 local Layout = Instance.new("UIListLayout", Scroll)
 Layout.SortOrder = Enum.SortOrder.LayoutOrder
 Layout.Padding = UDim.new(0,8)
 
---------------------------------------------------
 -- Helper function to add elements to scroll
---------------------------------------------------
 local function AddToScroll(element)
 	element.Parent = Scroll
 end
@@ -622,13 +620,13 @@ end
 --------------------------------------------------
 -- Noclip + Fly Toggle
 --------------------------------------------------
-CircleToggle(Scroll,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
+CircleToggle(AddToScroll,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
 
--- Fly Speed Slider
-FlySpeedSlider(Scroll)
+-- Fly Speed Slider (modified to accept parent)
+FlySpeedSlider(AddToScroll)
 
 -- Big Head Toggle
-BigHeadCircleToggle(Scroll)
+BigHeadCircleToggle(AddToScroll)
 
 --------------------------------------------------
 -- Player List Container
@@ -696,6 +694,7 @@ Players.PlayerRemoving:Connect(function(p)
 		end
 	end
 end)
+
 
 
 --------------------------------------------------
