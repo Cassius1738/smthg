@@ -592,55 +592,36 @@ end
 FlySpeedSlider(MovementPage)
 
 --------------------------------------------------
---// MOVEMENT PAGE PLAYER LIST (DYNAMIC & SCROLLABLE)
+--// MOVEMENT PAGE PLAYER LIST (CONSTRAINED)
 --------------------------------------------------
-local function CreateDynamicPlayerList(page)
-    -- Container
-    local PlayerListContainer = Instance.new("ScrollingFrame", page)
+local function CreateSafePlayerList(parentFrame)
+    local PlayerListContainer = Instance.new("ScrollingFrame", parentFrame)
+    PlayerListContainer.Size = UDim2.new(1, -16, 0, 150) -- full width minus padding
+    PlayerListContainer.Position = UDim2.new(0, 8, 0, 100) -- start below top toggles
     PlayerListContainer.BackgroundColor3 = Color3.fromRGB(35,35,35)
     PlayerListContainer.BorderSizePixel = 0
     PlayerListContainer.ScrollBarThickness = 8
-    PlayerListContainer.Size = UDim2.new(1,0,0,150) -- initial height
-    PlayerListContainer.Position = UDim2.new(0,0,0,0)
     Instance.new("UICorner", PlayerListContainer).CornerRadius = UDim.new(0,8)
 
     local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
-    PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
     PlayerLayout.Padding = UDim.new(0,4)
+    PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
-    -- Auto-update CanvasSize
+    -- update canvas size dynamically
     PlayerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y + 8)
     end)
 
-    -- Function to calculate the top position based on other elements
-    local function UpdatePlayerListPosition()
-        local maxY = 0
-        for _, child in pairs(page:GetChildren()) do
-            if child:IsA("Frame") and child ~= PlayerListContainer then
-                maxY = math.max(maxY, child.Position.Y.Offset + child.Size.Y.Offset)
-            end
-        end
-        -- Set position below other elements
-        PlayerListContainer.Position = UDim2.new(0,0,0,maxY + 8)
-
-        -- Adjust height so it stays inside the page
-        local availableHeight = page.AbsoluteSize.Y - PlayerListContainer.Position.Y.Offset - 8
-        PlayerListContainer.Size = UDim2.new(1,0,0,math.clamp(availableHeight, 50, 300))
+    -- constrain the height so it never goes outside parentFrame
+    local function UpdateHeight()
+        local maxHeight = parentFrame.AbsoluteSize.Y - PlayerListContainer.Position.Y.Offset - 8
+        PlayerListContainer.Size = UDim2.new(1, -16, 0, math.clamp(PlayerListContainer.AbsoluteSize.Y, 50, maxHeight))
     end
 
-    -- Listen for size/position changes of other elements
-    for _, child in pairs(page:GetChildren()) do
-        if child:IsA("Frame") and child ~= PlayerListContainer then
-            child:GetPropertyChangedSignal("Position"):Connect(UpdatePlayerListPosition)
-            child:GetPropertyChangedSignal("Size"):Connect(UpdatePlayerListPosition)
-        end
-    end
+    parentFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateHeight)
+    UpdateHeight()
 
-    -- Initial update
-    UpdatePlayerListPosition()
-
-    -- Function to create a player button
+    -- create player button
     local function CreatePlayerButton(player)
         if player == LocalPlayer then return end
         local holder = Instance.new("Frame")
@@ -679,27 +660,22 @@ local function CreateDynamicPlayerList(page)
         holder.Parent = PlayerListContainer
     end
 
-    -- Populate current players
-    for _, player in pairs(Players:GetPlayers()) do
-        CreatePlayerButton(player)
+    for _,p in pairs(Players:GetPlayers()) do
+        CreatePlayerButton(p)
     end
 
-    -- Listen for new players
     Players.PlayerAdded:Connect(CreatePlayerButton)
-
-    -- Remove players leaving
-    Players.PlayerRemoving:Connect(function(player)
-        for _, frame in pairs(PlayerListContainer:GetChildren()) do
-            if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == player.Name then
+    Players.PlayerRemoving:Connect(function(p)
+        for _,frame in pairs(PlayerListContainer:GetChildren()) do
+            if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == p.Name then
                 frame:Destroy()
             end
         end
     end)
 end
 
--- Call the function for the MovementPage
-CreateDynamicPlayerList(MovementPage)
-
+-- initialize inside Main frame
+CreateSafePlayerList(MovementPage)
 
 --------------------------------------------------
 --// UNIVERSAL BIG HEAD (R6 + R15 + CUSTOM RIGS)
