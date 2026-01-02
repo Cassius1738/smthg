@@ -249,16 +249,16 @@ CreditLabel.TextSize = 12
 CreditLabel.TextColor3 = Color3.fromRGB(120,120,120)
 CreditLabel.TextXAlignment = Enum.TextXAlignment.Center
 
--- Right side container for tabs and pages
+-- Right side container for tabs and pages with extra left padding
 local RightPanel = Instance.new("Frame", Main)
-RightPanel.Size = UDim2.new(1,-120,1,0)
-RightPanel.Position = UDim2.new(0,120,0,0)
+RightPanel.Size = UDim2.new(1,-140,1,0) -- leave extra 20px padding
+RightPanel.Position = UDim2.new(0,140,0,0) -- shift right
 RightPanel.BackgroundTransparency = 1
 
--- Tabs
+-- Tabs (with padding)
 local Tabs = Instance.new("Frame", RightPanel)
-Tabs.Position = UDim2.new(0,0,0,0)
-Tabs.Size = UDim2.new(1,0,0,36)
+Tabs.Position = UDim2.new(0,10,0,0) -- 10px padding from left
+Tabs.Size = UDim2.new(1,-20,0,36)   -- reduce width for padding
 Tabs.BackgroundTransparency = 1
 local TabLayout = Instance.new("UIListLayout", Tabs)
 TabLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -269,12 +269,21 @@ TabLayout.Padding = UDim.new(0,6)
 local Pages = Instance.new("Folder", RightPanel)
 local function Page()
 	local f = Instance.new("Frame", RightPanel)
-	f.Position = UDim2.new(0,0,0,42)
-	f.Size = UDim2.new(1,0,1,-42)
+	f.Position = UDim2.new(0,10,0,42)  -- shifted 10px from left
+	f.Size = UDim2.new(1,-20,1,-42)    -- reduced width for left+right padding
 	f.BackgroundTransparency = 1
 	f.Visible = false
-	Instance.new("UIListLayout", f).Padding = UDim.new(0,8)
-	Instance.new("UIListLayout", f).SortOrder = Enum.SortOrder.LayoutOrder
+
+	local layout = Instance.new("UIListLayout", f)
+	layout.Padding = UDim.new(0,8)
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+	local padding = Instance.new("UIPadding", f)
+	padding.PaddingLeft = UDim.new(0,4)
+	padding.PaddingRight = UDim.new(0,4)
+	padding.PaddingTop = UDim.new(0,4)
+	padding.PaddingBottom = UDim.new(0,4)
+
 	f.Parent = Pages
 	return f
 end
