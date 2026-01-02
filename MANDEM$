@@ -718,72 +718,130 @@ CircleToggle(ScrollFrame,"No Jump Cooldown","NoCooldownJumpEnabled")
 Slider(ScrollFrame,"Walk Speed","WalkSpeedValue",16,100)
 
 --------------------------------------------------
---// Player List with Teleport
+--// MOVEMENT PAGE PLAYER LIST (CONSTRAINED FIX)
 --------------------------------------------------
-local PlayerListContainer = Instance.new("Frame", ScrollFrame)
-PlayerListContainer.Size = UDim2.new(1,0,0,0)
-PlayerListContainer.BackgroundTransparency = 1
-PlayerListContainer.LayoutOrder = 999
-local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
-PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
-PlayerLayout.Padding = UDim.new(0,4)
+local function CreateConstrainedPlayerList(page)
+    -- Add a UIListLayout to the page
+    local pageLayout = page:FindFirstChildOfClass("UIListLayout")
+    if not pageLayout then
+        pageLayout = Instance.new("UIListLayout", page)
+        pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        pageLayout.Padding = UDim.new(0,8)
+    end
 
-local function AddPlayerButton(player)
-    if player == LocalPlayer then return end
-    local holder = Instance.new("Frame")
-    holder.Size = UDim2.new(1,0,0,28)
-    holder.BackgroundTransparency = 1
+    -- ScrollingFrame container for players
+    local PlayerListContainer = Instance.new("ScrollingFrame", page)
+    PlayerListContainer.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    PlayerListContainer.BorderSizePixel = 0
+    PlayerListContainer.ScrollBarThickness = 8
+    PlayerListContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    PlayerListContainer.Size = UDim2.new(1,0,0,100) -- temporary initial height
+    PlayerListContainer.BackgroundTransparency = 0
+    Instance.new("UICorner", PlayerListContainer).CornerRadius = UDim.new(0,8)
+    PlayerListContainer.LayoutOrder = 999 -- always at the bottom of layout
 
-    local nameLabel = Instance.new("TextLabel", holder)
-    nameLabel.Size = UDim2.new(0.55,0,1,0)
-    nameLabel.Position = UDim2.new(0,5,0,0)
-    nameLabel.BackgroundTransparency = 1
-    nameLabel.Text = player.Name
-    nameLabel.TextColor3 = Color3.new(1,1,1)
-    nameLabel.Font = Enum.Font.Gotham
-    nameLabel.TextSize = 13
-    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    -- UIListLayout inside scrolling frame
+    local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
+    PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    PlayerLayout.Padding = UDim.new(0,4)
 
-    local tpBtn = Instance.new("TextButton", holder)
-    tpBtn.Size = UDim2.new(0.4,0,1,0)
-    tpBtn.Position = UDim2.new(0.57,0,0,0)
-    tpBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
-    tpBtn.Text = "Teleport"
-    tpBtn.TextColor3 = Color3.new(1,1,1)
-    tpBtn.Font = Enum.Font.Gotham
-    tpBtn.TextSize = 12
-    Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,6)
-
-    tpBtn.MouseButton1Click:Connect(function()
-        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local targetHRP = player.Character.HumanoidRootPart
-            local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-            local hrp = char:WaitForChild("HumanoidRootPart")
-            hrp.CFrame = targetHRP.CFrame + Vector3.new(0,3,0)
+    -- Adjust PlayerListContainer height to fill remaining space
+    local function UpdateHeight()
+        local usedHeight = 0
+        for _, child in pairs(page:GetChildren()) do
+            if child ~= PlayerListContainer and child:IsA("Frame") then
+                usedHeight = usedHeight + child.AbsoluteSize.Y + 8
+            end
         end
-    end)
+        local remaining = page.AbsoluteSize.Y - usedHeight - 8
+        PlayerListContainer.Size = UDim2.new(1,0,0,math.max(50, remaining))
+    end
 
-    holder.Parent = PlayerListContainer
-end
-
-for _,player in pairs(Players:GetPlayers()) do AddPlayerButton(player) end
-Players.PlayerAdded:Connect(AddPlayerButton)
-Players.PlayerRemoving:Connect(function(player)
-    for _,f in pairs(PlayerListContainer:GetChildren()) do
-        if f:IsA("Frame") and f:FindFirstChildOfClass("TextLabel") and f:FindFirstChildOfClass("TextLabel").Text == player.Name then
-            f:Destroy()
+    page:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateHeight)
+    for _, child in pairs(page:GetChildren()) do
+        if child:IsA("Frame") then
+            child:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateHeight)
         end
     end
-end)
+    UpdateHeight()
+
+    -- Function to create a player button
+    local function CreatePlayerButton(player)
+        if player == LocalPlayer then return end
+        local holder = Instance.new("Frame")
+        holder.Size = UDim2.new(1,0,0,28)
+        holder.BackgroundTransparency = 1
+
+        local nameLabel = Instance.new("TextLabel", holder)
+        nameLabel.Size = UDim2.new(0.55,0,1,0)
+        nameLabel.Position = UDim2.new(0,5,0,0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Text = player.Name
+        nameLabel.TextColor3 = Color3.new(1,1,1)
+        nameLabel.Font = Enum.Font.Gotham
+        nameLabel.TextSize = 13
+        nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+        local tpBtn = Instance.new("TextButton", holder)
+        tpBtn.Size = UDim2.new(0.4,0,1,0)
+        tpBtn.Position = UDim2.new(0.57,0,0,0)
+        tpBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+        tpBtn.Text = "Teleport"
+        tpBtn.TextColor3 = Color3.new(1,1,1)
+        tpBtn.Font = Enum.Font.Gotham
+        tpBtn.TextSize = 12
+        Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,6)
+
+        tpBtn.MouseButton1Click:Connect(function()
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local targetHRP = player.Character.HumanoidRootPart
+                local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+                local hrp = char:WaitForChild("HumanoidRootPart")
+                hrp.CFrame = targetHRP.CFrame + Vector3.new(0,3,0)
+            end
+        end)
+
+        holder.Parent = PlayerListContainer
+    end
+
+    -- Populate current players
+    for _, player in pairs(Players:GetPlayers()) do
+        CreatePlayerButton(player)
+    end
+
+    -- Listen for new players
+    Players.PlayerAdded:Connect(CreatePlayerButton)
+
+    -- Remove players leaving
+    Players.PlayerRemoving:Connect(function(player)
+        for _, frame in pairs(PlayerListContainer:GetChildren()) do
+            if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == player.Name then
+                frame:Destroy()
+            end
+        end
+    end)
+end
+
+-- Call it for MovementPage
+CreateConstrainedPlayerList(MovementPage)
 
 --------------------------------------------------
---// Big Head Logic (Universal)
+--// UNIVERSAL BIG HEAD (R6 + R15 + CUSTOM RIGS)
 --------------------------------------------------
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+_G.VisualBigHead = false
 local BIG_HEAD_SIZE = Vector3.new(4,4,4)
 local NORMAL_HEAD_SIZE = Vector3.new(2,1,1)
 
+-- Detect head dynamically
 local function GetHead(character)
-    if character:FindFirstChild("Head") then return character.Head end
+    -- R6/R15 default head
+    if character:FindFirstChild("Head") then
+        return character.Head
+    end
+    -- fallback for custom rigs
     for _, part in pairs(character:GetChildren()) do
         if part:IsA("BasePart") and part.Name:lower():find("head") then
             return part
@@ -792,14 +850,17 @@ local function GetHead(character)
     return nil
 end
 
+-- Apply Big Head repeatedly to counter rig resets
 local function ApplyBigHead(character)
     local head = GetHead(character)
     if not head then return end
+
     spawn(function()
         while character.Parent and _G.VisualBigHead do
             head.Size = BIG_HEAD_SIZE
             head.CanCollide = false
             head.Transparency = 0.5
+
             local mesh = head:FindFirstChildOfClass("SpecialMesh")
             if not mesh then
                 mesh = Instance.new("SpecialMesh")
@@ -809,6 +870,7 @@ local function ApplyBigHead(character)
             mesh.Scale = Vector3.new(1,1,1)
             task.wait(0.1)
         end
+        -- reset if disabled
         if head.Parent then
             head.Size = NORMAL_HEAD_SIZE
             head.Transparency = 0
@@ -816,46 +878,106 @@ local function ApplyBigHead(character)
     end)
 end
 
+-- Setup a player for Big Head
 local function SetupPlayer(player)
     player.CharacterAdded:Connect(function(char)
         task.wait(0.5)
-        if _G.VisualBigHead then ApplyBigHead(char) end
+        if _G.VisualBigHead then
+            ApplyBigHead(char)
+        end
     end)
+    -- apply immediately if already loaded
     if player.Character and _G.VisualBigHead then
         task.wait(0.5)
         ApplyBigHead(player.Character)
     end
 end
 
-for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then SetupPlayer(p) end end
-Players.PlayerAdded:Connect(function(p) if p ~= LocalPlayer then SetupPlayer(p) end end)
+-- Setup all current players
+for _, p in pairs(Players:GetPlayers()) do
+    if p ~= LocalPlayer then
+        SetupPlayer(p)
+    end
+end
+
+-- Listen for new players
+Players.PlayerAdded:Connect(function(p)
+    if p ~= LocalPlayer then
+        SetupPlayer(p)
+    end
+end)
+
+-- GUI toggle circle for MovementPage
+local function BigHeadCircleToggle(parent)
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,0,0,32)
+    holder.BackgroundTransparency = 1
+
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(1,-40,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = "Big Head (Visual & Hitbox)"
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local btn = Instance.new("TextButton", holder)
+    btn.Size = UDim2.new(0,22,0,22)
+    btn.Position = UDim2.new(1,-26,0.5,-11)
+    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    btn.Text = "○"
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.TextColor3 = Color3.fromRGB(200,200,200)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+
+    btn.MouseButton1Click:Connect(function()
+        _G.VisualBigHead = not _G.VisualBigHead
+        btn.Text = _G.VisualBigHead and "●" or "○"
+        btn.TextColor3 = _G.VisualBigHead and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+
+        -- apply immediately to all
+        for _, player in pairs(Players:GetPlayers()) do
+            if player.Character then
+                ApplyBigHead(player.Character)
+            end
+        end
+    end)
+end
+
+BigHeadCircleToggle(MovementPage)
 
 --------------------------------------------------
---// Movement Updater (WalkSpeed / AutoJump / NoCooldownJump)
+--// WalkSpeed & No Jump Cooldown Fix
 --------------------------------------------------
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = game:GetService("Players").LocalPlayer
+
+-- WalkSpeed
 RunService.Stepped:Connect(function()
     local char = LocalPlayer.Character
     if char then
         local humanoid = char:FindFirstChildOfClass("Humanoid")
         if humanoid then
-            -- WalkSpeed
             humanoid.WalkSpeed = _G.SpeedEnabled and _G.WalkSpeedValue or 16
-
-            -- AutoJump
-            if _G.AutoJumpEnabled and humanoid.FloorMaterial ~= Enum.Material.Air then
-                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-            end
-
-            -- NoCooldownJump
-            if _G.NoCooldownJumpEnabled then
-                humanoid.JumpPower = 50
-                humanoid.Jump = true
-            end
         end
     end
 end)
 
-
+-- No Jump Cooldown (spacebar auto jump)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.Space then
+        local char = LocalPlayer.Character
+        if char then
+            local humanoid = char:FindFirstChildOfClass("Humanoid")
+            if humanoid and _G.NoCooldownJumpEnabled then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end
+    end
+end)
 
 --------------------------------------------------
 --// SHOW / HIDE MENU
