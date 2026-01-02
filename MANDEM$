@@ -592,28 +592,160 @@ end
 FlySpeedSlider(MovementPage)
 
 --------------------------------------------------
---// CLEAN SCROLLABLE PLAYER LIST INSIDE GUI - FIXED
+--// MOVEMENT PAGE CLEAN LAYOUT
 --------------------------------------------------
-local PlayerListContainer = Instance.new("ScrollingFrame", MovementPage)
-PlayerListContainer.Size = UDim2.new(1,0,0,200) -- fixed height
-PlayerListContainer.Position = UDim2.new(0,0,0,150) -- below previous elements (adjust as needed)
-PlayerListContainer.BackgroundColor3 = Color3.fromRGB(35,35,35)
-PlayerListContainer.BorderSizePixel = 0
-PlayerListContainer.CanvasSize = UDim2.new(0,0,0,0)
-PlayerListContainer.ScrollBarThickness = 8
-Instance.new("UICorner", PlayerListContainer).CornerRadius = UDim.new(0,8)
 
-local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
-PlayerLayout.Padding = UDim.new(0,4)
-PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+-- Clear any existing children first (optional)
+for _, c in pairs(MovementPage:GetChildren()) do c:Destroy() end
 
--- Update CanvasSize dynamically
-PlayerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y + 8)
+-- Main container for all elements
+local MovementContainer = Instance.new("Frame", MovementPage)
+MovementContainer.Size = UDim2.new(1,0,1,0)
+MovementContainer.BackgroundTransparency = 1
+MovementContainer.Position = UDim2.new(0,0,0,0)
+
+-- Use UIListLayout to stack all elements vertically
+local Layout = Instance.new("UIListLayout", MovementContainer)
+Layout.SortOrder = Enum.SortOrder.LayoutOrder
+Layout.Padding = UDim.new(0,8) -- space between elements
+
+-- Function to add a toggle or slider cleanly
+local function AddElement(frame)
+	frame.Parent = MovementContainer
+end
+
+-- Noclip + Fly Toggle
+local NoclipFlyToggle = Instance.new("Frame")
+NoclipFlyToggle.Size = UDim2.new(1,0,0,32)
+NoclipFlyToggle.BackgroundTransparency = 1
+local label1 = Instance.new("TextLabel", NoclipFlyToggle)
+label1.Size = UDim2.new(0.7,0,1,0)
+label1.BackgroundTransparency = 1
+label1.Text = "Noclip + Fly (WASD + Space/Shift)"
+label1.Font = Enum.Font.Gotham
+label1.TextSize = 13
+label1.TextColor3 = Color3.new(1,1,1)
+label1.TextXAlignment = Enum.TextXAlignment.Left
+local btn1 = Instance.new("TextButton", NoclipFlyToggle)
+btn1.Size = UDim2.new(0.2,0,0.8,0)
+btn1.Position = UDim2.new(0.78,0,0.1,0)
+btn1.BackgroundColor3 = Color3.fromRGB(35,35,35)
+btn1.Text = "○"
+btn1.Font = Enum.Font.GothamBold
+btn1.TextSize = 16
+btn1.TextColor3 = Color3.fromRGB(200,200,200)
+Instance.new("UICorner", btn1).CornerRadius = UDim.new(1,0)
+btn1.MouseButton1Click:Connect(function()
+	_G.NoclipFlyEnabled = not _G.NoclipFlyEnabled
+	btn1.Text = _G.NoclipFlyEnabled and "●" or "○"
+	btn1.TextColor3 = _G.NoclipFlyEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+end)
+AddElement(NoclipFlyToggle)
+
+-- Big Head Toggle
+local BigHeadToggle = Instance.new("Frame")
+BigHeadToggle.Size = UDim2.new(1,0,0,32)
+BigHeadToggle.BackgroundTransparency = 1
+local label2 = Instance.new("TextLabel", BigHeadToggle)
+label2.Size = UDim2.new(0.7,0,1,0)
+label2.BackgroundTransparency = 1
+label2.Text = "Big Head"
+label2.Font = Enum.Font.Gotham
+label2.TextSize = 13
+label2.TextColor3 = Color3.new(1,1,1)
+label2.TextXAlignment = Enum.TextXAlignment.Left
+local btn2 = Instance.new("TextButton", BigHeadToggle)
+btn2.Size = UDim2.new(0.2,0,0.8,0)
+btn2.Position = UDim2.new(0.78,0,0.1,0)
+btn2.BackgroundColor3 = Color3.fromRGB(35,35,35)
+btn2.Text = "○"
+btn2.Font = Enum.Font.GothamBold
+btn2.TextSize = 16
+btn2.TextColor3 = Color3.fromRGB(200,200,200)
+Instance.new("UICorner", btn2).CornerRadius = UDim.new(1,0)
+btn2.MouseButton1Click:Connect(function()
+	_G.VisualBigHead = not _G.VisualBigHead
+	btn2.Text = _G.VisualBigHead and "●" or "○"
+	btn2.TextColor3 = _G.VisualBigHead and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+
+	-- apply immediately to all players
+	for _, player in pairs(Players:GetPlayers()) do
+		if player.Character then
+			ApplyBigHead(player.Character)
+		end
+	end
+end)
+AddElement(BigHeadToggle)
+
+-- Fly Speed Slider
+local FlySpeedFrame = Instance.new("Frame")
+FlySpeedFrame.Size = UDim2.new(1,0,0,40)
+FlySpeedFrame.BackgroundTransparency = 1
+local FlyLabel = Instance.new("TextLabel", FlySpeedFrame)
+FlyLabel.Size = UDim2.new(0.6,0,1,0)
+FlyLabel.BackgroundTransparency = 1
+FlyLabel.Text = "Fly Speed: ".._G.FlySpeed
+FlyLabel.Font = Enum.Font.Gotham
+FlyLabel.TextSize = 13
+FlyLabel.TextColor3 = Color3.new(1,1,1)
+FlyLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Slider UI
+local SliderBar = Instance.new("Frame", FlySpeedFrame)
+SliderBar.Size = UDim2.new(0.35,0,0.3,0)
+SliderBar.Position = UDim2.new(0.6,0,0.35,0)
+SliderBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
+Instance.new("UICorner", SliderBar).CornerRadius = UDim.new(1,0)
+local Fill = Instance.new("Frame", SliderBar)
+Fill.Size = UDim2.new(_G.FlySpeed/200,0,1,0)
+Fill.BackgroundColor3 = Color3.fromRGB(0,255,120)
+Instance.new("UICorner", Fill).CornerRadius = UDim.new(1,0)
+local Handle = Instance.new("Frame", SliderBar)
+Handle.Size = UDim2.new(0,16,0,16)
+Handle.Position = UDim2.new(Fill.Size.X.Scale,0,0.5,-8)
+Handle.BackgroundColor3 = Color3.fromRGB(0,255,120)
+Instance.new("UICorner", Handle).CornerRadius = UDim.new(1,0)
+
+-- Drag logic
+local dragging = false
+Handle.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true Main.Active = false end
+end)
+Handle.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false Main.Active = true end
+end)
+UserInputService.InputChanged:Connect(function(input)
+	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+		local mouseX = math.clamp(input.Position.X - SliderBar.AbsolutePosition.X,0,SliderBar.AbsoluteSize.X)
+		local val = mouseX / SliderBar.AbsoluteSize.X
+		_G.FlySpeed = math.clamp(val*200,10,200)
+		Fill.Size = UDim2.new(val,0,1,0)
+		Handle.Position = UDim2.new(val,0,0.5,-8)
+		FlyLabel.Text = "Fly Speed: "..math.floor(_G.FlySpeed)
+	end
 end)
 
--- Function to create player button
-local function CreatePlayerButton(player)
+AddElement(FlySpeedFrame)
+
+-- Player List
+local PlayerList = Instance.new("ScrollingFrame", MovementContainer)
+PlayerList.Size = UDim2.new(1,0,0,200) -- fixed height
+PlayerList.BackgroundColor3 = Color3.fromRGB(35,35,35)
+PlayerList.BorderSizePixel = 0
+PlayerList.ScrollBarThickness = 8
+Instance.new("UICorner", PlayerList).CornerRadius = UDim.new(0,8)
+
+local PlayerListLayout = Instance.new("UIListLayout", PlayerList)
+PlayerListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+PlayerListLayout.Padding = UDim.new(0,4)
+
+-- Update CanvasSize dynamically
+PlayerListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	PlayerList.CanvasSize = UDim2.new(0,0,0,PlayerListLayout.AbsoluteContentSize.Y + 8)
+end)
+
+-- Function to add players to the list
+local function AddPlayerButton(player)
 	if player == LocalPlayer then return end
 	local holder = Instance.new("Frame")
 	holder.Size = UDim2.new(1,0,0,28)
@@ -648,22 +780,20 @@ local function CreatePlayerButton(player)
 		end
 	end)
 
-	holder.Parent = PlayerListContainer
+	holder.Parent = PlayerList
 end
 
--- Populate players
-for _,p in pairs(Players:GetPlayers()) do
-	CreatePlayerButton(p)
-end
-
-Players.PlayerAdded:Connect(CreatePlayerButton)
+-- Populate player list
+for _,p in pairs(Players:GetPlayers()) do AddPlayerButton(p) end
+Players.PlayerAdded:Connect(AddPlayerButton)
 Players.PlayerRemoving:Connect(function(p)
-	for _,frame in pairs(PlayerListContainer:GetChildren()) do
-		if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == p.Name then
-			frame:Destroy()
+	for _,f in pairs(PlayerList:GetChildren()) do
+		if f:IsA("Frame") and f:FindFirstChildOfClass("TextLabel") and f:FindFirstChildOfClass("TextLabel").Text == p.Name then
+			f:Destroy()
 		end
 	end
 end)
+
 
 
 --------------------------------------------------
