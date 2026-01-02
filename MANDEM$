@@ -57,9 +57,14 @@ UserInputService.InputBegan:Connect(function(i,gp)
 		-- Aimbot key
 		if i.KeyCode == _G.AimbotKey and not AimbotDebounce then
 			_G.AimbotEnabled = not _G.AimbotEnabled
-			_G.AimbotGUIEnabled = _G.AimbotEnabled
+			_G.AimbotGUIEnabled = _G.AimbotEnabled -- keep GUI in sync
 			AimbotDebounce = true
-			print(_G.AimbotEnabled and "Aimbot Enabled" or "Aimbot Disabled")
+
+			if _G.AimbotEnabled then
+				print("Aimbot Enabled")
+			else
+				print("Aimbot Disabled")
+			end
 
 		-- Noclip toggle
 		elseif i.KeyCode == Enum.KeyCode.N then
@@ -144,6 +149,7 @@ end)
 --// ESP
 --------------------------------------------------
 local ESPObjects = {}
+
 local function CreateESP(p)
 	if p == LocalPlayer then return end
 	local box = Drawing.new("Square")
@@ -163,6 +169,7 @@ local function CreateESP(p)
 	tracer.Thickness = 1
 	ESPObjects[p] = {Box = box, Name = name, Tracer = tracer}
 end
+
 for _,p in pairs(Players:GetPlayers()) do CreateESP(p) end
 Players.PlayerAdded:Connect(CreateESP)
 Players.PlayerRemoving:Connect(function(p)
@@ -252,9 +259,9 @@ local function Page()
 	f.Size = UDim2.new(1,-30,1,-110)
 	f.BackgroundTransparency = 1
 	f.Visible = false
-	local layout = Instance.new("UIListLayout", f)
-	layout.Padding = UDim.new(0,8)
-	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	Instance.new("UIListLayout", f).Padding = UDim.new(0,8)
+	Instance.new("UIListLayout", f).SortOrder = Enum.SortOrder.LayoutOrder
+	f.Parent = Pages
 	return f
 end
 
@@ -282,6 +289,7 @@ end
 Tab("Aimbot",AimbotPage)
 Tab("ESP",ESPPage)
 Tab("Movement",MovementPage)
+
 
 --------------------------------------------------
 --// HELPER FUNCTIONS
