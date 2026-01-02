@@ -295,28 +295,25 @@ Tabs.BackgroundTransparency = 1
 
 local TabLayout = Instance.new("UIListLayout", Tabs)
 TabLayout.FillDirection = Enum.FillDirection.Horizontal
-TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left -- left-aligned tabs
-TabLayout.Padding = UDim.new(0,8)
+TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left -- left-aligned
+TabLayout.Padding = UDim.new(0,6) 
 
 --------------------------------------------------
--- PAGES (top-left aligned inside Main)
+-- PAGES 
 --------------------------------------------------
 local Pages = Instance.new("Folder", Main)
 
 local function Page()
     local f = Instance.new("Frame", Main)
-    f.Position = UDim2.new(0,10,0,128)   -- top-left inside Main
-    f.Size = UDim2.new(1,-20,1,-138)     -- width fills Main with small padding
+    f.Position = UDim2.new(0,10,0,128)   -- start below header & tabs
+    f.Size = UDim2.new(1,-20,1,-138)     -- fills main, with some padding
     f.BackgroundTransparency = 1
     f.Visible = false
 
-    -- RIGHT PADDING FOR SCROLLBAR
-    local pad = Instance.new("UIPadding", f)
-    pad.PaddingRight = UDim.new(0,17)
-
+    -- Use vertical layout for controls
     local layout = Instance.new("UIListLayout", f)
-    layout.Padding = UDim.new(0,8)
     layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0,8) -- spacing between buttons/sliders
 
     f.Parent = Pages
     return f
@@ -388,33 +385,38 @@ end
 --------------------------------------------------
 -- Enable Aimbot
 local function AimbotCircleToggle(parent)
-	local holder = Instance.new("Frame", parent)
-	holder.Size = UDim2.new(1,0,0,32)
-	holder.BackgroundTransparency = 1
-	local label = Instance.new("TextLabel", holder)
-	label.Size = UDim2.new(1,-40,1,0)
-	label.BackgroundTransparency = 1
-	label.Text = "Enable Aimbot"
-	label.Font = Enum.Font.Gotham
-	label.TextSize = 13
-	label.TextColor3 = Color3.new(1,1,1)
-	label.TextXAlignment = Enum.TextXAlignment.Left
-	local btn = Instance.new("TextButton", holder)
-	btn.Size = UDim2.new(0,22,0,22)
-	btn.Position = UDim2.new(1,-26,0.5,-11)
-	btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
-	btn.Text = "○"
-	btn.Font = Enum.Font.GothamBold
-	btn.TextSize = 16
-	btn.TextColor3 = Color3.fromRGB(200,200,200)
-	Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
-	btn.MouseButton1Click:Connect(function()
-		_G.AimbotGUIEnabled = not _G.AimbotGUIEnabled
-		if not _G.AimbotGUIEnabled then _G.AimbotEnabled = false end
-		btn.Text = _G.AimbotGUIEnabled and "●" or "○"
-		btn.TextColor3 = _G.AimbotGUIEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
-	end)
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,0,0,32) -- full width of page
+    holder.BackgroundTransparency = 1
+    holder.LayoutOrder = 1 -- ensures it's on top
+
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(1,-40,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = "Enable Aimbot"
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local btn = Instance.new("TextButton", holder)
+    btn.Size = UDim2.new(0,22,0,22)
+    btn.Position = UDim2.new(1,-26,0.5,-11)
+    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    btn.Text = "○"
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.TextColor3 = Color3.fromRGB(200,200,200)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+
+    btn.MouseButton1Click:Connect(function()
+        _G.AimbotGUIEnabled = not _G.AimbotGUIEnabled
+        if not _G.AimbotGUIEnabled then _G.AimbotEnabled = false end
+        btn.Text = _G.AimbotGUIEnabled and "●" or "○"
+        btn.TextColor3 = _G.AimbotGUIEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+    end)
 end
+
 AimbotCircleToggle(AimbotPage)
 
 -- Aim Part Dropdown
