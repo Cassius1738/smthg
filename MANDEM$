@@ -526,29 +526,36 @@ CircleToggle(ESPPage,"ESP Tracer","ESP_Tracer")
 CircleToggle(ESPPage,"Team Check","TeamCheck")
 
 --------------------------------------------------
---// MOVEMENT PAGE (Scrollable + Player List inside RightPanel)
+--// MOVEMENT PAGE (Scrollable + Player List)
 --------------------------------------------------
 
--- Clear previous children if reloading
+-- Clear previous children
 for _,c in pairs(MovementPage:GetChildren()) do
     c:Destroy()
 end
 
--- Scrollable frame for all movement options + player list
+-- Scrollable frame
 local ScrollFrame = Instance.new("ScrollingFrame")
 ScrollFrame.Parent = MovementPage
-ScrollFrame.Size = UDim2.new(1,0,1,0)  -- full RightPanel size
+ScrollFrame.Size = UDim2.new(1,0,1,0)
 ScrollFrame.Position = UDim2.new(0,0,0,0)
 ScrollFrame.BackgroundTransparency = 1
 ScrollFrame.ScrollBarThickness = 8
 ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
--- Layout inside scrolling frame
+-- Layout inside scroll frame
 local Layout = Instance.new("UIListLayout", ScrollFrame)
 Layout.SortOrder = Enum.SortOrder.LayoutOrder
 Layout.Padding = UDim.new(0,8)
+Layout.FillDirection = Enum.FillDirection.Vertical
 
--- Toggles + Sliders
+local Padding = Instance.new("UIPadding", ScrollFrame)
+Padding.PaddingTop = UDim.new(0,4)
+Padding.PaddingBottom = UDim.new(0,4)
+Padding.PaddingLeft = UDim.new(0,4)
+Padding.PaddingRight = UDim.new(0,4)
+
+-- Movement Toggles + Sliders
 CircleToggle(ScrollFrame,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
 Slider(ScrollFrame,"Fly Speed","FlySpeed",10,200)
 CircleToggle(ScrollFrame,"No Jump Cooldown","NoCooldownJumpEnabled")
@@ -556,8 +563,19 @@ CircleToggle(ScrollFrame,"Enable Walk Speed","SpeedEnabled")
 Slider(ScrollFrame,"Walk Speed","WalkSpeedValue",16,100)
 BigHeadCircleToggle(ScrollFrame)
 
+-- Player list container
+local PlayerContainer = Instance.new("Frame")
+PlayerContainer.Size = UDim2.new(1,0,0,0) -- height will expand automatically
+PlayerContainer.BackgroundTransparency = 1
+PlayerContainer.Parent = ScrollFrame
+
+local PlayerLayout = Instance.new("UIListLayout", PlayerContainer)
+PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+PlayerLayout.Padding = UDim.new(0,4)
+PlayerContainer.AutomaticSize = Enum.AutomaticSize.Y
+
 -- Player list header
-local PlayerHeader = Instance.new("TextLabel", ScrollFrame)
+local PlayerHeader = Instance.new("TextLabel", PlayerContainer)
 PlayerHeader.Size = UDim2.new(1,0,0,28)
 PlayerHeader.BackgroundTransparency = 1
 PlayerHeader.Text = "Players"
@@ -566,7 +584,7 @@ PlayerHeader.TextSize = 14
 PlayerHeader.TextColor3 = Color3.fromRGB(0,255,120)
 PlayerHeader.TextXAlignment = Enum.TextXAlignment.Left
 
--- Add teleport buttons for all players
+-- Add teleport buttons
 local function AddPlayerTeleportButtons(parent)
     local function CreatePlayerButton(player)
         if player == LocalPlayer then return end
@@ -574,7 +592,6 @@ local function AddPlayerTeleportButtons(parent)
         holder.Size = UDim2.new(1,0,0,28)
         holder.BackgroundTransparency = 1
 
-        -- Player Name
         local nameLabel = Instance.new("TextLabel", holder)
         nameLabel.Size = UDim2.new(0.55,0,1,0)
         nameLabel.BackgroundTransparency = 1
@@ -584,7 +601,6 @@ local function AddPlayerTeleportButtons(parent)
         nameLabel.TextSize = 13
         nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 
-        -- Teleport Button
         local tpBtn = Instance.new("TextButton", holder)
         tpBtn.Size = UDim2.new(0.4,0,1,0)
         tpBtn.Position = UDim2.new(0.57,0,0,0)
@@ -595,7 +611,6 @@ local function AddPlayerTeleportButtons(parent)
         tpBtn.TextSize = 12
         Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,6)
 
-        -- Teleport logic
         tpBtn.MouseButton1Click:Connect(function()
             if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
                 local targetHRP = player.Character.HumanoidRootPart
@@ -608,12 +623,10 @@ local function AddPlayerTeleportButtons(parent)
         holder.Parent = parent
     end
 
-    -- Create buttons for current players
     for _, p in pairs(Players:GetPlayers()) do
         CreatePlayerButton(p)
     end
 
-    -- Listen for new players
     Players.PlayerAdded:Connect(CreatePlayerButton)
     Players.PlayerRemoving:Connect(function(player)
         for _, frame in pairs(parent:GetChildren()) do
@@ -624,8 +637,7 @@ local function AddPlayerTeleportButtons(parent)
     end)
 end
 
-AddPlayerTeleportButtons(ScrollFrame)
-
+AddPlayerTeleportButtons(PlayerContainer)
 
 --------------------------------------------------
 --// Helper Functions
