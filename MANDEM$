@@ -507,91 +507,6 @@ CircleToggle(ESPPage,"ESP Tracer","ESP_Tracer")
 CircleToggle(ESPPage,"Team Check","TeamCheck")
 
 --------------------------------------------------
---// MOVEMENT PAGE
---------------------------------------------------
-CircleToggle(MovementPage,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
-
--- Noclip + Fly logic
-RunService.Stepped:Connect(function()
-	if _G.NoclipFlyEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-		local hrp = LocalPlayer.Character.HumanoidRootPart
-		for _,part in pairs(LocalPlayer.Character:GetDescendants()) do
-			if part:IsA("BasePart") then part.CanCollide = false end
-		end
-		if not hrp:FindFirstChild("FlyVelocity") then
-			local bv = Instance.new("BodyVelocity")
-			bv.Name = "FlyVelocity"
-			bv.MaxForce = Vector3.new(1e5,1e5,1e5)
-			bv.Velocity = Vector3.zero
-			bv.Parent = hrp
-		end
-		local moveDir = Vector3.new()
-		if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + hrp.CFrame.LookVector end
-		if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - hrp.CFrame.LookVector end
-		if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - hrp.CFrame.RightVector end
-		if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + hrp.CFrame.RightVector end
-		if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0,1,0) end
-		if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir = moveDir - Vector3.new(0,1,0) end
-		if moveDir.Magnitude > 0 then hrp.FlyVelocity.Velocity = moveDir.Unit * _G.FlySpeed else hrp.FlyVelocity.Velocity = Vector3.zero end
-	else
-		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-			local hrp = LocalPlayer.Character.HumanoidRootPart
-			if hrp:FindFirstChild("FlyVelocity") then hrp.FlyVelocity:Destroy() end
-			for _,part in pairs(LocalPlayer.Character:GetDescendants()) do
-				if part:IsA("BasePart") then part.CanCollide = true end
-			end
-		end
-	end
-end)
-
--- Fly Speed Slider
-local function FlySpeedSlider(parent)
-	local holder = Instance.new("Frame", parent)
-	holder.Size = UDim2.new(1,0,0,40)
-	holder.BackgroundTransparency = 1
-	local label = Instance.new("TextLabel", holder)
-	label.Size = UDim2.new(0.6,0,1,0)
-	label.BackgroundTransparency = 1
-	label.Text = "Fly Speed: ".._G.FlySpeed
-	label.Font = Enum.Font.Gotham
-	label.TextSize = 13
-	label.TextColor3 = Color3.new(1,1,1)
-	label.TextXAlignment = Enum.TextXAlignment.Left
-	local sliderBar = Instance.new("Frame", holder)
-	sliderBar.Size = UDim2.new(0.35,0,0.3,0)
-	sliderBar.Position = UDim2.new(0.6,0,0.35,0)
-	sliderBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
-	Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1,0)
-	local fill = Instance.new("Frame", sliderBar)
-	fill.Size = UDim2.new(_G.FlySpeed/200,0,1,0)
-	fill.BackgroundColor3 = Color3.fromRGB(0,255,120)
-	Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
-	local handle = Instance.new("Frame", sliderBar)
-	handle.Size = UDim2.new(0,16,0,16)
-	handle.Position = UDim2.new(fill.Size.X.Scale, 0, 0.5, -8)
-	handle.BackgroundColor3 = Color3.fromRGB(0,255,120)
-	Instance.new("UICorner", handle).CornerRadius = UDim.new(1,0)
-	local dragging = false
-	handle.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true Main.Active = false end
-	end)
-	handle.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false Main.Active = true end
-	end)
-	UserInputService.InputChanged:Connect(function(input)
-		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-			local mouseX = math.clamp(input.Position.X - sliderBar.AbsolutePosition.X,0,sliderBar.AbsoluteSize.X)
-			local val = mouseX / sliderBar.AbsoluteSize.X
-			_G.FlySpeed = math.clamp(val*200,10,200)
-			fill.Size = UDim2.new(val,0,1,0)
-			handle.Position = UDim2.new(val,0,0.5,-8)
-			label.Text = "Fly Speed: "..math.floor(_G.FlySpeed)
-		end
-	end)
-end
-FlySpeedSlider(MovementPage)
-
---------------------------------------------------
 --// MOVEMENT PAGE CLEAN SCROLLABLE
 --------------------------------------------------
 
@@ -717,6 +632,7 @@ _G.WalkSpeedValue = _G.WalkSpeedValue or 16
 CircleToggle(ScrollFrame,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
 Slider(ScrollFrame,"Fly Speed","FlySpeed",10,200)
 CircleToggle(ScrollFrame,"No Jump Cooldown","NoCooldownJumpEnabled")
+CircleToggle(ScrollFrame,"Enable Walk Speed","SpeedEnabled")
 Slider(ScrollFrame,"Walk Speed","WalkSpeedValue",16,100)
 
 --------------------------------------------------
@@ -915,7 +831,7 @@ local function BigHeadCircleToggle(parent)
     end)
 end
 
-BigHeadCircleToggle(MovementPage)
+BigHeadCircleToggle(ScrollFrame)
 
 --------------------------------------------------
 --// WalkSpeed & No Jump Cooldown Fix
