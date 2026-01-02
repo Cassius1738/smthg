@@ -200,8 +200,8 @@ UI.ResetOnSpawn = false
 UI.Parent = safe_gethui()
 
 local Main = Instance.new("Frame", UI)
-Main.Size = UDim2.new(0,500,0,420) -- bigger GUI
-Main.Position = UDim2.new(0.25,0,0.2,0)
+Main.Size = UDim2.new(0,650,0,300) -- wider and shorter
+Main.Position = UDim2.new(0.15,0,0.3,0) -- center-ish
 Main.BackgroundColor3 = Color3.fromRGB(18,18,18)
 Main.Active = true
 Main.Draggable = true
@@ -251,14 +251,14 @@ CreditLabel.TextXAlignment = Enum.TextXAlignment.Center
 
 -- Right side container for tabs and pages with extra left padding
 local RightPanel = Instance.new("Frame", Main)
-RightPanel.Size = UDim2.new(1,-140,1,0) -- leave extra 20px padding
-RightPanel.Position = UDim2.new(0,140,0,0) -- shift right
+RightPanel.Size = UDim2.new(1,-120,1,0) -- same as before
+RightPanel.Position = UDim2.new(0,120,0,0)
 RightPanel.BackgroundTransparency = 1
 
 -- Tabs (with padding)
 local Tabs = Instance.new("Frame", RightPanel)
 Tabs.Position = UDim2.new(0,10,0,0) -- 10px padding from left
-Tabs.Size = UDim2.new(1,-20,0,36)   -- reduce width for padding
+Tabs.Size = UDim2.new(1,0,0,28) 
 Tabs.BackgroundTransparency = 1
 local TabLayout = Instance.new("UIListLayout", Tabs)
 TabLayout.FillDirection = Enum.FillDirection.Horizontal
