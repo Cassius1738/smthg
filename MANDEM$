@@ -591,171 +591,87 @@ local function FlySpeedSlider(parent)
 end
 FlySpeedSlider(MovementPage)
 
+---------------------------------------------------
+--// CLEAN MOVEMENT PAGE LAYOUT
 --------------------------------------------------
---// MOVEMENT PAGE CLEAN LAYOUT
---------------------------------------------------
-
--- Clear any existing children first (optional)
+-- Clear existing children (optional, safe if running once)
 for _, c in pairs(MovementPage:GetChildren()) do c:Destroy() end
 
--- Main container for all elements
+-- Main container for stacking all movement elements
 local MovementContainer = Instance.new("Frame", MovementPage)
 MovementContainer.Size = UDim2.new(1,0,1,0)
 MovementContainer.BackgroundTransparency = 1
 MovementContainer.Position = UDim2.new(0,0,0,0)
 
--- Use UIListLayout to stack all elements vertically
+-- Stack everything vertically
 local Layout = Instance.new("UIListLayout", MovementContainer)
 Layout.SortOrder = Enum.SortOrder.LayoutOrder
-Layout.Padding = UDim.new(0,8) -- space between elements
+Layout.Padding = UDim.new(0,8) -- spacing between elements
 
--- Function to add a toggle or slider cleanly
-local function AddElement(frame)
+-- Helper to add existing frames to container
+local function AddToContainer(frame)
 	frame.Parent = MovementContainer
 end
 
--- Noclip + Fly Toggle
-local NoclipFlyToggle = Instance.new("Frame")
-NoclipFlyToggle.Size = UDim2.new(1,0,0,32)
-NoclipFlyToggle.BackgroundTransparency = 1
-local label1 = Instance.new("TextLabel", NoclipFlyToggle)
-label1.Size = UDim2.new(0.7,0,1,0)
-label1.BackgroundTransparency = 1
-label1.Text = "Noclip + Fly (WASD + Space/Shift)"
-label1.Font = Enum.Font.Gotham
-label1.TextSize = 13
-label1.TextColor3 = Color3.new(1,1,1)
-label1.TextXAlignment = Enum.TextXAlignment.Left
-local btn1 = Instance.new("TextButton", NoclipFlyToggle)
-btn1.Size = UDim2.new(0.2,0,0.8,0)
-btn1.Position = UDim2.new(0.78,0,0.1,0)
-btn1.BackgroundColor3 = Color3.fromRGB(35,35,35)
-btn1.Text = "○"
-btn1.Font = Enum.Font.GothamBold
-btn1.TextSize = 16
-btn1.TextColor3 = Color3.fromRGB(200,200,200)
-Instance.new("UICorner", btn1).CornerRadius = UDim.new(1,0)
-btn1.MouseButton1Click:Connect(function()
+-- Noclip + Fly toggle
+local NoclipFlyFrame = Instance.new("Frame")
+NoclipFlyFrame.Size = UDim2.new(1,0,0,32)
+NoclipFlyFrame.BackgroundTransparency = 1
+local labelNF = Instance.new("TextLabel", NoclipFlyFrame)
+labelNF.Size = UDim2.new(1,-40,1,0)
+labelNF.BackgroundTransparency = 1
+labelNF.Text = "Noclip + Fly (WASD + Space/Shift)"
+labelNF.Font = Enum.Font.Gotham
+labelNF.TextSize = 13
+labelNF.TextColor3 = Color3.new(1,1,1)
+labelNF.TextXAlignment = Enum.TextXAlignment.Left
+local btnNF = Instance.new("TextButton", NoclipFlyFrame)
+btnNF.Size = UDim2.new(0,22,0,22)
+btnNF.Position = UDim2.new(1,-26,0.5,-11)
+btnNF.BackgroundColor3 = Color3.fromRGB(35,35,35)
+btnNF.Text = _G.NoclipFlyEnabled and "●" or "○"
+btnNF.Font = Enum.Font.GothamBold
+btnNF.TextSize = 16
+btnNF.TextColor3 = _G.NoclipFlyEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+Instance.new("UICorner", btnNF).CornerRadius = UDim.new(1,0)
+btnNF.MouseButton1Click:Connect(function()
 	_G.NoclipFlyEnabled = not _G.NoclipFlyEnabled
-	btn1.Text = _G.NoclipFlyEnabled and "●" or "○"
-	btn1.TextColor3 = _G.NoclipFlyEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+	btnNF.Text = _G.NoclipFlyEnabled and "●" or "○"
+	btnNF.TextColor3 = _G.NoclipFlyEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
 end)
-AddElement(NoclipFlyToggle)
+AddToContainer(NoclipFlyFrame)
 
--- Big Head Toggle
-local BigHeadToggle = Instance.new("Frame")
-BigHeadToggle.Size = UDim2.new(1,0,0,32)
-BigHeadToggle.BackgroundTransparency = 1
-local label2 = Instance.new("TextLabel", BigHeadToggle)
-label2.Size = UDim2.new(0.7,0,1,0)
-label2.BackgroundTransparency = 1
-label2.Text = "Big Head"
-label2.Font = Enum.Font.Gotham
-label2.TextSize = 13
-label2.TextColor3 = Color3.new(1,1,1)
-label2.TextXAlignment = Enum.TextXAlignment.Left
-local btn2 = Instance.new("TextButton", BigHeadToggle)
-btn2.Size = UDim2.new(0.2,0,0.8,0)
-btn2.Position = UDim2.new(0.78,0,0.1,0)
-btn2.BackgroundColor3 = Color3.fromRGB(35,35,35)
-btn2.Text = "○"
-btn2.Font = Enum.Font.GothamBold
-btn2.TextSize = 16
-btn2.TextColor3 = Color3.fromRGB(200,200,200)
-Instance.new("UICorner", btn2).CornerRadius = UDim.new(1,0)
-btn2.MouseButton1Click:Connect(function()
-	_G.VisualBigHead = not _G.VisualBigHead
-	btn2.Text = _G.VisualBigHead and "●" or "○"
-	btn2.TextColor3 = _G.VisualBigHead and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+-- Fly Speed slider (reuse your existing slider code)
+FlySpeedSlider(MovementContainer)
 
-	-- apply immediately to all players
-	for _, player in pairs(Players:GetPlayers()) do
-		if player.Character then
-			ApplyBigHead(player.Character)
-		end
-	end
-end)
-AddElement(BigHeadToggle)
+-- Big Head toggle
+BigHeadCircleToggle(MovementContainer)
 
--- Fly Speed Slider
-local FlySpeedFrame = Instance.new("Frame")
-FlySpeedFrame.Size = UDim2.new(1,0,0,40)
-FlySpeedFrame.BackgroundTransparency = 1
-local FlyLabel = Instance.new("TextLabel", FlySpeedFrame)
-FlyLabel.Size = UDim2.new(0.6,0,1,0)
-FlyLabel.BackgroundTransparency = 1
-FlyLabel.Text = "Fly Speed: ".._G.FlySpeed
-FlyLabel.Font = Enum.Font.Gotham
-FlyLabel.TextSize = 13
-FlyLabel.TextColor3 = Color3.new(1,1,1)
-FlyLabel.TextXAlignment = Enum.TextXAlignment.Left
-
--- Slider UI
-local SliderBar = Instance.new("Frame", FlySpeedFrame)
-SliderBar.Size = UDim2.new(0.35,0,0.3,0)
-SliderBar.Position = UDim2.new(0.6,0,0.35,0)
-SliderBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
-Instance.new("UICorner", SliderBar).CornerRadius = UDim.new(1,0)
-local Fill = Instance.new("Frame", SliderBar)
-Fill.Size = UDim2.new(_G.FlySpeed/200,0,1,0)
-Fill.BackgroundColor3 = Color3.fromRGB(0,255,120)
-Instance.new("UICorner", Fill).CornerRadius = UDim.new(1,0)
-local Handle = Instance.new("Frame", SliderBar)
-Handle.Size = UDim2.new(0,16,0,16)
-Handle.Position = UDim2.new(Fill.Size.X.Scale,0,0.5,-8)
-Handle.BackgroundColor3 = Color3.fromRGB(0,255,120)
-Instance.new("UICorner", Handle).CornerRadius = UDim.new(1,0)
-
--- Drag logic
-local dragging = false
-Handle.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true Main.Active = false end
-end)
-Handle.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false Main.Active = true end
-end)
-UserInputService.InputChanged:Connect(function(input)
-	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-		local mouseX = math.clamp(input.Position.X - SliderBar.AbsolutePosition.X,0,SliderBar.AbsoluteSize.X)
-		local val = mouseX / SliderBar.AbsoluteSize.X
-		_G.FlySpeed = math.clamp(val*200,10,200)
-		Fill.Size = UDim2.new(val,0,1,0)
-		Handle.Position = UDim2.new(val,0,0.5,-8)
-		FlyLabel.Text = "Fly Speed: "..math.floor(_G.FlySpeed)
-	end
-end)
-
-AddElement(FlySpeedFrame)
-
--- Player List
+-- Player List (scrollable)
 local PlayerList = Instance.new("ScrollingFrame", MovementContainer)
-PlayerList.Size = UDim2.new(1,0,0,200) -- fixed height
+PlayerList.Size = UDim2.new(1,0,0,200)
 PlayerList.BackgroundColor3 = Color3.fromRGB(35,35,35)
 PlayerList.BorderSizePixel = 0
 PlayerList.ScrollBarThickness = 8
 Instance.new("UICorner", PlayerList).CornerRadius = UDim.new(0,8)
-
-local PlayerListLayout = Instance.new("UIListLayout", PlayerList)
-PlayerListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-PlayerListLayout.Padding = UDim.new(0,4)
-
--- Update CanvasSize dynamically
-PlayerListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	PlayerList.CanvasSize = UDim2.new(0,0,0,PlayerListLayout.AbsoluteContentSize.Y + 8)
+local ListLayout = Instance.new("UIListLayout", PlayerList)
+ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ListLayout.Padding = UDim.new(0,4)
+ListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	PlayerList.CanvasSize = UDim2.new(0,0,0,ListLayout.AbsoluteContentSize.Y + 8)
 end)
 
--- Function to add players to the list
-local function AddPlayerButton(player)
-	if player == LocalPlayer then return end
+-- Add all players dynamically
+local function AddPlayer(p)
+	if p == LocalPlayer then return end
 	local holder = Instance.new("Frame")
 	holder.Size = UDim2.new(1,0,0,28)
 	holder.BackgroundTransparency = 1
-
 	local nameLabel = Instance.new("TextLabel", holder)
 	nameLabel.Size = UDim2.new(0.55,0,1,0)
 	nameLabel.Position = UDim2.new(0,5,0,0)
 	nameLabel.BackgroundTransparency = 1
-	nameLabel.Text = player.Name
+	nameLabel.Text = p.Name
 	nameLabel.TextColor3 = Color3.new(1,1,1)
 	nameLabel.Font = Enum.Font.Gotham
 	nameLabel.TextSize = 13
@@ -772,20 +688,18 @@ local function AddPlayerButton(player)
 	Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,6)
 
 	tpBtn.MouseButton1Click:Connect(function()
-		if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-			local targetHRP = player.Character.HumanoidRootPart
-			local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-			local hrp = char:WaitForChild("HumanoidRootPart")
-			hrp.CFrame = targetHRP.CFrame + Vector3.new(0,3,0)
+		if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+			local hrp = LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+			hrp.CFrame = p.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
 		end
 	end)
 
 	holder.Parent = PlayerList
 end
 
--- Populate player list
-for _,p in pairs(Players:GetPlayers()) do AddPlayerButton(p) end
-Players.PlayerAdded:Connect(AddPlayerButton)
+-- Populate existing players
+for _,p in pairs(Players:GetPlayers()) do AddPlayer(p) end
+Players.PlayerAdded:Connect(AddPlayer)
 Players.PlayerRemoving:Connect(function(p)
 	for _,f in pairs(PlayerList:GetChildren()) do
 		if f:IsA("Frame") and f:FindFirstChildOfClass("TextLabel") and f:FindFirstChildOfClass("TextLabel").Text == p.Name then
@@ -793,6 +707,7 @@ Players.PlayerRemoving:Connect(function(p)
 		end
 	end
 end)
+
 
 
 
