@@ -718,7 +718,18 @@ CircleToggle(ScrollFrame,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
 Slider(ScrollFrame,"Fly Speed","FlySpeed",10,200)
 CircleToggle(ScrollFrame,"No Jump Cooldown","NoCooldownJumpEnabled")
 Slider(ScrollFrame,"Walk Speed","WalkSpeedValue",16,100)
-CircleToggle(ScrollFrame,"Big Head (Visual & Hitbox)","VisualBigHead")
+
+--------------------------------------------------
+--// PLAYER LIST HEADER
+--------------------------------------------------
+local PlayerHeader = Instance.new("TextLabel", ScrollFrame)
+PlayerHeader.Size = UDim2.new(1,0,0,28)
+PlayerHeader.BackgroundTransparency = 1
+PlayerHeader.Text = "Players"
+PlayerHeader.Font = Enum.Font.GothamBold
+PlayerHeader.TextSize = 14
+PlayerHeader.TextColor3 = Color3.fromRGB(0,255,120)
+PlayerHeader.TextXAlignment = Enum.TextXAlignment.Left
 
 
 --------------------------------------------------
