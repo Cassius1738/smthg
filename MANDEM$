@@ -713,7 +713,7 @@ local function ApplyBigHead(player)
 	end
 end
 
--- Apply Big Head whenever a player's character spawns
+-- Setup Big Head for a player (handles respawn)
 local function SetupPlayerBigHead(player)
 	player.CharacterAdded:Connect(function()
 		task.wait(0.5) -- wait for character to load
@@ -721,16 +721,17 @@ local function SetupPlayerBigHead(player)
 			ApplyBigHead(player)
 		end
 	end)
+	-- Apply immediately if player already spawned
+	if player.Character and _G.VisualBigHead then
+		task.wait(0.5)
+		ApplyBigHead(player)
+	end
 end
 
--- Apply Big Head to all current players and set up respawn listeners
+-- Apply Big Head to all current players
 for _, player in pairs(Players:GetPlayers()) do
 	if player ~= LocalPlayer then
 		SetupPlayerBigHead(player)
-		if _G.VisualBigHead and player.Character then
-			task.wait(0.5)
-			ApplyBigHead(player)
-		end
 	end
 end
 
@@ -777,6 +778,17 @@ local function BigHeadCircleToggle(parent)
 end
 
 BigHeadCircleToggle(MovementPage)
+
+-- Continuously ensure all players' heads stay big if enabled (optional safeguard)
+RunService.RenderStepped:Connect(function()
+	if _G.VisualBigHead then
+		for _, player in pairs(Players:GetPlayers()) do
+			if player ~= LocalPlayer and player.Character then
+				ApplyBigHead(player)
+			end
+		end
+	end
+end)
 
 
 --------------------------------------------------
