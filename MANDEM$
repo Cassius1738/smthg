@@ -28,7 +28,6 @@ _G.AimbotGUIEnabled = false
 _G.CameraLockEnabled = false
 _G.CameraLockAllowed = false
 _G.AimbotKey = Enum.KeyCode.Q
-_G.CameraLockKey = Enum.KeyCode.E
 _G.TeamCheck = false
 _G.AimPart = "Head"
 _G.Sensitivity = 0.08
@@ -46,34 +45,26 @@ _G.NoclipFlyEnabled = false
 _G.FlySpeed = 50
 
 --------------------------------------------------
---// INPUT HANDLING
+--// INPUT HANDLING (FIXED TOGGLE)
 --------------------------------------------------
 local AimbotDebounce = false
-local CameraLockDebounce = false
-
 UserInputService.InputBegan:Connect(function(i,gp)
 	if gp then return end
+
 	if i.UserInputType == Enum.UserInputType.MouseButton2 then
 		Holding = true
+
 	elseif i.UserInputType == Enum.UserInputType.Keyboard then
-		-- Toggle Aimbot
+		-- Aimbot key
 		if i.KeyCode == _G.AimbotKey and not AimbotDebounce then
 			_G.AimbotEnabled = not _G.AimbotEnabled
 			_G.AimbotGUIEnabled = _G.AimbotEnabled
 			AimbotDebounce = true
 			print("Aimbot", _G.AimbotEnabled and "Enabled" or "Disabled")
-		-- Toggle Noclip/Fly
+
+		-- Noclip toggle
 		elseif i.KeyCode == Enum.KeyCode.N then
 			_G.NoclipFlyEnabled = not _G.NoclipFlyEnabled
-		-- Toggle Camera Lock
-		elseif i.KeyCode == _G.CameraLockKey and _G.CameraLockAllowed and not CameraLockDebounce then
-			_G.CameraLockEnabled = not _G.CameraLockEnabled
-			CameraLockDebounce = true
-			if _G.CameraLockButton then
-				_G.CameraLockButton.Text = _G.CameraLockEnabled and "●" or "○"
-				_G.CameraLockButton.TextColor3 = _G.CameraLockEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
-			end
-			print("Camera Lock", _G.CameraLockEnabled and "Enabled" or "Disabled")
 		end
 	end
 end)
@@ -81,9 +72,8 @@ end)
 UserInputService.InputEnded:Connect(function(i)
 	if i.UserInputType == Enum.UserInputType.MouseButton2 then
 		Holding = false
-	elseif i.UserInputType == Enum.UserInputType.Keyboard then
-		if i.KeyCode == _G.AimbotKey then AimbotDebounce = false end
-		if i.KeyCode == _G.CameraLockKey then CameraLockDebounce = false end
+	elseif i.UserInputType == Enum.UserInputType.Keyboard and i.KeyCode == _G.AimbotKey then
+		AimbotDebounce = false
 	end
 end)
 
@@ -109,17 +99,25 @@ local function GetClosestPlayer()
 end
 
 --------------------------------------------------
---// AIMBOT LOOP
+--// AIMBOT LOOP (FIXED CAMERA LOCK)
 --------------------------------------------------
 RunService.RenderStepped:Connect(function()
 	local target = GetClosestPlayer()
 	if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
 		local targetPos = target.Character[_G.AimPart].Position
+
+		-- Smooth aim while holding right-click (optional)
 		if Holding and _G.AimbotEnabled then
-			TweenService:Create(Camera,TweenInfo.new(_G.Sensitivity,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{CFrame=CFrame.new(Camera.CFrame.Position,targetPos)}):Play()
+			TweenService:Create(
+				Camera,
+				TweenInfo.new(_G.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+				{CFrame = CFrame.new(Camera.CFrame.Position, targetPos)}
+			):Play()
 		end
+
+		-- CAMERA LOCK: independent of right-click
 		if _G.CameraLockEnabled then
-			Camera.CFrame = CFrame.new(Camera.CFrame.Position,targetPos)
+			Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
 		end
 	end
 end)
@@ -147,6 +145,7 @@ end)
 --// ESP
 --------------------------------------------------
 local ESPObjects = {}
+
 local function CreateESP(p)
 	if p == LocalPlayer then return end
 	local box = Drawing.new("Square")
@@ -164,45 +163,49 @@ local function CreateESP(p)
 	tracer.Visible = false
 	tracer.Color = _G.CircleColor
 	tracer.Thickness = 1
-	ESPObjects[p] = {Box=box, Name=name, Tracer=tracer}
+	ESPObjects[p] = {Box = box, Name = name, Tracer = tracer}
 end
+
 for _,p in pairs(Players:GetPlayers()) do CreateESP(p) end
 Players.PlayerAdded:Connect(CreateESP)
 Players.PlayerRemoving:Connect(function(p)
-	if ESPObjects[p] then for _,v in pairs(ESPObjects[p]) do v:Remove() end ESPObjects[p]=nil end
+	if ESPObjects[p] then
+		for _,v in pairs(ESPObjects[p]) do v:Remove() end
+		ESPObjects[p] = nil
+	end
 end)
 
 RunService.RenderStepped:Connect(function()
 	local bottom = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
-	for player,objs in pairs(ESPObjects) do
+	for player, objs in pairs(ESPObjects) do
 		local char = player.Character
 		local hum = char and char:FindFirstChild("Humanoid")
 		local hrp = char and char:FindFirstChild("HumanoidRootPart")
-		if char and hum and hum.Health>0 and hrp and (not _G.TeamCheck or player.Team~=LocalPlayer.Team) then
+		if char and hum and hum.Health > 0 and hrp and (not _G.TeamCheck or player.Team ~= LocalPlayer.Team) then
 			local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
 			if _G.ESP_Box and onScreen then
 				local size = Vector2.new(35,50)
-				objs.Box.Size=size
-				objs.Box.Position=Vector2.new(pos.X-size.X/2,pos.Y-size.Y/2)
-				objs.Box.Visible=true
-				objs.Box.Color=_G.CircleColor
-			else objs.Box.Visible=false end
+				objs.Box.Size = size
+				objs.Box.Position = Vector2.new(pos.X - size.X/2, pos.Y - size.Y/2)
+				objs.Box.Visible = true
+				objs.Box.Color = _G.CircleColor
+			else objs.Box.Visible = false end
 			if _G.ESP_Name and onScreen then
-				objs.Name.Text=player.Name
-				objs.Name.Position=Vector2.new(pos.X,pos.Y-35)
-				objs.Name.Visible=true
-				objs.Name.Color=_G.CircleColor
-			else objs.Name.Visible=false end
+				objs.Name.Text = player.Name
+				objs.Name.Position = Vector2.new(pos.X, pos.Y - 35)
+				objs.Name.Visible = true
+				objs.Name.Color = _G.CircleColor
+			else objs.Name.Visible = false end
 			if _G.ESP_Tracer and onScreen then
-				objs.Tracer.From=bottom
-				objs.Tracer.To=Vector2.new(pos.X,pos.Y)
-				objs.Tracer.Visible=true
-				objs.Tracer.Color=_G.CircleColor
-			else objs.Tracer.Visible=false end
+				objs.Tracer.From = bottom
+				objs.Tracer.To = Vector2.new(pos.X,pos.Y)
+				objs.Tracer.Visible = true
+				objs.Tracer.Color = _G.CircleColor
+			else objs.Tracer.Visible = false end
 		else
-			objs.Box.Visible=false
-			objs.Name.Visible=false
-			objs.Tracer.Visible=false
+			objs.Box.Visible = false
+			objs.Name.Visible = false
+			objs.Tracer.Visible = false
 		end
 	end
 end)
@@ -244,7 +247,7 @@ TabLayout.FillDirection = Enum.FillDirection.Horizontal
 TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 TabLayout.Padding = UDim.new(0,8)
 
--- Pages folder
+-- Pages
 local Pages = Instance.new("Folder", Main)
 local function Page()
 	local f = Instance.new("Frame", Main)
@@ -252,6 +255,8 @@ local function Page()
 	f.Size = UDim2.new(1,-30,1,-110)
 	f.BackgroundTransparency = 1
 	f.Visible = false
+	Instance.new("UIListLayout", f).Padding = UDim.new(0,8)
+	Instance.new("UIListLayout", f).SortOrder = Enum.SortOrder.LayoutOrder
 	f.Parent = Pages
 	return f
 end
@@ -282,33 +287,190 @@ Tab("ESP",ESPPage)
 Tab("Movement",MovementPage)
 
 --------------------------------------------------
---// CREATE SCROLLABLE CONTAINERS FOR EACH PAGE
+--// HELPER FUNCTIONS
 --------------------------------------------------
-local function CreatePageContainer(page)
-	local container = Instance.new("ScrollingFrame", page)
-	container.Size = UDim2.new(1,0,1,0)
-	container.Position = UDim2.new(0,0,0,0)
-	container.BackgroundTransparency = 1
-	container.ScrollBarThickness = 6
-	container.AutomaticCanvasSize = Enum.AutomaticSize.Y
-	local layout = Instance.new("UIListLayout", container)
-	layout.Padding = UDim.new(0,6)
-	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	return container
+local function CircleToggle(parent,text,flag)
+	local holder = Instance.new("Frame", parent)
+	holder.Size = UDim2.new(1,0,0,32)
+	holder.BackgroundTransparency = 1
+	local label = Instance.new("TextLabel", holder)
+	label.Size = UDim2.new(1,-40,1,0)
+	label.BackgroundTransparency = 1
+	label.Text = text
+	label.Font = Enum.Font.Gotham
+	label.TextSize = 13
+	label.TextColor3 = Color3.new(1,1,1)
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	local btn = Instance.new("TextButton", holder)
+	btn.Size = UDim2.new(0,22,0,22)
+	btn.Position = UDim2.new(1,-26,0.5,-11)
+	btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	btn.Text = "○"
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 16
+	btn.TextColor3 = Color3.fromRGB(200,200,200)
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+	btn.MouseButton1Click:Connect(function()
+		_G[flag] = not _G[flag]
+		btn.Text = _G[flag] and "●" or "○"
+		btn.TextColor3 = _G[flag] and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+	end)
 end
 
-local AimbotContainer = CreatePageContainer(AimbotPage)
-local ESPContainer = CreatePageContainer(ESPPage)
-local MovementContainer = CreatePageContainer(MovementPage)
+--------------------------------------------------
+--// Aimbot Page
+--------------------------------------------------
+-- Enable Aimbot
+local function AimbotCircleToggle(parent)
+	local holder = Instance.new("Frame", parent)
+	holder.Size = UDim2.new(1,0,0,32)
+	holder.BackgroundTransparency = 1
+	local label = Instance.new("TextLabel", holder)
+	label.Size = UDim2.new(1,-40,1,0)
+	label.BackgroundTransparency = 1
+	label.Text = "Enable Aimbot"
+	label.Font = Enum.Font.Gotham
+	label.TextSize = 13
+	label.TextColor3 = Color3.new(1,1,1)
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	local btn = Instance.new("TextButton", holder)
+	btn.Size = UDim2.new(0,22,0,22)
+	btn.Position = UDim2.new(1,-26,0.5,-11)
+	btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	btn.Text = "○"
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 16
+	btn.TextColor3 = Color3.fromRGB(200,200,200)
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+	btn.MouseButton1Click:Connect(function()
+		_G.AimbotGUIEnabled = not _G.AimbotGUIEnabled
+		if not _G.AimbotGUIEnabled then _G.AimbotEnabled = false end
+		btn.Text = _G.AimbotGUIEnabled and "●" or "○"
+		btn.TextColor3 = _G.AimbotGUIEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+	end)
+end
+AimbotCircleToggle(AimbotPage)
+
+-- Camera Lock Button
+local function CameraLockToggle(parent)
+	local holder = Instance.new("Frame", parent)
+	holder.Size = UDim2.new(1,0,0,32)
+	holder.BackgroundTransparency = 1
+
+	local label = Instance.new("TextLabel", holder)
+	label.Size = UDim2.new(1,-40,1,0)
+	label.BackgroundTransparency = 1
+	label.Text = "Camera Lock"
+	label.Font = Enum.Font.Gotham
+	label.TextSize = 13
+	label.TextColor3 = Color3.new(1,1,1)
+	label.TextXAlignment = Enum.TextXAlignment.Left
+
+	local btn = Instance.new("TextButton", holder)
+	btn.Size = UDim2.new(0,22,0,22)
+	btn.Position = UDim2.new(1,-26,0.5,-11)
+	btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	btn.Text = "○"
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 16
+	btn.TextColor3 = Color3.fromRGB(200,200,200)
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+
+	-- Global reference
+	_G.CameraLockButton = btn
+	_G.CameraLockEnabled = false
+	_G.CameraLockAllowed = false
+
+	btn.MouseButton1Click:Connect(function()
+		_G.CameraLockAllowed = not _G.CameraLockAllowed
+		btn.TextColor3 = _G.CameraLockAllowed and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+		btn.Text = _G.CameraLockEnabled and "●" or "○"
+	end)
+end
+
+CameraLockToggle(AimbotPage)
+
+-- Camera Lock Keybind
+local CameraLockKey = Enum.KeyCode.E
+local CameraLockDebounce = false
+UserInputService.InputBegan:Connect(function(input,gp)
+	if gp then return end
+	if input.UserInputType == Enum.UserInputType.Keyboard then
+		if input.KeyCode == CameraLockKey and _G.CameraLockAllowed and not CameraLockDebounce then
+			_G.CameraLockEnabled = not _G.CameraLockEnabled
+			CameraLockDebounce = true
+			if _G.CameraLockButton then
+				_G.CameraLockButton.Text = _G.CameraLockEnabled and "●" or "○"
+			end
+			print("Camera Lock", _G.CameraLockEnabled and "Enabled" or "Disabled")
+		end
+	end
+end)
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == CameraLockKey then
+		CameraLockDebounce = false
+	end
+end)
+
+-- Aim Part Dropdown
+local function AimPartDropdown(parent)
+	local holder = Instance.new("Frame", parent)
+	holder.Size = UDim2.new(1,0,0,32)
+	holder.BackgroundTransparency = 1
+	local label = Instance.new("TextLabel", holder)
+	label.Size = UDim2.new(0.5,0,1,0)
+	label.BackgroundTransparency = 1
+	label.Text = "Aim Part"
+	label.Font = Enum.Font.Gotham
+	label.TextSize = 13
+	label.TextColor3 = Color3.new(1,1,1)
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	local dropdown = Instance.new("TextButton", holder)
+	dropdown.Size = UDim2.new(0.45,0,1,0)
+	dropdown.Position = UDim2.new(0.5,0,0,0)
+	dropdown.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	dropdown.Text = _G.AimPart
+	dropdown.TextColor3 = Color3.new(1,1,1)
+	dropdown.Font = Enum.Font.Gotham
+	dropdown.TextSize = 13
+	Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0,8)
+	local options = {"Head","UpperTorso","LowerTorso"}
+	local open = false
+	local listFrame
+	dropdown.MouseButton1Click:Connect(function()
+		if open then if listFrame then listFrame:Destroy() end open = false else
+			listFrame = Instance.new("Frame", parent)
+			listFrame.Position = UDim2.new(dropdown.Position.X.Scale,dropdown.Position.X.Offset,dropdown.Position.Y.Scale,dropdown.Position.Y.Offset+32)
+			listFrame.Size = UDim2.new(dropdown.Size.X.Scale,dropdown.Size.X.Offset,0,#options*28)
+			listFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
+			Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0,8)
+			for i,opt in pairs(options) do
+				local b = Instance.new("TextButton", listFrame)
+				b.Size = UDim2.new(1,0,0,28)
+				b.Position = UDim2.new(0,0,0,(i-1)*28)
+				b.Text = opt
+				b.Font = Enum.Font.Gotham
+				b.TextSize = 13
+				b.TextColor3 = Color3.new(1,1,1)
+				b.BackgroundTransparency = 1
+				b.MouseButton1Click:Connect(function()
+					_G.AimPart = opt
+					dropdown.Text = opt
+					listFrame:Destroy()
+					open = false
+				end)
+			end
+			open = true
+		end
+	end)
+end
+AimPartDropdown(AimbotPage)
 
 --------------------------------------------------
---// AIMBOT PAGE CONTROLS
+--// Movement Page
 --------------------------------------------------
-AimbotCircleToggle(AimbotContainer)       -- Enable Aimbot
-CameraLockToggle(AimbotContainer)         -- Camera Lock Allowed
-AimPartDropdown(AimbotContainer)          -- Aim Part selection
-SmoothnessSlider(AimbotContainer)         -- Smoothness slider
-KeybindButton(AimbotContainer)            -- Set Aimbot key
+-- Noclip + Fly
+CircleToggle(MovementPage,"Noclip + Fly","NoclipFlyEnabled")
 
 --------------------------------------------------
 --// ESP PAGE CONTROLS
