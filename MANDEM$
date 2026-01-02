@@ -301,8 +301,6 @@ TabLayout.Padding = UDim.new(0,6)
 --------------------------------------------------
 -- PAGES 
 --------------------------------------------------
-local Pages = Instance.new("Folder", Main)
-
 local function Page()
     local f = Instance.new("Frame", Main)
     f.Position = UDim2.new(0,10,0,128)   -- start below header & tabs
@@ -310,14 +308,30 @@ local function Page()
     f.BackgroundTransparency = 1
     f.Visible = false
 
-    -- Use vertical layout for controls
-    local layout = Instance.new("UIListLayout", f)
+    -- Scrollable frame for controls
+    local ScrollFrame = Instance.new("ScrollingFrame", f)
+    ScrollFrame.Size = UDim2.new(1,0,1,0)
+    ScrollFrame.Position = UDim2.new(0,0,0,0)
+    ScrollFrame.BackgroundTransparency = 1
+    ScrollFrame.ScrollBarThickness = 8
+    ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+    -- Add right padding so scrollbar doesn't overlap controls
+    local padding = Instance.new("UIPadding", ScrollFrame)
+    padding.PaddingRight = UDim.new(0,17)  -- space between controls and scrollbar
+    padding.PaddingLeft = UDim.new(0,0)
+    padding.PaddingTop = UDim.new(0,0)
+    padding.PaddingBottom = UDim.new(0,0)
+
+    -- Layout for vertical stacking of buttons/sliders
+    local layout = Instance.new("UIListLayout", ScrollFrame)
     layout.SortOrder = Enum.SortOrder.LayoutOrder
     layout.Padding = UDim.new(0,8) -- spacing between buttons/sliders
 
     f.Parent = Pages
-    return f
+    return ScrollFrame
 end
+
 
 local AimbotPage = Page()
 local ESPPage = Page()
