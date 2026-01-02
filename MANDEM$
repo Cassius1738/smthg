@@ -507,89 +507,107 @@ CircleToggle(ESPPage,"ESP Tracer","ESP_Tracer")
 CircleToggle(ESPPage,"Team Check","TeamCheck")
 
 --------------------------------------------------
---// MOVEMENT PAGE
+--// MOVEMENT PAGE PLAYER LIST (INTEGRATED & CLEAN)
 --------------------------------------------------
-CircleToggle(MovementPage,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
+local function CreateMovementPlayerList(page)
+    -- Container
+    local PlayerListContainer = Instance.new("ScrollingFrame", page)
+    PlayerListContainer.Size = UDim2.new(1,0,0,180)
+    PlayerListContainer.Position = UDim2.new(0,0,0,0) -- will adjust dynamically
+    PlayerListContainer.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    PlayerListContainer.BorderSizePixel = 0
+    PlayerListContainer.CanvasSize = UDim2.new(0,0,0,0)
+    PlayerListContainer.ScrollBarThickness = 8
+    Instance.new("UICorner", PlayerListContainer).CornerRadius = UDim.new(0,8)
 
--- Noclip + Fly logic
-RunService.Stepped:Connect(function()
-	if _G.NoclipFlyEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-		local hrp = LocalPlayer.Character.HumanoidRootPart
-		for _,part in pairs(LocalPlayer.Character:GetDescendants()) do
-			if part:IsA("BasePart") then part.CanCollide = false end
-		end
-		if not hrp:FindFirstChild("FlyVelocity") then
-			local bv = Instance.new("BodyVelocity")
-			bv.Name = "FlyVelocity"
-			bv.MaxForce = Vector3.new(1e5,1e5,1e5)
-			bv.Velocity = Vector3.zero
-			bv.Parent = hrp
-		end
-		local moveDir = Vector3.new()
-		if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + hrp.CFrame.LookVector end
-		if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - hrp.CFrame.LookVector end
-		if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - hrp.CFrame.RightVector end
-		if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + hrp.CFrame.RightVector end
-		if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0,1,0) end
-		if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir = moveDir - Vector3.new(0,1,0) end
-		if moveDir.Magnitude > 0 then hrp.FlyVelocity.Velocity = moveDir.Unit * _G.FlySpeed else hrp.FlyVelocity.Velocity = Vector3.zero end
-	else
-		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-			local hrp = LocalPlayer.Character.HumanoidRootPart
-			if hrp:FindFirstChild("FlyVelocity") then hrp.FlyVelocity:Destroy() end
-			for _,part in pairs(LocalPlayer.Character:GetDescendants()) do
-				if part:IsA("BasePart") then part.CanCollide = true end
-			end
-		end
-	end
-end)
+    -- Layout
+    local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
+    PlayerLayout.Padding = UDim.new(0,4)
+    PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- Fly Speed Slider
-local function FlySpeedSlider(parent)
-	local holder = Instance.new("Frame", parent)
-	holder.Size = UDim2.new(1,0,0,40)
-	holder.BackgroundTransparency = 1
-	local label = Instance.new("TextLabel", holder)
-	label.Size = UDim2.new(0.6,0,1,0)
-	label.BackgroundTransparency = 1
-	label.Text = "Fly Speed: ".._G.FlySpeed
-	label.Font = Enum.Font.Gotham
-	label.TextSize = 13
-	label.TextColor3 = Color3.new(1,1,1)
-	label.TextXAlignment = Enum.TextXAlignment.Left
-	local sliderBar = Instance.new("Frame", holder)
-	sliderBar.Size = UDim2.new(0.35,0,0.3,0)
-	sliderBar.Position = UDim2.new(0.6,0,0.35,0)
-	sliderBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
-	Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1,0)
-	local fill = Instance.new("Frame", sliderBar)
-	fill.Size = UDim2.new(_G.FlySpeed/200,0,1,0)
-	fill.BackgroundColor3 = Color3.fromRGB(0,255,120)
-	Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
-	local handle = Instance.new("Frame", sliderBar)
-	handle.Size = UDim2.new(0,16,0,16)
-	handle.Position = UDim2.new(fill.Size.X.Scale, 0, 0.5, -8)
-	handle.BackgroundColor3 = Color3.fromRGB(0,255,120)
-	Instance.new("UICorner", handle).CornerRadius = UDim.new(1,0)
-	local dragging = false
-	handle.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true Main.Active = false end
-	end)
-	handle.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false Main.Active = true end
-	end)
-	UserInputService.InputChanged:Connect(function(input)
-		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-			local mouseX = math.clamp(input.Position.X - sliderBar.AbsolutePosition.X,0,sliderBar.AbsoluteSize.X)
-			local val = mouseX / sliderBar.AbsoluteSize.X
-			_G.FlySpeed = math.clamp(val*200,10,200)
-			fill.Size = UDim2.new(val,0,1,0)
-			handle.Position = UDim2.new(val,0,0.5,-8)
-			label.Text = "Fly Speed: "..math.floor(_G.FlySpeed)
-		end
-	end)
+    -- Auto-update CanvasSize
+    PlayerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y + 8)
+    end)
+
+    -- Function to create a player entry
+    local function CreatePlayerButton(player)
+        if player == LocalPlayer then return end
+        local holder = Instance.new("Frame")
+        holder.Size = UDim2.new(1,0,0,28)
+        holder.BackgroundTransparency = 1
+
+        local nameLabel = Instance.new("TextLabel", holder)
+        nameLabel.Size = UDim2.new(0.55,0,1,0)
+        nameLabel.Position = UDim2.new(0,5,0,0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Text = player.Name
+        nameLabel.TextColor3 = Color3.new(1,1,1)
+        nameLabel.Font = Enum.Font.Gotham
+        nameLabel.TextSize = 13
+        nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+        local tpBtn = Instance.new("TextButton", holder)
+        tpBtn.Size = UDim2.new(0.4,0,1,0)
+        tpBtn.Position = UDim2.new(0.57,0,0,0)
+        tpBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+        tpBtn.Text = "Teleport"
+        tpBtn.TextColor3 = Color3.new(1,1,1)
+        tpBtn.Font = Enum.Font.Gotham
+        tpBtn.TextSize = 12
+        Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,6)
+
+        tpBtn.MouseButton1Click:Connect(function()
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local targetHRP = player.Character.HumanoidRootPart
+                local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+                local hrp = char:WaitForChild("HumanoidRootPart")
+                hrp.CFrame = targetHRP.CFrame + Vector3.new(0,3,0)
+            end
+        end)
+
+        holder.Parent = PlayerListContainer
+    end
+
+    -- Populate current players
+    for _,p in pairs(Players:GetPlayers()) do
+        CreatePlayerButton(p)
+    end
+
+    -- Handle new players
+    Players.PlayerAdded:Connect(CreatePlayerButton)
+    Players.PlayerRemoving:Connect(function(p)
+        for _,frame in pairs(PlayerListContainer:GetChildren()) do
+            if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == p.Name then
+                frame:Destroy()
+            end
+        end
+    end)
+
+    -- Dynamic positioning below other elements
+    local function UpdatePosition()
+        local maxY = 0
+        for _,child in pairs(page:GetChildren()) do
+            if child:IsA("Frame") and child ~= PlayerListContainer then
+                maxY = math.max(maxY, child.Position.Y.Offset + child.Size.Y.Offset)
+            end
+        end
+        PlayerListContainer.Position = UDim2.new(0,0,0,maxY + 8)
+    end
+
+    -- Watch other elements
+    for _,child in pairs(page:GetChildren()) do
+        if child:IsA("Frame") and child ~= PlayerListContainer then
+            child:GetPropertyChangedSignal("Position"):Connect(UpdatePosition)
+            child:GetPropertyChangedSignal("Size"):Connect(UpdatePosition)
+        end
+    end
+
+    UpdatePosition()
 end
-FlySpeedSlider(MovementPage)
+
+-- Call this for the Movement Page
+CreateMovementPlayerList(MovementPage)
 
 --------------------------------------------------
 --// CLEAN SCROLLABLE PLAYER LIST INSIDE GUI
