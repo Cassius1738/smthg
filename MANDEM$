@@ -401,56 +401,67 @@ Players.PlayerRemoving:Connect(function(p)
 end)
 
 --------------------------------------------------
---// CAMERA AIMBOT (CURSOR-BASED, NO AUTO-PICK)
+--// CAMERA AIMBOT (CURSOR LOCK, NO AUTO SWITCH)
 --------------------------------------------------
 local CurrentTarget = nil
 
-local function IsAlive(p)
-    return p and p.Character and p.Character:FindFirstChild(_G.AimPart) and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0
+local function IsAlive(plr)
+	return plr
+		and plr.Character
+		and plr.Character:FindFirstChild(_G.AimPart)
+		and plr.Character:FindFirstChild("Humanoid")
+		and plr.Character.Humanoid.Health > 0
 end
 
-local function GetMouseTarget()
-	local mouse = LocalPlayer:GetMouse()
-	local hit = mouse.Target
-	if hit and hit.Parent then
-		local model = hit.Parent
-		local humanoid = model:FindFirstChildOfClass("Humanoid")
-		if humanoid and humanoid.Health > 0 then
-			local player = Players:GetPlayerFromCharacter(model)
-			if player and player ~= LocalPlayer then
-				if not _G.TeamCheck or player.Team ~= LocalPlayer.Team then
-					return player
+-- Picks ONLY what your crosshair is pointing at ONCE
+local function GetTargetFromCursor()
+	local mousePos = UserInputService:GetMouseLocation()
+	local bestPlayer = nil
+	local smallestDist = 40 -- lock radius (pixels)
+
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr ~= LocalPlayer and IsAlive(plr) then
+			if not _G.TeamCheck or plr.Team ~= LocalPlayer.Team then
+				local part = plr.Character[_G.AimPart]
+				local screenPos, onScreen = Camera:WorldToViewportPoint(part.Position)
+				if onScreen then
+					local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+					if dist < smallestDist then
+						smallestDist = dist
+						bestPlayer = plr
+					end
 				end
 			end
 		end
 	end
-	return nil
+
+	return bestPlayer
 end
 
--- Toggle aimbot with key
+-- Toggle camera lock
 UserInputService.InputBegan:Connect(function(input, gp)
 	if gp then return end
 	if input.KeyCode == _G.AimbotKey then
 		_G.AimbotEnabled = not _G.AimbotEnabled
+
 		if _G.AimbotEnabled then
-			CurrentTarget = GetMouseTarget()
-			print("Aimbot Enabled | Target Locked: "..(CurrentTarget and CurrentTarget.Name or "None"))
+			-- LOCK ONLY ONCE
+			CurrentTarget = GetTargetFromCursor()
 		else
 			CurrentTarget = nil
-			print("Aimbot Disabled")
 		end
 	end
 end)
 
--- Smooth camera follow
+-- Smooth camera follow (NO RETARGETING)
 RunService.RenderStepped:Connect(function()
 	if _G.AimbotEnabled and CurrentTarget and IsAlive(CurrentTarget) then
 		local part = CurrentTarget.Character[_G.AimPart]
-		if part then
-			local camCF = Camera.CFrame
-			local targetCF = CFrame.new(camCF.Position, part.Position)
-			Camera.CFrame = camCF:Lerp(targetCF, _G.Sensitivity)
-		end
+		local camCF = Camera.CFrame
+		local targetCF = CFrame.new(camCF.Position, part.Position)
+
+		-- Azure-style smooth cam
+		Camera.CFrame = camCF:Lerp(targetCF, _G.Sensitivity)
 	end
 end)
 
