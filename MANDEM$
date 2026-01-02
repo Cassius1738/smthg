@@ -685,7 +685,7 @@ Players.PlayerRemoving:Connect(function(p)
 end)
 
 --------------------------------------------------
---// BIG HEAD (VISUAL + HITBOX)
+--// BIG HEAD (VISUAL + HITBOX) - FIXED
 --------------------------------------------------
 _G.VisualBigHead = false
 
@@ -713,22 +713,35 @@ local function ApplyBigHead(player)
 	end
 end
 
-local function ApplyBigHeadToAll()
-	for _, player in pairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer and player.Character then
+-- Apply Big Head whenever a player's character spawns
+local function SetupPlayerBigHead(player)
+	player.CharacterAdded:Connect(function()
+		task.wait(0.5) -- wait for character to load
+		if _G.VisualBigHead then
+			ApplyBigHead(player)
+		end
+	end)
+end
+
+-- Apply Big Head to all current players and set up respawn listeners
+for _, player in pairs(Players:GetPlayers()) do
+	if player ~= LocalPlayer then
+		SetupPlayerBigHead(player)
+		if _G.VisualBigHead and player.Character then
+			task.wait(0.5)
 			ApplyBigHead(player)
 		end
 	end
 end
 
+-- Listen for new players joining
 Players.PlayerAdded:Connect(function(player)
-	player.CharacterAdded:Connect(function()
-		task.wait(0.5)
-		ApplyBigHead(player)
-	end)
+	if player ~= LocalPlayer then
+		SetupPlayerBigHead(player)
+	end
 end)
 
--- Create toggle circle in MovementPage
+-- GUI toggle for Movement Page
 local function BigHeadCircleToggle(parent)
 	local holder = Instance.new("Frame", parent)
 	holder.Size = UDim2.new(1,0,0,32)
@@ -754,7 +767,12 @@ local function BigHeadCircleToggle(parent)
 		_G.VisualBigHead = not _G.VisualBigHead
 		btn.Text = _G.VisualBigHead and "●" or "○"
 		btn.TextColor3 = _G.VisualBigHead and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
-		ApplyBigHeadToAll()
+		-- Apply immediately to all players
+		for _, player in pairs(Players:GetPlayers()) do
+			if player ~= LocalPlayer and player.Character then
+				ApplyBigHead(player)
+			end
+		end
 	end)
 end
 
