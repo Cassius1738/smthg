@@ -598,25 +598,18 @@ FlySpeedSlider(MovementPage)
 -- Wrapper frame that clips content
 local PlayerListWrapper = Instance.new("Frame", MovementPage)
 PlayerListWrapper.Size = UDim2.new(1, 0, 0, 150) -- visible height
-PlayerListWrapper.Position = UDim2.new(0, 0, 0, 0) -- will adjust below other elements
+PlayerListWrapper.Position = UDim2.new(0, 0, 0, 0) -- will adjust dynamically
 PlayerListWrapper.BackgroundTransparency = 1
 PlayerListWrapper.ClipsDescendants = true
 
 -- Scrolling frame inside the wrapper
 local PlayerListContainer = Instance.new("ScrollingFrame", PlayerListWrapper)
-PlayerListContainer.Size = UDim2.new(1, 0, 1, 0) -- fill wrapper
+PlayerListContainer.Size = UDim2.new(1, -20, 1, 0) -- smaller width to avoid overlapping scrollbar
 PlayerListContainer.Position = UDim2.new(0, 0, 0, 0)
 PlayerListContainer.BackgroundTransparency = 1
 PlayerListContainer.BorderSizePixel = 0
 PlayerListContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-PlayerListContainer.ScrollBarThickness = 6 -- smaller thickness to prevent overlap
-
--- Padding so scrollbar doesn't overlap buttons
-local padding = Instance.new("UIPadding", PlayerListContainer)
-padding.PaddingRight = UDim.new(0, 14) -- move scroll bar inward (space from right)
-padding.PaddingLeft = UDim.new(0, 4)   -- left margin
-padding.PaddingTop = UDim.new(0, 4)
-padding.PaddingBottom = UDim.new(0, 4)
+PlayerListContainer.ScrollBarThickness = 4 -- thin scroll bar
 
 local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
 PlayerLayout.Padding = UDim.new(0, 4)
@@ -655,7 +648,8 @@ end
 local function CreatePlayerButton(player)
 	if player == LocalPlayer then return end
 	local holder = Instance.new("Frame")
-	holder.Size = UDim2.new(1, 0, 0, 28)
+	holder.Size = UDim2.new(1, -8, 0, 28) -- shrink width slightly so buttons don't touch scrollbar
+	holder.Position = UDim2.new(0, 0, 0, 0)
 	holder.BackgroundTransparency = 1
 
 	local nameLabel = Instance.new("TextLabel", holder)
