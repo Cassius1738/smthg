@@ -592,97 +592,114 @@ end
 FlySpeedSlider(MovementPage)
 
 --------------------------------------------------
---// CLEAN SCROLLABLE PLAYER LIST INSIDE GUI
+--// MOVEMENT PAGE PLAYER LIST (DYNAMIC & SCROLLABLE)
 --------------------------------------------------
-local PlayerListContainer = Instance.new("ScrollingFrame", MovementPage)
-PlayerListContainer.Size = UDim2.new(1,0,0,150) -- fixed height
-PlayerListContainer.Position = UDim2.new(0,0,0,0) -- will adjust dynamically
-PlayerListContainer.BackgroundColor3 = Color3.fromRGB(35,35,35)
-PlayerListContainer.BorderSizePixel = 0
-PlayerListContainer.CanvasSize = UDim2.new(0,0,0,0)
-PlayerListContainer.ScrollBarThickness = 8
-Instance.new("UICorner", PlayerListContainer).CornerRadius = UDim.new(0,8)
+local function CreateDynamicPlayerList(page)
+    -- Container
+    local PlayerListContainer = Instance.new("ScrollingFrame", page)
+    PlayerListContainer.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    PlayerListContainer.BorderSizePixel = 0
+    PlayerListContainer.ScrollBarThickness = 8
+    PlayerListContainer.Size = UDim2.new(1,0,0,150) -- initial height
+    PlayerListContainer.Position = UDim2.new(0,0,0,0)
+    Instance.new("UICorner", PlayerListContainer).CornerRadius = UDim.new(0,8)
 
-local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
-PlayerLayout.Padding = UDim.new(0,4)
-PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
+    PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    PlayerLayout.Padding = UDim.new(0,4)
 
--- Update CanvasSize dynamically
-PlayerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y + 8)
-end)
+    -- Auto-update CanvasSize
+    PlayerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y + 8)
+    end)
 
--- Adjust PlayerListContainer position based on other MovementPage elements
-local function UpdatePlayerListPosition()
-	local maxY = 0
-	for _,child in pairs(MovementPage:GetChildren()) do
-		if child:IsA("Frame") and child ~= PlayerListContainer then
-			maxY = math.max(maxY, child.Position.Y.Offset + child.Size.Y.Offset)
-		end
-	end
-	PlayerListContainer.Position = UDim2.new(0,0,0,maxY + 8) -- padding
+    -- Function to calculate the top position based on other elements
+    local function UpdatePlayerListPosition()
+        local maxY = 0
+        for _, child in pairs(page:GetChildren()) do
+            if child:IsA("Frame") and child ~= PlayerListContainer then
+                maxY = math.max(maxY, child.Position.Y.Offset + child.Size.Y.Offset)
+            end
+        end
+        -- Set position below other elements
+        PlayerListContainer.Position = UDim2.new(0,0,0,maxY + 8)
+
+        -- Adjust height so it stays inside the page
+        local availableHeight = page.AbsoluteSize.Y - PlayerListContainer.Position.Y.Offset - 8
+        PlayerListContainer.Size = UDim2.new(1,0,0,math.clamp(availableHeight, 50, 300))
+    end
+
+    -- Listen for size/position changes of other elements
+    for _, child in pairs(page:GetChildren()) do
+        if child:IsA("Frame") and child ~= PlayerListContainer then
+            child:GetPropertyChangedSignal("Position"):Connect(UpdatePlayerListPosition)
+            child:GetPropertyChangedSignal("Size"):Connect(UpdatePlayerListPosition)
+        end
+    end
+
+    -- Initial update
+    UpdatePlayerListPosition()
+
+    -- Function to create a player button
+    local function CreatePlayerButton(player)
+        if player == LocalPlayer then return end
+        local holder = Instance.new("Frame")
+        holder.Size = UDim2.new(1,0,0,28)
+        holder.BackgroundTransparency = 1
+
+        local nameLabel = Instance.new("TextLabel", holder)
+        nameLabel.Size = UDim2.new(0.55,0,1,0)
+        nameLabel.Position = UDim2.new(0,5,0,0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Text = player.Name
+        nameLabel.TextColor3 = Color3.new(1,1,1)
+        nameLabel.Font = Enum.Font.Gotham
+        nameLabel.TextSize = 13
+        nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+        local tpBtn = Instance.new("TextButton", holder)
+        tpBtn.Size = UDim2.new(0.4,0,1,0)
+        tpBtn.Position = UDim2.new(0.57,0,0,0)
+        tpBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+        tpBtn.Text = "Teleport"
+        tpBtn.TextColor3 = Color3.new(1,1,1)
+        tpBtn.Font = Enum.Font.Gotham
+        tpBtn.TextSize = 12
+        Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,6)
+
+        tpBtn.MouseButton1Click:Connect(function()
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local targetHRP = player.Character.HumanoidRootPart
+                local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+                local hrp = char:WaitForChild("HumanoidRootPart")
+                hrp.CFrame = targetHRP.CFrame + Vector3.new(0,3,0)
+            end
+        end)
+
+        holder.Parent = PlayerListContainer
+    end
+
+    -- Populate current players
+    for _, player in pairs(Players:GetPlayers()) do
+        CreatePlayerButton(player)
+    end
+
+    -- Listen for new players
+    Players.PlayerAdded:Connect(CreatePlayerButton)
+
+    -- Remove players leaving
+    Players.PlayerRemoving:Connect(function(player)
+        for _, frame in pairs(PlayerListContainer:GetChildren()) do
+            if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == player.Name then
+                frame:Destroy()
+            end
+        end
+    end)
 end
 
-UpdatePlayerListPosition()
-for _,child in pairs(MovementPage:GetChildren()) do
-	if child:IsA("Frame") and child ~= PlayerListContainer then
-		child:GetPropertyChangedSignal("Position"):Connect(UpdatePlayerListPosition)
-		child:GetPropertyChangedSignal("Size"):Connect(UpdatePlayerListPosition)
-	end
-end
+-- Call the function for the MovementPage
+CreateDynamicPlayerList(MovementPage)
 
--- Function to create player button
-local function CreatePlayerButton(player)
-	if player == LocalPlayer then return end
-	local holder = Instance.new("Frame")
-	holder.Size = UDim2.new(1,0,0,28)
-	holder.BackgroundTransparency = 1
-
-	local nameLabel = Instance.new("TextLabel", holder)
-	nameLabel.Size = UDim2.new(0.55,0,1,0)
-	nameLabel.Position = UDim2.new(0,5,0,0)
-	nameLabel.BackgroundTransparency = 1
-	nameLabel.Text = player.Name
-	nameLabel.TextColor3 = Color3.new(1,1,1)
-	nameLabel.Font = Enum.Font.Gotham
-	nameLabel.TextSize = 13
-	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-
-	local tpBtn = Instance.new("TextButton", holder)
-	tpBtn.Size = UDim2.new(0.4,0,1,0)
-	tpBtn.Position = UDim2.new(0.57,0,0,0)
-	tpBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
-	tpBtn.Text = "Teleport"
-	tpBtn.TextColor3 = Color3.new(1,1,1)
-	tpBtn.Font = Enum.Font.Gotham
-	tpBtn.TextSize = 12
-	Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,6)
-
-	tpBtn.MouseButton1Click:Connect(function()
-		if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-			local targetHRP = player.Character.HumanoidRootPart
-			local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-			local hrp = char:WaitForChild("HumanoidRootPart")
-			hrp.CFrame = targetHRP.CFrame + Vector3.new(0,3,0)
-		end
-	end)
-
-	holder.Parent = PlayerListContainer
-end
-
--- Populate players
-for _,p in pairs(Players:GetPlayers()) do
-	CreatePlayerButton(p)
-end
-
-Players.PlayerAdded:Connect(CreatePlayerButton)
-Players.PlayerRemoving:Connect(function(p)
-	for _,frame in pairs(PlayerListContainer:GetChildren()) do
-		if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == p.Name then
-			frame:Destroy()
-		end
-	end
-end)
 
 --------------------------------------------------
 --// UNIVERSAL BIG HEAD (R6 + R15 + CUSTOM RIGS)
