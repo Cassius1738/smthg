@@ -685,7 +685,7 @@ Players.PlayerRemoving:Connect(function(p)
 end)
 
 --------------------------------------------------
---// BIG HEAD + HITBOX (LOCAL ONLY)
+--// BIG HEAD (VISUAL + HITBOX) - FULLY FUNCTIONAL
 --------------------------------------------------
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -695,27 +695,28 @@ _G.VisualBigHead = false
 local BIG_HEAD_SIZE = Vector3.new(4,4,4)
 local NORMAL_HEAD_SIZE = Vector3.new(2,1,1)
 
--- Applies visual big head + hitbox for a player
+-- Apply visual + hitbox for a player
 local function ApplyBigHead(player)
 	if not player.Character then return end
 	local head = player.Character:FindFirstChild("Head")
 	if head then
+		-- Visual
+		head.Size = _G.VisualBigHead and BIG_HEAD_SIZE or NORMAL_HEAD_SIZE
+		head.Transparency = _G.VisualBigHead and 0.5 or 0
+		head.CanCollide = false
+
+		-- Ensure mesh exists
+		local mesh = head:FindFirstChildOfClass("SpecialMesh")
+		if not mesh then
+			mesh = Instance.new("SpecialMesh")
+			mesh.MeshType = Enum.MeshType.Head
+			mesh.Parent = head
+		end
+		mesh.Scale = Vector3.new(1,1,1)
+
+		-- Hitbox part
+		local hitbox = head:FindFirstChild("BigHeadHitbox")
 		if _G.VisualBigHead then
-			-- Visual head
-			head.Size = BIG_HEAD_SIZE
-			head.Transparency = 0.5
-			head.CanCollide = false
-
-			local mesh = head:FindFirstChildOfClass("SpecialMesh")
-			if not mesh then
-				mesh = Instance.new("SpecialMesh")
-				mesh.MeshType = Enum.MeshType.Head
-				mesh.Parent = head
-			end
-			mesh.Scale = Vector3.new(1,1,1)
-
-			-- Hitbox part (local only)
-			local hitbox = head:FindFirstChild("BigHeadHitbox")
 			if not hitbox then
 				hitbox = Instance.new("Part")
 				hitbox.Name = "BigHeadHitbox"
@@ -727,43 +728,32 @@ local function ApplyBigHead(player)
 			end
 			hitbox.Size = BIG_HEAD_SIZE
 			hitbox.CFrame = head.CFrame
-		else
-			-- Reset
-			head.Size = NORMAL_HEAD_SIZE
-			head.Transparency = 0
-			local mesh = head:FindFirstChildOfClass("SpecialMesh")
-			if mesh then mesh.Scale = Vector3.new(1,1,1) end
-			local hitbox = head:FindFirstChild("BigHeadHitbox")
-			if hitbox then hitbox:Destroy() end
+		elseif hitbox then
+			hitbox:Destroy()
 		end
 	end
 end
 
--- Update hitbox position every frame
+-- Update head + hitbox every frame to prevent Roblox resetting
 RunService.RenderStepped:Connect(function()
 	if _G.VisualBigHead then
 		for _,player in pairs(Players:GetPlayers()) do
 			if player ~= LocalPlayer and player.Character then
-				local head = player.Character:FindFirstChild("Head")
-				local hitbox = head and head:FindFirstChild("BigHeadHitbox")
-				if head and hitbox then
-					hitbox.CFrame = head.CFrame
-					head.Size = BIG_HEAD_SIZE -- ensure visual stays big
-					head.Transparency = 0.5
-				end
+				ApplyBigHead(player)
 			end
 		end
 	end
 end)
 
--- Setup players
+-- Setup a player to handle respawns
 local function SetupPlayer(player)
 	player.CharacterAdded:Connect(function()
-		task.wait(0.5)
+		task.wait(0.5) -- wait for character to fully load
 		ApplyBigHead(player)
 	end)
 end
 
+-- Apply to all current players
 for _,player in pairs(Players:GetPlayers()) do
 	if player ~= LocalPlayer then
 		SetupPlayer(player)
@@ -772,17 +762,19 @@ for _,player in pairs(Players:GetPlayers()) do
 	end
 end
 
+-- Listen for new players
 Players.PlayerAdded:Connect(function(player)
 	if player ~= LocalPlayer then
 		SetupPlayer(player)
 	end
 end)
 
--- GUI toggle
+-- GUI toggle for MovementPage
 local function BigHeadCircleToggle(parent)
 	local holder = Instance.new("Frame", parent)
 	holder.Size = UDim2.new(1,0,0,32)
 	holder.BackgroundTransparency = 1
+
 	local label = Instance.new("TextLabel", holder)
 	label.Size = UDim2.new(1,-40,1,0)
 	label.BackgroundTransparency = 1
@@ -806,7 +798,8 @@ local function BigHeadCircleToggle(parent)
 		_G.VisualBigHead = not _G.VisualBigHead
 		btn.Text = _G.VisualBigHead and "●" or "○"
 		btn.TextColor3 = _G.VisualBigHead and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
-		-- Apply immediately to all players
+
+		-- Apply immediately
 		for _,player in pairs(Players:GetPlayers()) do
 			if player ~= LocalPlayer then
 				ApplyBigHead(player)
@@ -816,8 +809,6 @@ local function BigHeadCircleToggle(parent)
 end
 
 BigHeadCircleToggle(MovementPage)
-
-
 
 --------------------------------------------------
 --// SHOW / HIDE MENU
