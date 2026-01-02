@@ -507,42 +507,63 @@ CircleToggle(ESPPage,"ESP Tracer","ESP_Tracer")
 CircleToggle(ESPPage,"Team Check","TeamCheck")
 
 --------------------------------------------------
---// MOVEMENT PAGE PLAYER LIST (INTEGRATED & CLEAN)
+--// INTEGRATED PLAYER LIST INSIDE MOVEMENT PAGE
 --------------------------------------------------
-local function CreateMovementPlayerList(page)
-    -- Container
-    local PlayerListContainer = Instance.new("ScrollingFrame", page)
-    PlayerListContainer.Size = UDim2.new(1,0,0,180)
-    PlayerListContainer.Position = UDim2.new(0,0,0,0) -- will adjust dynamically
-    PlayerListContainer.BackgroundColor3 = Color3.fromRGB(35,35,35)
-    PlayerListContainer.BorderSizePixel = 0
-    PlayerListContainer.CanvasSize = UDim2.new(0,0,0,0)
-    PlayerListContainer.ScrollBarThickness = 8
-    Instance.new("UICorner", PlayerListContainer).CornerRadius = UDim.new(0,8)
+local function CreateIntegratedPlayerList(page)
+    -- Wrapper frame inside MovementPage
+    local container = Instance.new("Frame", page)
+    container.Size = UDim2.new(1, -20, 0, 180) -- fit nicely inside page
+    container.Position = UDim2.new(0, 10, 0, 0) -- padding from edges
+    container.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    container.BorderSizePixel = 0
+    Instance.new("UICorner", container).CornerRadius = UDim.new(0,8)
 
-    -- Layout
-    local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
-    PlayerLayout.Padding = UDim.new(0,4)
-    PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    -- Header
+    local header = Instance.new("TextLabel", container)
+    header.Size = UDim2.new(1,0,0,28)
+    header.Position = UDim2.new(0,0,0,0)
+    header.BackgroundTransparency = 1
+    header.Text = "Players"
+    header.Font = Enum.Font.GothamBold
+    header.TextSize = 14
+    header.TextColor3 = Color3.fromRGB(255,255,255)
+    header.TextXAlignment = Enum.TextXAlignment.Left
+    header.TextYAlignment = Enum.TextYAlignment.Center
+    header.Padding = Instance.new("UIPadding", header)
+    header.Padding.Left = UDim.new(0,6)
 
-    -- Auto-update CanvasSize
-    PlayerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y + 8)
+    -- Scrollable list
+    local scroll = Instance.new("ScrollingFrame", container)
+    scroll.Size = UDim2.new(1,0,1,-32) -- under header
+    scroll.Position = UDim2.new(0,0,0,28)
+    scroll.BackgroundTransparency = 1
+    scroll.BorderSizePixel = 0
+    scroll.ScrollBarThickness = 6
+    scroll.CanvasSize = UDim2.new(0,0,0,0)
+
+    local layout = Instance.new("UIListLayout", scroll)
+    layout.Padding = UDim.new(0,4)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+    -- Auto-update canvas size
+    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        scroll.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y + 4)
     end)
 
-    -- Function to create a player entry
-    local function CreatePlayerButton(player)
+    -- Function to add a player
+    local function AddPlayer(player)
         if player == LocalPlayer then return end
+
         local holder = Instance.new("Frame")
         holder.Size = UDim2.new(1,0,0,28)
         holder.BackgroundTransparency = 1
 
         local nameLabel = Instance.new("TextLabel", holder)
         nameLabel.Size = UDim2.new(0.55,0,1,0)
-        nameLabel.Position = UDim2.new(0,5,0,0)
+        nameLabel.Position = UDim2.new(0,6,0,0)
         nameLabel.BackgroundTransparency = 1
         nameLabel.Text = player.Name
-        nameLabel.TextColor3 = Color3.new(1,1,1)
+        nameLabel.TextColor3 = Color3.fromRGB(255,255,255)
         nameLabel.Font = Enum.Font.Gotham
         nameLabel.TextSize = 13
         nameLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -550,9 +571,9 @@ local function CreateMovementPlayerList(page)
         local tpBtn = Instance.new("TextButton", holder)
         tpBtn.Size = UDim2.new(0.4,0,1,0)
         tpBtn.Position = UDim2.new(0.57,0,0,0)
-        tpBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+        tpBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
         tpBtn.Text = "Teleport"
-        tpBtn.TextColor3 = Color3.new(1,1,1)
+        tpBtn.TextColor3 = Color3.fromRGB(255,255,255)
         tpBtn.Font = Enum.Font.Gotham
         tpBtn.TextSize = 12
         Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,6)
@@ -566,48 +587,30 @@ local function CreateMovementPlayerList(page)
             end
         end)
 
-        holder.Parent = PlayerListContainer
+        holder.Parent = scroll
     end
 
-    -- Populate current players
+    -- Add all current players
     for _,p in pairs(Players:GetPlayers()) do
-        CreatePlayerButton(p)
+        AddPlayer(p)
     end
 
     -- Handle new players
-    Players.PlayerAdded:Connect(CreatePlayerButton)
+    Players.PlayerAdded:Connect(AddPlayer)
     Players.PlayerRemoving:Connect(function(p)
-        for _,frame in pairs(PlayerListContainer:GetChildren()) do
+        for _,frame in pairs(scroll:GetChildren()) do
             if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == p.Name then
                 frame:Destroy()
             end
         end
     end)
 
-    -- Dynamic positioning below other elements
-    local function UpdatePosition()
-        local maxY = 0
-        for _,child in pairs(page:GetChildren()) do
-            if child:IsA("Frame") and child ~= PlayerListContainer then
-                maxY = math.max(maxY, child.Position.Y.Offset + child.Size.Y.Offset)
-            end
-        end
-        PlayerListContainer.Position = UDim2.new(0,0,0,maxY + 8)
-    end
-
-    -- Watch other elements
-    for _,child in pairs(page:GetChildren()) do
-        if child:IsA("Frame") and child ~= PlayerListContainer then
-            child:GetPropertyChangedSignal("Position"):Connect(UpdatePosition)
-            child:GetPropertyChangedSignal("Size"):Connect(UpdatePosition)
-        end
-    end
-
-    UpdatePosition()
+    return container
 end
 
 -- Call this for the Movement Page
-CreateMovementPlayerList(MovementPage)
+CreateIntegratedPlayerList(MovementPage)
+
 
 --------------------------------------------------
 --// CLEAN SCROLLABLE PLAYER LIST INSIDE GUI
