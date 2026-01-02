@@ -526,7 +526,7 @@ CircleToggle(ESPPage,"ESP Tracer","ESP_Tracer")
 CircleToggle(ESPPage,"Team Check","TeamCheck")
 
 --------------------------------------------------
---// MOVEMENT PAGE CLEAN SCROLLABLE
+--// MOVEMENT PAGE (Scrollable + Player List inside RightPanel)
 --------------------------------------------------
 
 -- Clear previous children if reloading
@@ -534,19 +534,98 @@ for _,c in pairs(MovementPage:GetChildren()) do
     c:Destroy()
 end
 
--- Single scrolling frame for all movement options + player list
+-- Scrollable frame for all movement options + player list
 local ScrollFrame = Instance.new("ScrollingFrame")
 ScrollFrame.Parent = MovementPage
-ScrollFrame.Size = UDim2.new(1,0,1,0)
+ScrollFrame.Size = UDim2.new(1,0,1,0)  -- full RightPanel size
 ScrollFrame.Position = UDim2.new(0,0,0,0)
 ScrollFrame.BackgroundTransparency = 1
 ScrollFrame.ScrollBarThickness = 8
 ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
--- UIListLayout inside scrolling frame
+-- Layout inside scrolling frame
 local Layout = Instance.new("UIListLayout", ScrollFrame)
 Layout.SortOrder = Enum.SortOrder.LayoutOrder
 Layout.Padding = UDim.new(0,8)
+
+-- Toggles + Sliders
+CircleToggle(ScrollFrame,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
+Slider(ScrollFrame,"Fly Speed","FlySpeed",10,200)
+CircleToggle(ScrollFrame,"No Jump Cooldown","NoCooldownJumpEnabled")
+CircleToggle(ScrollFrame,"Enable Walk Speed","SpeedEnabled")
+Slider(ScrollFrame,"Walk Speed","WalkSpeedValue",16,100)
+BigHeadCircleToggle(ScrollFrame)
+
+-- Player list header
+local PlayerHeader = Instance.new("TextLabel", ScrollFrame)
+PlayerHeader.Size = UDim2.new(1,0,0,28)
+PlayerHeader.BackgroundTransparency = 1
+PlayerHeader.Text = "Players"
+PlayerHeader.Font = Enum.Font.GothamBold
+PlayerHeader.TextSize = 14
+PlayerHeader.TextColor3 = Color3.fromRGB(0,255,120)
+PlayerHeader.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Add teleport buttons for all players
+local function AddPlayerTeleportButtons(parent)
+    local function CreatePlayerButton(player)
+        if player == LocalPlayer then return end
+        local holder = Instance.new("Frame")
+        holder.Size = UDim2.new(1,0,0,28)
+        holder.BackgroundTransparency = 1
+
+        -- Player Name
+        local nameLabel = Instance.new("TextLabel", holder)
+        nameLabel.Size = UDim2.new(0.55,0,1,0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Text = player.Name
+        nameLabel.TextColor3 = Color3.new(1,1,1)
+        nameLabel.Font = Enum.Font.Gotham
+        nameLabel.TextSize = 13
+        nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+        -- Teleport Button
+        local tpBtn = Instance.new("TextButton", holder)
+        tpBtn.Size = UDim2.new(0.4,0,1,0)
+        tpBtn.Position = UDim2.new(0.57,0,0,0)
+        tpBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+        tpBtn.Text = "Teleport"
+        tpBtn.TextColor3 = Color3.new(1,1,1)
+        tpBtn.Font = Enum.Font.Gotham
+        tpBtn.TextSize = 12
+        Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,6)
+
+        -- Teleport logic
+        tpBtn.MouseButton1Click:Connect(function()
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local targetHRP = player.Character.HumanoidRootPart
+                local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+                local hrp = char:WaitForChild("HumanoidRootPart")
+                hrp.CFrame = targetHRP.CFrame + Vector3.new(0,3,0)
+            end
+        end)
+
+        holder.Parent = parent
+    end
+
+    -- Create buttons for current players
+    for _, p in pairs(Players:GetPlayers()) do
+        CreatePlayerButton(p)
+    end
+
+    -- Listen for new players
+    Players.PlayerAdded:Connect(CreatePlayerButton)
+    Players.PlayerRemoving:Connect(function(player)
+        for _, frame in pairs(parent:GetChildren()) do
+            if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == player.Name then
+                frame:Destroy()
+            end
+        end
+    end)
+end
+
+AddPlayerTeleportButtons(ScrollFrame)
+
 
 --------------------------------------------------
 --// Helper Functions
