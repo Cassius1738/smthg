@@ -352,32 +352,38 @@ Tab("Movement",MovementPage)
 --------------------------------------------------
 --// HELPER FUNCTIONS
 --------------------------------------------------
-local function CircleToggle(parent,text,flag)
-	local holder = Instance.new("Frame", parent)
-	holder.Size = UDim2.new(1,0,0,32)
-	holder.BackgroundTransparency = 1
-	local label = Instance.new("TextLabel", holder)
-	label.Size = UDim2.new(1,-40,1,0)
-	label.BackgroundTransparency = 1
-	label.Text = text
-	label.Font = Enum.Font.Gotham
-	label.TextSize = 13
-	label.TextColor3 = Color3.new(1,1,1)
-	label.TextXAlignment = Enum.TextXAlignment.Left
-	local btn = Instance.new("TextButton", holder)
-	btn.Size = UDim2.new(0,22,0,22)
-	btn.Position = UDim2.new(1,-26,0.5,-11)
-	btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
-	btn.Text = "○"
-	btn.Font = Enum.Font.GothamBold
-	btn.TextSize = 16
-	btn.TextColor3 = Color3.fromRGB(200,200,200)
-	Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
-	btn.MouseButton1Click:Connect(function()
-		_G[flag] = not _G[flag]
-		btn.Text = _G[flag] and "●" or "○"
-		btn.TextColor3 = _G[flag] and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
-	end)
+local function CircleToggle(parent, text, flag)
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,0,0,32)
+    holder.BackgroundTransparency = 1
+
+    -- Right padding so toggle button isn't too close to scrollbar
+    local RIGHT_PADDING = 15
+
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(1, -40 - RIGHT_PADDING, 1, 0) -- subtract padding
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local btn = Instance.new("TextButton", holder)
+    btn.Size = UDim2.new(0,22,0,22)
+    btn.Position = UDim2.new(1, -26 - RIGHT_PADDING, 0.5, -11) -- move left by padding
+    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    btn.Text = "○"
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.TextColor3 = Color3.fromRGB(200,200,200)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+
+    btn.MouseButton1Click:Connect(function()
+        _G[flag] = not _G[flag]
+        btn.Text = _G[flag] and "●" or "○"
+        btn.TextColor3 = _G[flag] and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+    end)
 end
 
 --------------------------------------------------
