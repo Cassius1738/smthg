@@ -57,14 +57,9 @@ UserInputService.InputBegan:Connect(function(i,gp)
 		-- Aimbot key
 		if i.KeyCode == _G.AimbotKey and not AimbotDebounce then
 			_G.AimbotEnabled = not _G.AimbotEnabled
-			_G.AimbotGUIEnabled = _G.AimbotEnabled -- keep GUI in sync
+			_G.AimbotGUIEnabled = _G.AimbotEnabled
 			AimbotDebounce = true
-
-			if _G.AimbotEnabled then
-				print("Aimbot Enabled")
-			else
-				print("Aimbot Disabled")
-			end
+			print(_G.AimbotEnabled and "Aimbot Enabled" or "Aimbot Disabled")
 
 		-- Noclip toggle
 		elseif i.KeyCode == Enum.KeyCode.N then
@@ -149,7 +144,6 @@ end)
 --// ESP
 --------------------------------------------------
 local ESPObjects = {}
-
 local function CreateESP(p)
 	if p == LocalPlayer then return end
 	local box = Drawing.new("Square")
@@ -169,7 +163,6 @@ local function CreateESP(p)
 	tracer.Thickness = 1
 	ESPObjects[p] = {Box = box, Name = name, Tracer = tracer}
 end
-
 for _,p in pairs(Players:GetPlayers()) do CreateESP(p) end
 Players.PlayerAdded:Connect(CreateESP)
 Players.PlayerRemoving:Connect(function(p)
@@ -213,6 +206,7 @@ RunService.RenderStepped:Connect(function()
 		end
 	end
 end)
+
 --------------------------------------------------
 --// GUI
 --------------------------------------------------
@@ -258,9 +252,9 @@ local function Page()
 	f.Size = UDim2.new(1,-30,1,-110)
 	f.BackgroundTransparency = 1
 	f.Visible = false
-	Instance.new("UIListLayout", f).Padding = UDim.new(0,8)
-	Instance.new("UIListLayout", f).SortOrder = Enum.SortOrder.LayoutOrder
-	f.Parent = Pages
+	local layout = Instance.new("UIListLayout", f)
+	layout.Padding = UDim.new(0,8)
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	return f
 end
 
@@ -339,276 +333,8 @@ local function CreateAimbotGUI()
     RightColumn.Position = UDim2.new(0.52,0,0,0)
     RightColumn.BackgroundTransparency = 1
 
-    -----------------------------
-    -- LEFT: Regular Aimbot
-    -----------------------------
-    local function AddAimbotButtons(parent)
-        -- Enable Aimbot Toggle
-        local enableHolder = Instance.new("Frame", parent)
-        enableHolder.Size = UDim2.new(1,0,0,32)
-        enableHolder.BackgroundTransparency = 1
-        local label = Instance.new("TextLabel", enableHolder)
-        label.Size = UDim2.new(1,-40,1,0)
-        label.BackgroundTransparency = 1
-        label.Text = "Enable Aimbot"
-        label.Font = Enum.Font.Gotham
-        label.TextSize = 13
-        label.TextColor3 = Color3.new(1,1,1)
-        label.TextXAlignment = Enum.TextXAlignment.Left
-
-        local btn = Instance.new("TextButton", enableHolder)
-        btn.Size = UDim2.new(0,22,0,22)
-        btn.Position = UDim2.new(1,-26,0.5,-11)
-        btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
-        btn.Text = "○"
-        btn.Font = Enum.Font.GothamBold
-        btn.TextSize = 16
-        btn.TextColor3 = Color3.fromRGB(200,200,200)
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
-
-        btn.MouseButton1Click:Connect(function()
-            _G.AimbotEnabled = not _G.AimbotEnabled
-            btn.Text = _G.AimbotEnabled and "●" or "○"
-            btn.TextColor3 = _G.AimbotEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
-        end)
-    end
-    AddAimbotButtons(LeftColumn)
-
-    -- AimPart dropdown (Left)
-    AddAimPartDropdown(LeftColumn, "_G.AimPart")
-    -- Smoothness slider (Left)
-    SmoothnessSlider(LeftColumn)
-    -- Keybind (Left)
-    KeybindButton(LeftColumn)
-
-    -----------------------------
-    -- RIGHT: Camera Aimbot
-    -----------------------------
-    local CameraVars = {
-        Enabled = false,
-        Allowed = false,
-        Key = Enum.KeyCode.E,
-        AimPart = "Head",
-        Smoothness = 0.08
-    }
-
-    -- Camera Enable Toggle
-    local function AddCameraToggle(parent)
-        local holder = Instance.new("Frame", parent)
-        holder.Size = UDim2.new(1,0,0,32)
-        holder.BackgroundTransparency = 1
-        local label = Instance.new("TextLabel", holder)
-        label.Size = UDim2.new(1,-40,1,0)
-        label.BackgroundTransparency = 1
-        label.Text = "Enable Camera Aimbot"
-        label.Font = Enum.Font.Gotham
-        label.TextSize = 13
-        label.TextColor3 = Color3.new(1,1,1)
-        label.TextXAlignment = Enum.TextXAlignment.Left
-
-        local btn = Instance.new("TextButton", holder)
-        btn.Size = UDim2.new(0,22,0,22)
-        btn.Position = UDim2.new(1,-26,0.5,-11)
-        btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
-        btn.Text = "○"
-        btn.Font = Enum.Font.GothamBold
-        btn.TextSize = 16
-        btn.TextColor3 = Color3.fromRGB(200,200,200)
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
-
-        btn.MouseButton1Click:Connect(function()
-            CameraVars.Allowed = not CameraVars.Allowed
-            btn.Text = CameraVars.Allowed and "●" or "○"
-            btn.TextColor3 = CameraVars.Allowed and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
-        end)
-
-        CameraVars.Button = btn
-    end
-    AddCameraToggle(RightColumn)
-
-    -- Camera AimPart Dropdown
-    local function CameraAimDropdown(parent)
-        local holder = Instance.new("Frame", parent)
-        holder.Size = UDim2.new(1,0,0,32)
-        holder.BackgroundTransparency = 1
-        local label = Instance.new("TextLabel", holder)
-        label.Size = UDim2.new(0.5,0,1,0)
-        label.BackgroundTransparency = 1
-        label.Text = "Aim Part"
-        label.Font = Enum.Font.Gotham
-        label.TextSize = 13
-        label.TextColor3 = Color3.new(1,1,1)
-        label.TextXAlignment = Enum.TextXAlignment.Left
-
-        local dropdown = Instance.new("TextButton", holder)
-        dropdown.Size = UDim2.new(0.45,0,1,0)
-        dropdown.Position = UDim2.new(0.5,0,0,0)
-        dropdown.BackgroundColor3 = Color3.fromRGB(35,35,35)
-        dropdown.Text = CameraVars.AimPart
-        dropdown.TextColor3 = Color3.new(1,1,1)
-        dropdown.Font = Enum.Font.Gotham
-        dropdown.TextSize = 13
-        Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0,8)
-
-        local options = {"Head","UpperTorso","LowerTorso"}
-        local open = false
-        local listFrame
-        dropdown.MouseButton1Click:Connect(function()
-            if open then if listFrame then listFrame:Destroy() end open = false
-            else
-                listFrame = Instance.new("Frame", parent)
-                listFrame.Position = UDim2.new(0,0,0,32)
-                listFrame.Size = UDim2.new(1,0,0,#options*30)
-                listFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
-                Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0,8)
-                local layout = Instance.new("UIListLayout", listFrame)
-                layout.Padding = UDim.new(0,2)
-                for _,opt in pairs(options) do
-                    local btn = Instance.new("TextButton", listFrame)
-                    btn.Size = UDim2.new(1,0,0,30)
-                    btn.BackgroundColor3 = Color3.fromRGB(45,45,45)
-                    btn.Text = opt
-                    btn.TextColor3 = Color3.new(1,1,1)
-                    btn.Font = Enum.Font.Gotham
-                    btn.TextSize = 13
-                    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
-                    btn.MouseButton1Click:Connect(function()
-                        CameraVars.AimPart = opt
-                        dropdown.Text = opt
-                        listFrame:Destroy()
-                        open = false
-                    end)
-                end
-                open = true
-            end
-        end)
-    end
-    CameraAimDropdown(RightColumn)
-
-    -- Camera Smoothness Slider
-    local function CameraSmoothSlider(parent)
-        local holder = Instance.new("Frame", parent)
-        holder.Size = UDim2.new(1,0,0,40)
-        holder.BackgroundTransparency = 1
-        local label = Instance.new("TextLabel", holder)
-        label.Size = UDim2.new(0.6,0,1,0)
-        label.BackgroundTransparency = 1
-        label.Text = "Smoothness: "..string.format("%.2f", CameraVars.Smoothness)
-        label.Font = Enum.Font.Gotham
-        label.TextSize = 13
-        label.TextColor3 = Color3.new(1,1,1)
-        label.TextXAlignment = Enum.TextXAlignment.Left
-
-        local sliderBar = Instance.new("Frame", holder)
-        sliderBar.Size = UDim2.new(0.35,0,0.3,0)
-        sliderBar.Position = UDim2.new(0.6,0,0.35,0)
-        sliderBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
-        Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1,0)
-        local fill = Instance.new("Frame", sliderBar)
-        fill.Size = UDim2.new((CameraVars.Smoothness-0.01)/0.19,0,1,0)
-        fill.BackgroundColor3 = Color3.fromRGB(0,255,120)
-        Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
-        local handle = Instance.new("Frame", sliderBar)
-        handle.Size = UDim2.new(0,16,0,16)
-        handle.Position = UDim2.new(fill.Size.X.Scale, 0, 0.5, -8)
-        handle.BackgroundColor3 = Color3.fromRGB(0,255,120)
-        Instance.new("UICorner", handle).CornerRadius = UDim.new(1,0)
-
-        local dragging = false
-        handle.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true Main.Active = false end
-        end)
-        handle.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false Main.Active = true end
-        end)
-        UserInputService.InputChanged:Connect(function(input)
-            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                local mouseX = math.clamp(input.Position.X - sliderBar.AbsolutePosition.X,0,sliderBar.AbsoluteSize.X)
-                local val = mouseX / sliderBar.AbsoluteSize.X
-                CameraVars.Smoothness = math.clamp(val*0.19+0.01,0.01,0.2)
-                fill.Size = UDim2.new(val,0,1,0)
-                handle.Position = UDim2.new(val,0,0.5,-8)
-                label.Text = "Smoothness: "..string.format("%.2f", CameraVars.Smoothness)
-            end
-        end)
-    end
-    CameraSmoothSlider(RightColumn)
-
-    -- Camera Keybind Button
-    local function CameraKeybindBtn(parent)
-        local holder = Instance.new("Frame", parent)
-        holder.Size = UDim2.new(1,0,0,32)
-        holder.BackgroundTransparency = 1
-        local label = Instance.new("TextLabel", holder)
-        label.Size = UDim2.new(0.5,0,1,0)
-        label.BackgroundTransparency = 1
-        label.Text = "Camera Key: "..CameraVars.Key.Name
-        label.Font = Enum.Font.Gotham
-        label.TextSize = 13
-        label.TextColor3 = Color3.new(1,1,1)
-        label.TextXAlignment = Enum.TextXAlignment.Left
-
-        local btn = Instance.new("TextButton", holder)
-        btn.Size = UDim2.new(0.45,0,1,0)
-        btn.Position = UDim2.new(0.5,0,0,0)
-        btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
-        btn.Text = "Set Key"
-        btn.TextColor3 = Color3.new(1,1,1)
-        btn.Font = Enum.Font.Gotham
-        btn.TextSize = 13
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
-
-        local waiting = false
-        btn.MouseButton1Click:Connect(function()
-            if waiting then return end
-            waiting = true
-            btn.Text = "Press Key..."
-            local conn
-            conn = UserInputService.InputBegan:Connect(function(input,gp)
-                if input.UserInputType == Enum.UserInputType.Keyboard then
-                    CameraVars.Key = input.KeyCode
-                    label.Text = "Camera Key: "..CameraVars.Key.Name
-                    btn.Text = "Set Key"
-                    waiting = false
-                    conn:Disconnect()
-                end
-            end)
-        end)
-    end
-    CameraKeybindBtn(RightColumn)
-
-    -----------------------------
-    -- CAMERA LOCK LOOP
-    -----------------------------
-    local debounce = false
-    UserInputService.InputBegan:Connect(function(input,gp)
-        if gp then return end
-        if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == CameraVars.Key and CameraVars.Allowed and not debounce then
-            CameraVars.Enabled = not CameraVars.Enabled
-            debounce = true
-            if CameraVars.Button then
-                CameraVars.Button.TextColor3 = CameraVars.Enabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
-            end
-        end
-    end)
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == CameraVars.Key then
-            debounce = false
-        end
-    end)
-
-    RunService.RenderStepped:Connect(function()
-        if CameraVars.Enabled then
-            local target = GetClosestPlayer()
-            if target and target.Character and target.Character:FindFirstChild(CameraVars.AimPart) then
-                TweenService:Create(
-                    Camera,
-                    TweenInfo.new(CameraVars.Smoothness, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
-                    {CFrame = CFrame.new(Camera.CFrame.Position, target.Character[CameraVars.AimPart].Position)}
-                ):Play()
-            end
-        end
-    end)
+    -- LEFT: Regular Aimbot Toggle
+    CircleToggle(LeftColumn,"Enable Aimbot","AimbotEnabled")
 end
 
 CreateAimbotGUI()
