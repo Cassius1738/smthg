@@ -592,30 +592,25 @@ end
 FlySpeedSlider(MovementPage)
 
 --------------------------------------------------
---// MOVEMENT PAGE SCROLLABLE (MERGED & FIXED)
+--// MOVEMENT PAGE CLEAN SCROLLABLE
 --------------------------------------------------
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local LocalPlayer = Players.LocalPlayer
 
 -- Clear previous children if reloading
 for _,c in pairs(MovementPage:GetChildren()) do
-    if not c:IsA("UIListLayout") then
-        c:Destroy()
-    end
+    c:Destroy()
 end
 
--- ScrollingFrame container
+-- Single scrolling frame for all movement options + player list
 local ScrollFrame = Instance.new("ScrollingFrame")
 ScrollFrame.Parent = MovementPage
 ScrollFrame.Size = UDim2.new(1,0,1,0)
+ScrollFrame.Position = UDim2.new(0,0,0,0)
 ScrollFrame.BackgroundTransparency = 1
 ScrollFrame.ScrollBarThickness = 8
 ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
 ScrollFrame.CanvasSize = UDim2.new(0,0,0,0)
 
--- UIListLayout inside ScrollFrame
+-- UIListLayout inside scrolling frame
 local Layout = Instance.new("UIListLayout", ScrollFrame)
 Layout.SortOrder = Enum.SortOrder.LayoutOrder
 Layout.Padding = UDim.new(0,8)
@@ -627,6 +622,7 @@ local function CircleToggle(parent,text,flag)
     local holder = Instance.new("Frame", parent)
     holder.Size = UDim2.new(1,0,0,32)
     holder.BackgroundTransparency = 1
+
     local label = Instance.new("TextLabel", holder)
     label.Size = UDim2.new(1,-40,1,0)
     label.BackgroundTransparency = 1
@@ -635,6 +631,7 @@ local function CircleToggle(parent,text,flag)
     label.TextSize = 13
     label.TextColor3 = Color3.new(1,1,1)
     label.TextXAlignment = Enum.TextXAlignment.Left
+
     local btn = Instance.new("TextButton", holder)
     btn.Size = UDim2.new(0,22,0,22)
     btn.Position = UDim2.new(1,-26,0.5,-11)
@@ -644,6 +641,7 @@ local function CircleToggle(parent,text,flag)
     btn.TextSize = 16
     btn.TextColor3 = Color3.fromRGB(200,200,200)
     Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+
     btn.MouseButton1Click:Connect(function()
         _G[flag] = not _G[flag]
         btn.Text = _G[flag] and "●" or "○"
@@ -655,6 +653,7 @@ local function Slider(parent,text,flag,min,max)
     local holder = Instance.new("Frame", parent)
     holder.Size = UDim2.new(1,0,0,40)
     holder.BackgroundTransparency = 1
+
     local label = Instance.new("TextLabel", holder)
     label.Size = UDim2.new(0.6,0,1,0)
     label.BackgroundTransparency = 1
@@ -663,20 +662,24 @@ local function Slider(parent,text,flag,min,max)
     label.TextSize = 13
     label.TextColor3 = Color3.new(1,1,1)
     label.TextXAlignment = Enum.TextXAlignment.Left
+
     local sliderBar = Instance.new("Frame", holder)
     sliderBar.Size = UDim2.new(0.35,0,0.3,0)
     sliderBar.Position = UDim2.new(0.6,0,0.35,0)
     sliderBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
     Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1,0)
+
     local fill = Instance.new("Frame", sliderBar)
     fill.Size = UDim2.new((_G[flag]-min)/(max-min),0,1,0)
     fill.BackgroundColor3 = Color3.fromRGB(0,255,120)
     Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
+
     local handle = Instance.new("Frame", sliderBar)
     handle.Size = UDim2.new(0,16,0,16)
     handle.Position = UDim2.new(fill.Size.X.Scale,0,0.5,-8)
     handle.BackgroundColor3 = Color3.fromRGB(0,255,120)
     Instance.new("UICorner", handle).CornerRadius = UDim.new(1,0)
+
     local dragging = false
     handle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true Main.Active = false end
@@ -684,6 +687,7 @@ local function Slider(parent,text,flag,min,max)
     handle.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false Main.Active = true end
     end)
+
     UserInputService.InputChanged:Connect(function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local mouseX = math.clamp(input.Position.X - sliderBar.AbsolutePosition.X,0,sliderBar.AbsoluteSize.X)
@@ -708,61 +712,21 @@ _G.SpeedEnabled = _G.SpeedEnabled or false
 _G.WalkSpeedValue = _G.WalkSpeedValue or 16
 
 --------------------------------------------------
---// Add Toggles & Sliders
+--// Add Movement Toggles + Sliders
 --------------------------------------------------
 CircleToggle(ScrollFrame,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
 Slider(ScrollFrame,"Fly Speed","FlySpeed",10,200)
 CircleToggle(ScrollFrame,"No Jump Cooldown","NoCooldownJumpEnabled")
 Slider(ScrollFrame,"Walk Speed","WalkSpeedValue",16,100)
+CircleToggle(ScrollFrame,"Big Head (Visual & Hitbox)","VisualBigHead")
+
 
 --------------------------------------------------
---// MOVEMENT PAGE TELEPORT PLAYER LIST (DYNAMIC)
+--// Player Teleport List
 --------------------------------------------------
-local function CreateDynamicTeleportPlayerList(page)
-    -- ScrollingFrame container inside MovementPage
-    local TPContainer = Instance.new("ScrollingFrame")
-    TPContainer.Name = "TeleportPlayerList"
-    TPContainer.Parent = page
-    TPContainer.BackgroundColor3 = Color3.fromRGB(35,35,35)
-    TPContainer.BorderSizePixel = 0
-    TPContainer.ScrollBarThickness = 8
-    TPContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    TPContainer.Size = UDim2.new(1, -20, 0, 100) -- initial height, will resize
-    TPContainer.Position = UDim2.new(0, 10, 0, 0) -- will adjust dynamically
-    Instance.new("UICorner", TPContainer).CornerRadius = UDim.new(0,8)
-    TPContainer.LayoutOrder = 999 -- always at bottom
-
-    -- UIListLayout inside scrolling frame
-    local Layout = Instance.new("UIListLayout", TPContainer)
-    Layout.SortOrder = Enum.SortOrder.LayoutOrder
-    Layout.Padding = UDim.new(0,4)
-
-    -- Function to dynamically update Y position and height
-    local function UpdatePositionAndSize()
-        local usedHeight = 0
-        for _, child in pairs(page:GetChildren()) do
-            if child ~= TPContainer and child:IsA("Frame") then
-                usedHeight = usedHeight + child.AbsoluteSize.Y + 8
-            end
-        end
-        local remainingHeight = page.AbsoluteSize.Y - usedHeight - 10
-        TPContainer.Position = UDim2.new(0, 10, 0, usedHeight)
-        TPContainer.Size = UDim2.new(1, -20, 0, math.max(50, remainingHeight))
-    end
-
-    -- Connect to page size changes and children changes
-    page:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdatePositionAndSize)
-    for _, child in pairs(page:GetChildren()) do
-        if child:IsA("Frame") then
-            child:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdatePositionAndSize)
-        end
-    end
-    UpdatePositionAndSize()
-
-    -- Function to create player button
-    local function AddPlayerButton(player)
+local function AddPlayerTeleportButtons(parent)
+    local function CreatePlayerButton(player)
         if player == LocalPlayer then return end
-
         local holder = Instance.new("Frame")
         holder.Size = UDim2.new(1,0,0,28)
         holder.BackgroundTransparency = 1
@@ -796,20 +760,20 @@ local function CreateDynamicTeleportPlayerList(page)
             end
         end)
 
-        holder.Parent = TPContainer
+        holder.Parent = parent
     end
 
     -- Populate existing players
     for _, player in pairs(Players:GetPlayers()) do
-        AddPlayerButton(player)
+        CreatePlayerButton(player)
     end
 
     -- Listen for new players
-    Players.PlayerAdded:Connect(AddPlayerButton)
+    Players.PlayerAdded:Connect(CreatePlayerButton)
 
     -- Remove leaving players
     Players.PlayerRemoving:Connect(function(player)
-        for _, frame in pairs(TPContainer:GetChildren()) do
+        for _, frame in pairs(parent:GetChildren()) do
             if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == player.Name then
                 frame:Destroy()
             end
@@ -817,8 +781,7 @@ local function CreateDynamicTeleportPlayerList(page)
     end)
 end
 
--- Initialize dynamic teleport player list
-CreateDynamicTeleportPlayerList(MovementPage)
+AddPlayerTeleportButtons(ScrollFrame)
 
 --------------------------------------------------
 --// UNIVERSAL BIG HEAD (R6 + R15 + CUSTOM RIGS)
