@@ -658,10 +658,10 @@ RunService.Stepped:Connect(function()
 end)
 
 --------------------------------------------------
--- CONSTRAINED PLAYER LIST
+-- CONSTRAINED SCROLLABLE PLAYER LIST
 --------------------------------------------------
 local function CreateConstrainedPlayerList(page)
-    -- Add a UIListLayout to the page
+    -- Add a UIListLayout to the page if not already
     local pageLayout = page:FindFirstChildOfClass("UIListLayout")
     if not pageLayout then
         pageLayout = Instance.new("UIListLayout", page)
@@ -675,16 +675,17 @@ local function CreateConstrainedPlayerList(page)
     PlayerListContainer.BorderSizePixel = 0
     PlayerListContainer.ScrollBarThickness = 8
     PlayerListContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    PlayerListContainer.Size = UDim2.new(1,0,0,100)
+    PlayerListContainer.Size = UDim2.new(1,0,0,100) -- initial temporary height
+    PlayerListContainer.BackgroundTransparency = 0
+    PlayerListContainer.LayoutOrder = 999
     Instance.new("UICorner", PlayerListContainer).CornerRadius = UDim.new(0,8)
-    PlayerListContainer.LayoutOrder = 999 -- always bottom
 
-    -- UIListLayout inside scrolling frame
+    -- UIListLayout inside the scrolling frame
     local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
     PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
     PlayerLayout.Padding = UDim.new(0,4)
 
-    -- Adjust height
+    -- Update the ScrollingFrame height to fit remaining space in MovementPage
     local function UpdateHeight()
         local usedHeight = 0
         for _, child in pairs(page:GetChildren()) do
@@ -692,19 +693,24 @@ local function CreateConstrainedPlayerList(page)
                 usedHeight = usedHeight + child.AbsoluteSize.Y + 8
             end
         end
+        -- remaining space inside the page
         local remaining = page.AbsoluteSize.Y - usedHeight - 8
-        PlayerListContainer.Size = UDim2.new(1,0,0,math.max(50, remaining))
+        PlayerListContainer.Size = UDim2.new(1,0,0,math.clamp(remaining, 50, remaining))
+        -- update CanvasSize so scrolling works properly
+        PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y + 4)
     end
 
+    -- Connect updates when page or child size changes
     page:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateHeight)
     for _, child in pairs(page:GetChildren()) do
         if child:IsA("Frame") then
             child:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateHeight)
         end
     end
+    PlayerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateHeight)
     UpdateHeight()
 
-    -- Player buttons
+    -- Function to create a player button
     local function CreatePlayerButton(player)
         if player == LocalPlayer then return end
         local holder = Instance.new("Frame")
@@ -743,9 +749,15 @@ local function CreateConstrainedPlayerList(page)
         holder.Parent = PlayerListContainer
     end
 
-    -- Populate players
-    for _, player in pairs(Players:GetPlayers()) do CreatePlayerButton(player) end
+    -- Populate current players
+    for _, player in pairs(Players:GetPlayers()) do
+        CreatePlayerButton(player)
+    end
+
+    -- Listen for new players
     Players.PlayerAdded:Connect(CreatePlayerButton)
+
+    -- Remove players leaving
     Players.PlayerRemoving:Connect(function(player)
         for _, frame in pairs(PlayerListContainer:GetChildren()) do
             if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == player.Name then
@@ -755,7 +767,9 @@ local function CreateConstrainedPlayerList(page)
     end)
 end
 
+-- Call the function for MovementPage
 CreateConstrainedPlayerList(MovementPage)
+
 
 --------------------------------------------------
 --// UNIVERSAL BIG HEAD (R6 + R15 + CUSTOM RIGS)
