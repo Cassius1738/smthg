@@ -685,67 +685,79 @@ Players.PlayerRemoving:Connect(function(p)
 end)
 
 --------------------------------------------------
---// BIG HEAD (VISUAL + HITBOX) - FIXED
+--// BIG HEAD (VISUAL + HITBOX) - LOCAL ONLY
 --------------------------------------------------
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
 _G.VisualBigHead = false
+local BIG_HEAD_SIZE = Vector3.new(4,4,4)
+local NORMAL_HEAD_SIZE = Vector3.new(2,1,1)
 
+-- Function to apply Big Head to a character
 local function ApplyBigHead(player)
-	if player == LocalPlayer then return end
-	local character = player.Character
-	if not character then return end
-
-	local head = character:FindFirstChild("Head")
+	if not player.Character then return end
+	local head = player.Character:FindFirstChild("Head")
 	if head then
-		local size = _G.VisualBigHead and Vector3.new(4,4,4) or Vector3.new(2,1,1)
-		head.Size = size
-		head.CanCollide = false
+		-- Set visual size
+		head.Size = _G.VisualBigHead and BIG_HEAD_SIZE or NORMAL_HEAD_SIZE
 		head.Transparency = _G.VisualBigHead and 0.5 or 0
+		head.CanCollide = false
 
+		-- Ensure mesh exists
 		local mesh = head:FindFirstChildOfClass("SpecialMesh")
-		if mesh then
-			mesh.Scale = Vector3.new(1,1,1)
-		else
-			local newMesh = Instance.new("SpecialMesh")
-			newMesh.MeshType = Enum.MeshType.Head
-			newMesh.Scale = Vector3.new(1,1,1)
-			newMesh.Parent = head
+		if not mesh then
+			mesh = Instance.new("SpecialMesh")
+			mesh.MeshType = Enum.MeshType.Head
+			mesh.Parent = head
 		end
+		mesh.Scale = Vector3.new(1,1,1)
 	end
 end
 
--- Apply Big Head whenever a player's character spawns
-local function SetupPlayerBigHead(player)
+-- Apply Big Head to all players currently in game
+local function ApplyBigHeadToAll()
+	for _, player in pairs(Players:GetPlayers()) do
+		ApplyBigHead(player)
+	end
+end
+
+-- Handle players respawning
+local function SetupPlayer(player)
 	player.CharacterAdded:Connect(function()
-		task.wait(0.5) -- wait for character to load
+		task.wait(0.5)
 		if _G.VisualBigHead then
 			ApplyBigHead(player)
 		end
 	end)
 end
 
--- Apply Big Head to all current players and set up respawn listeners
+-- Apply to all current players and listen for respawn
 for _, player in pairs(Players:GetPlayers()) do
-	if player ~= LocalPlayer then
-		SetupPlayerBigHead(player)
-		if _G.VisualBigHead and player.Character then
-			task.wait(0.5)
+	SetupPlayer(player)
+end
+
+-- Listen for new players
+Players.PlayerAdded:Connect(function(player)
+	SetupPlayer(player)
+end)
+
+-- Keep head sizes consistent every frame (prevents Roblox reset)
+RunService.RenderStepped:Connect(function()
+	if _G.VisualBigHead then
+		for _, player in pairs(Players:GetPlayers()) do
 			ApplyBigHead(player)
 		end
 	end
-end
-
--- Listen for new players joining
-Players.PlayerAdded:Connect(function(player)
-	if player ~= LocalPlayer then
-		SetupPlayerBigHead(player)
-	end
 end)
 
--- GUI toggle for Movement Page
+-- GUI toggle in MovementPage
 local function BigHeadCircleToggle(parent)
 	local holder = Instance.new("Frame", parent)
 	holder.Size = UDim2.new(1,0,0,32)
 	holder.BackgroundTransparency = 1
+
 	local label = Instance.new("TextLabel", holder)
 	label.Size = UDim2.new(1,-40,1,0)
 	label.BackgroundTransparency = 1
@@ -754,6 +766,7 @@ local function BigHeadCircleToggle(parent)
 	label.TextSize = 13
 	label.TextColor3 = Color3.new(1,1,1)
 	label.TextXAlignment = Enum.TextXAlignment.Left
+
 	local btn = Instance.new("TextButton", holder)
 	btn.Size = UDim2.new(0,22,0,22)
 	btn.Position = UDim2.new(1,-26,0.5,-11)
@@ -763,16 +776,12 @@ local function BigHeadCircleToggle(parent)
 	btn.TextSize = 16
 	btn.TextColor3 = Color3.fromRGB(200,200,200)
 	Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+
 	btn.MouseButton1Click:Connect(function()
 		_G.VisualBigHead = not _G.VisualBigHead
 		btn.Text = _G.VisualBigHead and "●" or "○"
 		btn.TextColor3 = _G.VisualBigHead and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
-		-- Apply immediately to all players
-		for _, player in pairs(Players:GetPlayers()) do
-			if player ~= LocalPlayer and player.Character then
-				ApplyBigHead(player)
-			end
-		end
+		ApplyBigHeadToAll()
 	end)
 end
 
