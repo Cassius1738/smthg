@@ -299,19 +299,28 @@ TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 TabLayout.Padding = UDim.new(0,8)
 
 --------------------------------------------------
--- PAGES
+-- PAGES 
 --------------------------------------------------
 local Pages = Instance.new("Folder", Main)
 
+-- Page Function with RIGHT PADDING, top-left aligned
 local function Page()
-	local f = Instance.new("Frame", Main)
-	f.Position = UDim2.new(0,15,0,128)
-	f.Size = UDim2.new(1,-30,1,-145)
-	f.BackgroundTransparency = 1
-	f.Visible = false
-	Instance.new("UIListLayout", f).Padding = UDim.new(0,8)
-	f.Parent = Pages
-	return f
+    local f = Instance.new("Frame", Main)
+    f.Position = UDim2.new(0,10,0,80) -- small offset from top-left, inside Main
+    f.Size = UDim2.new(1,-20,1,-90)  -- fill width and height with padding
+    f.BackgroundTransparency = 1
+    f.Visible = false
+
+    -- RIGHT SPACE FOR SCROLLBAR
+    local pad = Instance.new("UIPadding", f)
+    pad.PaddingRight = UDim.new(0,17)
+
+    local layout = Instance.new("UIListLayout", f)
+    layout.Padding = UDim.new(0,8)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+    f.Parent = Pages
+    return f
 end
 
 local AimbotPage = Page()
