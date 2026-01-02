@@ -307,11 +307,12 @@ local MovementContainer, MovementLayout = CreatePageContainer(MovementPage)
 --------------------------------------------------
 --// Aimbot Page Controls
 --------------------------------------------------
-AimbotCircleToggle(AimbotContainer)
-CameraLockToggle(AimbotContainer)
-AimPartDropdown(AimbotContainer)
-SmoothnessSlider(AimbotContainer)
-KeybindButton(AimbotContainer)
+-- Parent everything to the scrollable container
+AimbotCircleToggle(AimbotContainer)       -- Enable Aimbot
+CameraLockToggle(AimbotContainer)         -- Camera Lock Allowed
+AimPartDropdown(AimbotContainer)          -- Aim Part selection
+SmoothnessSlider(AimbotContainer)         -- Smoothness slider
+KeybindButton(AimbotContainer)            -- Set Aimbot key
 
 --------------------------------------------------
 --// ESP Page Controls
@@ -357,6 +358,7 @@ Players.PlayerRemoving:Connect(function(p)
 		end
 	end
 end)
+
 
 --------------------------------------------------
 --// SHOW / HIDE MENU
