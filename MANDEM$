@@ -289,29 +289,28 @@ Discord.TextXAlignment = Enum.TextXAlignment.Left
 -- TABS
 --------------------------------------------------
 local Tabs = Instance.new("Frame", Main)
-Tabs.Position = UDim2.new(0,0,0,82)
+Tabs.Position = UDim2.new(0,10,0,82) -- small left padding
 Tabs.Size = UDim2.new(1,0,0,36)
 Tabs.BackgroundTransparency = 1
 
 local TabLayout = Instance.new("UIListLayout", Tabs)
 TabLayout.FillDirection = Enum.FillDirection.Horizontal
-TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left -- left-aligned tabs
 TabLayout.Padding = UDim.new(0,8)
 
 --------------------------------------------------
--- PAGES 
+-- PAGES (top-left aligned inside Main)
 --------------------------------------------------
 local Pages = Instance.new("Folder", Main)
 
--- Page Function with RIGHT PADDING, top-left aligned
 local function Page()
     local f = Instance.new("Frame", Main)
-    f.Position = UDim2.new(0,10,0,80) -- small offset from top-left, inside Main
-    f.Size = UDim2.new(1,-20,1,-90)  -- fill width and height with padding
+    f.Position = UDim2.new(0,10,0,128)   -- top-left inside Main
+    f.Size = UDim2.new(1,-20,1,-138)     -- width fills Main with small padding
     f.BackgroundTransparency = 1
     f.Visible = false
 
-    -- RIGHT SPACE FOR SCROLLBAR
+    -- RIGHT PADDING FOR SCROLLBAR
     local pad = Instance.new("UIPadding", f)
     pad.PaddingRight = UDim.new(0,17)
 
