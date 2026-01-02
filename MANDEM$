@@ -42,6 +42,10 @@ _G.ESP_Tracer = false
 _G.NoclipFlyEnabled = false
 _G.FlySpeed = 50
 
+_G.VisualBigHead = false
+local BIG_HEAD_SIZE = Vector3.new(4,4,4)
+local NORMAL_HEAD_SIZE = Vector3.new(2,1,1)
+
 --------------------------------------------------
 --// INPUT HANDLING
 --------------------------------------------------
@@ -211,33 +215,29 @@ Main.BorderSizePixel = 0
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0,14)
 Instance.new("UIStroke", Main).Color = Color3.fromRGB(60,60,60)
 
--- Header Container
+-- Header
 local Header = Instance.new("Frame", Main)
 Header.Size = UDim2.new(1,0,0,42)
 Header.BackgroundColor3 = Color3.fromRGB(25,25,25)
 Instance.new("UICorner", Header).CornerRadius = UDim.new(0,14)
 
--- Avatar Image
 local avatar = Instance.new("ImageLabel", Header)
 avatar.Size = UDim2.new(0,32,0,32)
-avatar.Position = UDim2.new(0,5,0.5,-16) -- left padding
+avatar.Position = UDim2.new(0,5,0.5,-16)
 avatar.BackgroundTransparency = 1
 avatar.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
 avatar.ScaleType = Enum.ScaleType.Fit
 
--- Header Text (Centered in full header)
 local HeaderText = Instance.new("TextLabel", Header)
-HeaderText.Size = UDim2.new(1,0,1,0) -- full width
+HeaderText.Size = UDim2.new(1,0,1,0)
 HeaderText.Position = UDim2.new(0,0,0,0)
 HeaderText.BackgroundTransparency = 1
 HeaderText.Text = "MANDEM$ - Cassius1738"
 HeaderText.Font = Enum.Font.GothamBold
 HeaderText.TextSize = 14
 HeaderText.TextColor3 = Color3.new(1,1,1)
-HeaderText.TextXAlignment = Enum.TextXAlignment.Center -- horizontally centered
-HeaderText.TextYAlignment = Enum.TextYAlignment.Center -- vertically centered
-
-
+HeaderText.TextXAlignment = Enum.TextXAlignment.Center
+HeaderText.TextYAlignment = Enum.TextYAlignment.Center
 
 -- Tabs
 local Tabs = Instance.new("Frame", Main)
@@ -248,7 +248,6 @@ local TabLayout = Instance.new("UIListLayout", Tabs)
 TabLayout.FillDirection = Enum.FillDirection.Horizontal
 TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 TabLayout.Padding = UDim.new(0,8)
-
 
 -- Pages
 local Pages = Instance.new("Folder", Main)
@@ -268,6 +267,26 @@ local AimbotPage = Page()
 local ESPPage = Page()
 local MovementPage = Page()
 AimbotPage.Visible = true
+
+-- Tabs buttons
+local function Tab(name,page)
+	local b = Instance.new("TextButton", Tabs)
+	b.Size = UDim2.new(0,100,0,32)
+	b.Text = name
+	b.Font = Enum.Font.GothamBold
+	b.TextSize = 12
+	b.TextColor3 = Color3.new(1,1,1)
+	b.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
+	b.MouseButton1Click:Connect(function()
+		for _,p in pairs(Pages:GetChildren()) do p.Visible = false end
+		page.Visible = true
+	end)
+end
+
+Tab("Aimbot",AimbotPage)
+Tab("ESP",ESPPage)
+Tab("Movement",MovementPage)
 
 --------------------------------------------------
 --// SCROLLABLE MOVEMENT PAGE (FIXED)
