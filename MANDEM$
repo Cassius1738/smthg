@@ -685,60 +685,69 @@ Players.PlayerRemoving:Connect(function(p)
 end)
 
 --------------------------------------------------
---// BIG HEAD (VISUAL + HITBOX) - FIXED
+--// BIG HEAD (VISUAL + HITBOX)
 --------------------------------------------------
 _G.VisualBigHead = false
 
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+-- Function to apply big head to a player
 local function ApplyBigHead(player)
 	if player == LocalPlayer then return end
-	local character = player.Character
-	if not character then return end
+	local char = player.Character
+	if not char then return end
 
-	local head = character:FindFirstChild("Head")
+	local head = char:FindFirstChild("Head")
 	if head then
-		local size = _G.VisualBigHead and Vector3.new(4,4,4) or Vector3.new(2,1,1)
-		head.Size = size
-		head.CanCollide = false
-		head.Transparency = _G.VisualBigHead and 0.5 or 0
-
-		local mesh = head:FindFirstChildOfClass("SpecialMesh")
-		if mesh then
-			mesh.Scale = Vector3.new(1,1,1)
+		if _G.VisualBigHead then
+			head.Size = Vector3.new(4,4,4)           -- Big hitbox
+			head.CanCollide = false
+			head.Transparency = 0.5                  -- Half-transparent
 		else
-			local newMesh = Instance.new("SpecialMesh")
-			newMesh.MeshType = Enum.MeshType.Head
-			newMesh.Scale = Vector3.new(1,1,1)
-			newMesh.Parent = head
+			head.Size = Vector3.new(2,1,1)           -- Normal
+			head.CanCollide = true
+			head.Transparency = 0
 		end
+
+		-- Ensure head mesh exists and scales correctly
+		local mesh = head:FindFirstChildOfClass("SpecialMesh")
+		if not mesh then
+			mesh = Instance.new("SpecialMesh")
+			mesh.MeshType = Enum.MeshType.Head
+			mesh.Parent = head
+		end
+		mesh.Scale = Vector3.new(1,1,1)
 	end
 end
 
--- Setup Big Head for a player (handles respawn)
-local function SetupPlayerBigHead(player)
+-- Setup big head on respawn
+local function SetupPlayer(player)
 	player.CharacterAdded:Connect(function()
-		task.wait(0.5) -- wait for character to load
+		task.wait(0.5)
 		if _G.VisualBigHead then
 			ApplyBigHead(player)
 		end
 	end)
-	-- Apply immediately if player already spawned
+	-- Apply immediately if character exists
 	if player.Character and _G.VisualBigHead then
 		task.wait(0.5)
 		ApplyBigHead(player)
 	end
 end
 
--- Apply Big Head to all current players
+-- Apply to existing players
 for _, player in pairs(Players:GetPlayers()) do
 	if player ~= LocalPlayer then
-		SetupPlayerBigHead(player)
+		SetupPlayer(player)
 	end
 end
 
--- Listen for new players joining
+-- Apply to new players
 Players.PlayerAdded:Connect(function(player)
 	if player ~= LocalPlayer then
-		SetupPlayerBigHead(player)
+		SetupPlayer(player)
 	end
 end)
 
@@ -747,6 +756,7 @@ local function BigHeadCircleToggle(parent)
 	local holder = Instance.new("Frame", parent)
 	holder.Size = UDim2.new(1,0,0,32)
 	holder.BackgroundTransparency = 1
+
 	local label = Instance.new("TextLabel", holder)
 	label.Size = UDim2.new(1,-40,1,0)
 	label.BackgroundTransparency = 1
@@ -755,6 +765,7 @@ local function BigHeadCircleToggle(parent)
 	label.TextSize = 13
 	label.TextColor3 = Color3.new(1,1,1)
 	label.TextXAlignment = Enum.TextXAlignment.Left
+
 	local btn = Instance.new("TextButton", holder)
 	btn.Size = UDim2.new(0,22,0,22)
 	btn.Position = UDim2.new(1,-26,0.5,-11)
@@ -764,13 +775,13 @@ local function BigHeadCircleToggle(parent)
 	btn.TextSize = 16
 	btn.TextColor3 = Color3.fromRGB(200,200,200)
 	Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+
 	btn.MouseButton1Click:Connect(function()
 		_G.VisualBigHead = not _G.VisualBigHead
 		btn.Text = _G.VisualBigHead and "●" or "○"
 		btn.TextColor3 = _G.VisualBigHead and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
-		-- Apply immediately to all players
 		for _, player in pairs(Players:GetPlayers()) do
-			if player ~= LocalPlayer and player.Character then
+			if player ~= LocalPlayer then
 				ApplyBigHead(player)
 			end
 		end
@@ -779,16 +790,6 @@ end
 
 BigHeadCircleToggle(MovementPage)
 
--- Continuously ensure all players' heads stay big if enabled (optional safeguard)
-RunService.RenderStepped:Connect(function()
-	if _G.VisualBigHead then
-		for _, player in pairs(Players:GetPlayers()) do
-			if player ~= LocalPlayer and player.Character then
-				ApplyBigHead(player)
-			end
-		end
-	end
-end)
 
 
 --------------------------------------------------
