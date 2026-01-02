@@ -553,7 +553,7 @@ local Padding = Instance.new("UIPadding", ScrollFrame)
 Padding.PaddingTop = UDim.new(0,4)
 Padding.PaddingBottom = UDim.new(0,4)
 Padding.PaddingLeft = UDim.new(0,4)
-Padding.PaddingRight = UDim.new(0,4)
+Padding.PaddingRight = UDim.new(0,12)
 
 -- Add movement toggles + sliders
 CircleToggle(ScrollFrame,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
