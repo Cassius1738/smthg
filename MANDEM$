@@ -592,11 +592,11 @@ end
 FlySpeedSlider(MovementPage)
 
 --------------------------------------------------
---// CLEAN SCROLLABLE PLAYER LIST INSIDE GUI
+--// CLEAN SCROLLABLE PLAYER LIST INSIDE GUI - FIXED
 --------------------------------------------------
 local PlayerListContainer = Instance.new("ScrollingFrame", MovementPage)
-PlayerListContainer.Size = UDim2.new(1,0,0,150) -- fixed height
-PlayerListContainer.Position = UDim2.new(0,0,0,0) -- will adjust dynamically
+PlayerListContainer.Size = UDim2.new(1,0,0,200) -- fixed height
+PlayerListContainer.Position = UDim2.new(0,0,0,150) -- below previous elements (adjust as needed)
 PlayerListContainer.BackgroundColor3 = Color3.fromRGB(35,35,35)
 PlayerListContainer.BorderSizePixel = 0
 PlayerListContainer.CanvasSize = UDim2.new(0,0,0,0)
@@ -611,25 +611,6 @@ PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
 PlayerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 	PlayerListContainer.CanvasSize = UDim2.new(0,0,0,PlayerLayout.AbsoluteContentSize.Y + 8)
 end)
-
--- Adjust PlayerListContainer position based on other MovementPage elements
-local function UpdatePlayerListPosition()
-	local maxY = 0
-	for _,child in pairs(MovementPage:GetChildren()) do
-		if child:IsA("Frame") and child ~= PlayerListContainer then
-			maxY = math.max(maxY, child.Position.Y.Offset + child.Size.Y.Offset)
-		end
-	end
-	PlayerListContainer.Position = UDim2.new(0,0,0,maxY + 8) -- padding
-end
-
-UpdatePlayerListPosition()
-for _,child in pairs(MovementPage:GetChildren()) do
-	if child:IsA("Frame") and child ~= PlayerListContainer then
-		child:GetPropertyChangedSignal("Position"):Connect(UpdatePlayerListPosition)
-		child:GetPropertyChangedSignal("Size"):Connect(UpdatePlayerListPosition)
-	end
-end
 
 -- Function to create player button
 local function CreatePlayerButton(player)
@@ -683,6 +664,7 @@ Players.PlayerRemoving:Connect(function(p)
 		end
 	end
 end)
+
 
 --------------------------------------------------
 --// UNIVERSAL BIG HEAD (R6 + R15 + CUSTOM RIGS)
@@ -775,7 +757,7 @@ local function BigHeadCircleToggle(parent)
     local label = Instance.new("TextLabel", holder)
     label.Size = UDim2.new(1,-40,1,0)
     label.BackgroundTransparency = 1
-    label.Text = "Big Head (Visual & Hitbox)"
+    label.Text = "Big Head"
     label.Font = Enum.Font.Gotham
     label.TextSize = 13
     label.TextColor3 = Color3.new(1,1,1)
