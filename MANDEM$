@@ -716,56 +716,53 @@ CircleToggle(ScrollFrame,"No Jump Cooldown","NoCooldownJumpEnabled")
 Slider(ScrollFrame,"Walk Speed","WalkSpeedValue",16,100)
 
 --------------------------------------------------
---// MOVEMENT PAGE PLAYER LIST (CONSTRAINED FIX)
+--// MOVEMENT PAGE TELEPORT PLAYER LIST (DYNAMIC)
 --------------------------------------------------
-local function CreateConstrainedPlayerList(page)
-    -- Add a UIListLayout to the page
-    local pageLayout = page:FindFirstChildOfClass("UIListLayout")
-    if not pageLayout then
-        pageLayout = Instance.new("UIListLayout", page)
-        pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        pageLayout.Padding = UDim.new(0,8)
-    end
-
-    -- ScrollingFrame container for players
-    local PlayerListContainer = Instance.new("ScrollingFrame", page)
-    PlayerListContainer.BackgroundColor3 = Color3.fromRGB(35,35,35)
-    PlayerListContainer.BorderSizePixel = 0
-    PlayerListContainer.ScrollBarThickness = 8
-    PlayerListContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    PlayerListContainer.Size = UDim2.new(1,0,0,100) -- temporary initial height
-    PlayerListContainer.BackgroundTransparency = 0
-    Instance.new("UICorner", PlayerListContainer).CornerRadius = UDim.new(0,8)
-    PlayerListContainer.LayoutOrder = 999 -- always at the bottom of layout
+local function CreateDynamicTeleportPlayerList(page)
+    -- ScrollingFrame container inside MovementPage
+    local TPContainer = Instance.new("ScrollingFrame")
+    TPContainer.Name = "TeleportPlayerList"
+    TPContainer.Parent = page
+    TPContainer.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    TPContainer.BorderSizePixel = 0
+    TPContainer.ScrollBarThickness = 8
+    TPContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    TPContainer.Size = UDim2.new(1, -20, 0, 100) -- initial height, will resize
+    TPContainer.Position = UDim2.new(0, 10, 0, 0) -- will adjust dynamically
+    Instance.new("UICorner", TPContainer).CornerRadius = UDim.new(0,8)
+    TPContainer.LayoutOrder = 999 -- always at bottom
 
     -- UIListLayout inside scrolling frame
-    local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
-    PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    PlayerLayout.Padding = UDim.new(0,4)
+    local Layout = Instance.new("UIListLayout", TPContainer)
+    Layout.SortOrder = Enum.SortOrder.LayoutOrder
+    Layout.Padding = UDim.new(0,4)
 
-    -- Adjust PlayerListContainer height to fill remaining space
-    local function UpdateHeight()
+    -- Function to dynamically update Y position and height
+    local function UpdatePositionAndSize()
         local usedHeight = 0
         for _, child in pairs(page:GetChildren()) do
-            if child ~= PlayerListContainer and child:IsA("Frame") then
+            if child ~= TPContainer and child:IsA("Frame") then
                 usedHeight = usedHeight + child.AbsoluteSize.Y + 8
             end
         end
-        local remaining = page.AbsoluteSize.Y - usedHeight - 8
-        PlayerListContainer.Size = UDim2.new(1,0,0,math.max(50, remaining))
+        local remainingHeight = page.AbsoluteSize.Y - usedHeight - 10
+        TPContainer.Position = UDim2.new(0, 10, 0, usedHeight)
+        TPContainer.Size = UDim2.new(1, -20, 0, math.max(50, remainingHeight))
     end
 
-    page:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateHeight)
+    -- Connect to page size changes and children changes
+    page:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdatePositionAndSize)
     for _, child in pairs(page:GetChildren()) do
         if child:IsA("Frame") then
-            child:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateHeight)
+            child:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdatePositionAndSize)
         end
     end
-    UpdateHeight()
+    UpdatePositionAndSize()
 
-    -- Function to create a player button
-    local function CreatePlayerButton(player)
+    -- Function to create player button
+    local function AddPlayerButton(player)
         if player == LocalPlayer then return end
+
         local holder = Instance.new("Frame")
         holder.Size = UDim2.new(1,0,0,28)
         holder.BackgroundTransparency = 1
@@ -799,20 +796,20 @@ local function CreateConstrainedPlayerList(page)
             end
         end)
 
-        holder.Parent = PlayerListContainer
+        holder.Parent = TPContainer
     end
 
-    -- Populate current players
+    -- Populate existing players
     for _, player in pairs(Players:GetPlayers()) do
-        CreatePlayerButton(player)
+        AddPlayerButton(player)
     end
 
     -- Listen for new players
-    Players.PlayerAdded:Connect(CreatePlayerButton)
+    Players.PlayerAdded:Connect(AddPlayerButton)
 
-    -- Remove players leaving
+    -- Remove leaving players
     Players.PlayerRemoving:Connect(function(player)
-        for _, frame in pairs(PlayerListContainer:GetChildren()) do
+        for _, frame in pairs(TPContainer:GetChildren()) do
             if frame:IsA("Frame") and frame:FindFirstChildOfClass("TextLabel") and frame:FindFirstChildOfClass("TextLabel").Text == player.Name then
                 frame:Destroy()
             end
@@ -820,8 +817,8 @@ local function CreateConstrainedPlayerList(page)
     end)
 end
 
--- Call it for MovementPage
-CreateConstrainedPlayerList(MovementPage)
+-- Initialize dynamic teleport player list
+CreateDynamicTeleportPlayerList(MovementPage)
 
 --------------------------------------------------
 --// UNIVERSAL BIG HEAD (R6 + R15 + CUSTOM RIGS)
