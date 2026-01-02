@@ -592,8 +592,13 @@ end
 FlySpeedSlider(MovementPage)
 
 --------------------------------------------------
---// MOVEMENT PAGE SCROLLABLE (ALL TOGETHERS)
+--// MOVEMENT PAGE SCROLLABLE (MERGED & FIXED)
 --------------------------------------------------
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+
 -- Clear previous children if reloading
 for _,c in pairs(MovementPage:GetChildren()) do
     if not c:IsA("UIListLayout") then
@@ -615,7 +620,9 @@ local Layout = Instance.new("UIListLayout", ScrollFrame)
 Layout.SortOrder = Enum.SortOrder.LayoutOrder
 Layout.Padding = UDim.new(0,8)
 
--- Helper: Toggle Button
+--------------------------------------------------
+--// Helper Functions
+--------------------------------------------------
 local function CircleToggle(parent,text,flag)
     local holder = Instance.new("Frame", parent)
     holder.Size = UDim2.new(1,0,0,32)
@@ -644,7 +651,6 @@ local function CircleToggle(parent,text,flag)
     end)
 end
 
--- Helper: Slider
 local function Slider(parent,text,flag,min,max)
     local holder = Instance.new("Frame", parent)
     holder.Size = UDim2.new(1,0,0,40)
@@ -690,7 +696,9 @@ local function Slider(parent,text,flag,min,max)
     end)
 end
 
--- Initialize Globals
+--------------------------------------------------
+--// Initialize Globals
+--------------------------------------------------
 _G.NoclipFlyEnabled = _G.NoclipFlyEnabled or false
 _G.FlySpeed = _G.FlySpeed or 50
 _G.VisualBigHead = _G.VisualBigHead or false
@@ -699,7 +707,9 @@ _G.NoCooldownJumpEnabled = _G.NoCooldownJumpEnabled or false
 _G.SpeedEnabled = _G.SpeedEnabled or false
 _G.WalkSpeedValue = _G.WalkSpeedValue or 16
 
--- Add Toggles and Sliders
+--------------------------------------------------
+--// Add Toggles & Sliders
+--------------------------------------------------
 CircleToggle(ScrollFrame,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
 Slider(ScrollFrame,"Fly Speed","FlySpeed",10,200)
 CircleToggle(ScrollFrame,"Big Head (Visual & Hitbox)","VisualBigHead")
@@ -707,17 +717,17 @@ CircleToggle(ScrollFrame,"Auto Jump","AutoJumpEnabled")
 CircleToggle(ScrollFrame,"No Jump Cooldown","NoCooldownJumpEnabled")
 Slider(ScrollFrame,"Walk Speed","WalkSpeedValue",16,100)
 
--- Player List Section
+--------------------------------------------------
+--// Player List with Teleport
+--------------------------------------------------
 local PlayerListContainer = Instance.new("Frame", ScrollFrame)
 PlayerListContainer.Size = UDim2.new(1,0,0,0)
 PlayerListContainer.BackgroundTransparency = 1
 PlayerListContainer.LayoutOrder = 999
-
 local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
 PlayerLayout.SortOrder = Enum.SortOrder.LayoutOrder
 PlayerLayout.Padding = UDim.new(0,4)
 
--- Function to add player button
 local function AddPlayerButton(player)
     if player == LocalPlayer then return end
     local holder = Instance.new("Frame")
@@ -756,7 +766,6 @@ local function AddPlayerButton(player)
     holder.Parent = PlayerListContainer
 end
 
--- Populate players
 for _,player in pairs(Players:GetPlayers()) do AddPlayerButton(player) end
 Players.PlayerAdded:Connect(AddPlayerButton)
 Players.PlayerRemoving:Connect(function(player)
@@ -767,24 +776,14 @@ Players.PlayerRemoving:Connect(function(player)
     end
 end)
 
-
 --------------------------------------------------
---// UNIVERSAL BIG HEAD (R6 + R15 + CUSTOM RIGS)
+--// Big Head Logic (Universal)
 --------------------------------------------------
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-
-_G.VisualBigHead = false
 local BIG_HEAD_SIZE = Vector3.new(4,4,4)
 local NORMAL_HEAD_SIZE = Vector3.new(2,1,1)
 
--- Detect head dynamically
 local function GetHead(character)
-    -- R6/R15 default head
-    if character:FindFirstChild("Head") then
-        return character.Head
-    end
-    -- fallback for custom rigs
+    if character:FindFirstChild("Head") then return character.Head end
     for _, part in pairs(character:GetChildren()) do
         if part:IsA("BasePart") and part.Name:lower():find("head") then
             return part
@@ -793,17 +792,14 @@ local function GetHead(character)
     return nil
 end
 
--- Apply Big Head repeatedly to counter rig resets
 local function ApplyBigHead(character)
     local head = GetHead(character)
     if not head then return end
-
     spawn(function()
         while character.Parent and _G.VisualBigHead do
             head.Size = BIG_HEAD_SIZE
             head.CanCollide = false
             head.Transparency = 0.5
-
             local mesh = head:FindFirstChildOfClass("SpecialMesh")
             if not mesh then
                 mesh = Instance.new("SpecialMesh")
@@ -813,7 +809,6 @@ local function ApplyBigHead(character)
             mesh.Scale = Vector3.new(1,1,1)
             task.wait(0.1)
         end
-        -- reset if disabled
         if head.Parent then
             head.Size = NORMAL_HEAD_SIZE
             head.Transparency = 0
@@ -821,116 +816,45 @@ local function ApplyBigHead(character)
     end)
 end
 
--- Setup a player for Big Head
 local function SetupPlayer(player)
     player.CharacterAdded:Connect(function(char)
         task.wait(0.5)
-        if _G.VisualBigHead then
-            ApplyBigHead(char)
-        end
+        if _G.VisualBigHead then ApplyBigHead(char) end
     end)
-    -- apply immediately if already loaded
     if player.Character and _G.VisualBigHead then
         task.wait(0.5)
         ApplyBigHead(player.Character)
     end
 end
 
--- Setup all current players
-for _, p in pairs(Players:GetPlayers()) do
-    if p ~= LocalPlayer then
-        SetupPlayer(p)
-    end
-end
+for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then SetupPlayer(p) end end
+Players.PlayerAdded:Connect(function(p) if p ~= LocalPlayer then SetupPlayer(p) end end)
 
--- Listen for new players
-Players.PlayerAdded:Connect(function(p)
-    if p ~= LocalPlayer then
-        SetupPlayer(p)
+--------------------------------------------------
+--// Movement Updater (WalkSpeed / AutoJump / NoCooldownJump)
+--------------------------------------------------
+RunService.Stepped:Connect(function()
+    local char = LocalPlayer.Character
+    if char then
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            -- WalkSpeed
+            humanoid.WalkSpeed = _G.SpeedEnabled and _G.WalkSpeedValue or 16
+
+            -- AutoJump
+            if _G.AutoJumpEnabled and humanoid.FloorMaterial ~= Enum.Material.Air then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+
+            -- NoCooldownJump
+            if _G.NoCooldownJumpEnabled then
+                humanoid.JumpPower = 50
+                humanoid.Jump = true
+            end
+        end
     end
 end)
 
--- GUI toggle circle for MovementPage
-local function BigHeadCircleToggle(parent)
-    local holder = Instance.new("Frame", parent)
-    holder.Size = UDim2.new(1,0,0,32)
-    holder.BackgroundTransparency = 1
-
-    local label = Instance.new("TextLabel", holder)
-    label.Size = UDim2.new(1,-40,1,0)
-    label.BackgroundTransparency = 1
-    label.Text = "Big Head (Visual & Hitbox)"
-    label.Font = Enum.Font.Gotham
-    label.TextSize = 13
-    label.TextColor3 = Color3.new(1,1,1)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-
-    local btn = Instance.new("TextButton", holder)
-    btn.Size = UDim2.new(0,22,0,22)
-    btn.Position = UDim2.new(1,-26,0.5,-11)
-    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
-    btn.Text = "○"
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 16
-    btn.TextColor3 = Color3.fromRGB(200,200,200)
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
-
-    btn.MouseButton1Click:Connect(function()
-        _G.VisualBigHead = not _G.VisualBigHead
-        btn.Text = _G.VisualBigHead and "●" or "○"
-        btn.TextColor3 = _G.VisualBigHead and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
-
-        -- apply immediately to all
-        for _, player in pairs(Players:GetPlayers()) do
-            if player.Character then
-                ApplyBigHead(player.Character)
-            end
-        end
-    end)
-end
-
-BigHeadCircleToggle(MovementPage)
-
---------------------------------------------------
---// AUTO JUMP + NO COOLDOWN + WALK SPEED LOGIC
---------------------------------------------------
-_G.WalkSpeedValue = _G.WalkSpeedValue or 16
-_G.AutoJumpEnabled = _G.AutoJumpEnabled or false
-_G.NoCooldownJumpEnabled = _G.NoCooldownJumpEnabled or false
-_G.SpeedEnabled = _G.SpeedEnabled or false
-
-local function MovementUpdater()
-    local humanoid
-    RunService.Stepped:Connect(function()
-        local char = LocalPlayer.Character
-        if char then
-            humanoid = char:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                -- Apply WalkSpeed if enabled
-                if _G.SpeedEnabled then
-                    humanoid.WalkSpeed = _G.WalkSpeedValue
-                else
-                    humanoid.WalkSpeed = 16
-                end
-
-                -- Auto Jump Logic
-                if _G.AutoJumpEnabled then
-                    if humanoid.FloorMaterial ~= Enum.Material.Air then
-                        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-                    end
-                end
-
-                -- No Jump Cooldown (removes Roblox default jump cooldown)
-                if _G.NoCooldownJumpEnabled then
-                    humanoid.JumpPower = 50 -- can adjust jump height
-                    humanoid.Jump = true
-                end
-            end
-        end
-    end)
-end
-
-MovementUpdater()
 
 
 --------------------------------------------------
