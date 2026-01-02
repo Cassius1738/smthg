@@ -302,13 +302,14 @@ TabLayout.Padding = UDim.new(0,6)
 -- PAGES 
 --------------------------------------------------
 local function Page()
+    -- Parent frame
     local f = Instance.new("Frame", Main)
     f.Position = UDim2.new(0,10,0,128)   -- start below header & tabs
     f.Size = UDim2.new(1,-20,1,-138)     -- fills main, with some padding
     f.BackgroundTransparency = 1
     f.Visible = false
 
-    -- Scrollable frame for controls
+    -- Scrollable frame for content
     local ScrollFrame = Instance.new("ScrollingFrame", f)
     ScrollFrame.Size = UDim2.new(1,0,1,0)
     ScrollFrame.Position = UDim2.new(0,0,0,0)
@@ -316,26 +317,26 @@ local function Page()
     ScrollFrame.ScrollBarThickness = 8
     ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
-    -- Add right padding so scrollbar doesn't overlap controls
+    -- Padding so scrollbar doesn't overlap controls
     local padding = Instance.new("UIPadding", ScrollFrame)
-    padding.PaddingRight = UDim.new(0,17)  -- space between controls and scrollbar
+    padding.PaddingRight = UDim.new(0,17)  -- adjust space
     padding.PaddingLeft = UDim.new(0,0)
     padding.PaddingTop = UDim.new(0,0)
     padding.PaddingBottom = UDim.new(0,0)
 
-    -- Layout for vertical stacking of buttons/sliders
+    -- Layout for buttons/sliders inside ScrollFrame
     local layout = Instance.new("UIListLayout", ScrollFrame)
     layout.SortOrder = Enum.SortOrder.LayoutOrder
-    layout.Padding = UDim.new(0,8) -- spacing between buttons/sliders
+    layout.Padding = UDim.new(0,8)
 
-    f.Parent = Pages
-    return ScrollFrame
+    -- Return the parent frame, but children go into ScrollFrame
+    return f, ScrollFrame
 end
 
-
-local AimbotPage = Page()
-local ESPPage = Page()
-local MovementPage = Page()
+-- Create pages
+local AimbotPage, AimbotScroll = Page()
+local ESPPage, ESPScroll = Page()
+local MovementPage, MovementScroll = Page()
 AimbotPage.Visible = true
 
 --------------------------------------------------
