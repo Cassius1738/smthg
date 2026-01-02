@@ -282,32 +282,28 @@ Tab("ESP",ESPPage)
 Tab("Movement",MovementPage)
 
 --------------------------------------------------
---// SCROLLABLE PAGE CONTAINERS
+--// CREATE SCROLLABLE CONTAINERS FOR EACH PAGE
 --------------------------------------------------
-local function CreatePageContainer(parent)
-	local container = Instance.new("ScrollingFrame", parent)
+local function CreatePageContainer(page)
+	local container = Instance.new("ScrollingFrame", page)
 	container.Size = UDim2.new(1,0,1,0)
+	container.Position = UDim2.new(0,0,0,0)
 	container.BackgroundTransparency = 1
-	container.BorderSizePixel = 0
-	container.CanvasSize = UDim2.new(0,0,0,0)
 	container.ScrollBarThickness = 6
 	container.AutomaticCanvasSize = Enum.AutomaticSize.Y
-
 	local layout = Instance.new("UIListLayout", container)
 	layout.Padding = UDim.new(0,6)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
-
-	return container, layout
+	return container
 end
 
-local AimbotContainer, AimbotLayout = CreatePageContainer(AimbotPage)
-local ESPContainer, ESPLayout = CreatePageContainer(ESPPage)
-local MovementContainer, MovementLayout = CreatePageContainer(MovementPage)
+local AimbotContainer = CreatePageContainer(AimbotPage)
+local ESPContainer = CreatePageContainer(ESPPage)
+local MovementContainer = CreatePageContainer(MovementPage)
 
 --------------------------------------------------
---// Aimbot Page Controls
+--// AIMBOT PAGE CONTROLS
 --------------------------------------------------
--- Parent everything to the scrollable container
 AimbotCircleToggle(AimbotContainer)       -- Enable Aimbot
 CameraLockToggle(AimbotContainer)         -- Camera Lock Allowed
 AimPartDropdown(AimbotContainer)          -- Aim Part selection
@@ -315,7 +311,7 @@ SmoothnessSlider(AimbotContainer)         -- Smoothness slider
 KeybindButton(AimbotContainer)            -- Set Aimbot key
 
 --------------------------------------------------
---// ESP Page Controls
+--// ESP PAGE CONTROLS
 --------------------------------------------------
 CircleToggle(ESPContainer,"ESP Box","ESP_Box")
 CircleToggle(ESPContainer,"ESP Name","ESP_Name")
@@ -323,15 +319,14 @@ CircleToggle(ESPContainer,"ESP Tracer","ESP_Tracer")
 CircleToggle(ESPContainer,"Team Check","TeamCheck")
 
 --------------------------------------------------
---// Movement Page Controls
+--// MOVEMENT PAGE CONTROLS
 --------------------------------------------------
 CircleToggle(MovementContainer,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
 FlySpeedSlider(MovementContainer)
 
--- Player list inside Movement page
+-- Scrollable Player List inside Movement page
 local PlayerListContainer = Instance.new("ScrollingFrame", MovementContainer)
 PlayerListContainer.Size = UDim2.new(1,0,0,150)
-PlayerListContainer.Position = UDim2.new(0,0,0,0)
 PlayerListContainer.BackgroundColor3 = Color3.fromRGB(35,35,35)
 PlayerListContainer.BorderSizePixel = 0
 PlayerListContainer.CanvasSize = UDim2.new(0,0,0,0)
@@ -358,7 +353,6 @@ Players.PlayerRemoving:Connect(function(p)
 		end
 	end
 end)
-
 
 --------------------------------------------------
 --// SHOW / HIDE MENU
