@@ -215,11 +215,21 @@ Instance.new("UIStroke", Main).Color = Color3.fromRGB(60,60,60)
 local Header = Instance.new("TextLabel", Main)
 Header.Size = UDim2.new(1,0,0,42)
 Header.BackgroundColor3 = Color3.fromRGB(25,25,25)
-Header.Text = "MANDEM$ - Cassius1738"
+Header.TextXAlignment = Enum.TextXAlignment.Left
+Header.Text = "  MANDEM$ - Cassius1738" 
 Header.Font = Enum.Font.GothamBold
 Header.TextSize = 14
 Header.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", Header).CornerRadius = UDim.new(0,14)
+
+-- Avatar Image
+local avatar = Instance.new("ImageLabel", Header)
+avatar.Size = UDim2.new(0,32,0,32)
+avatar.Position = UDim2.new(0,5,0.5,-16) -- top-left with slight padding
+avatar.BackgroundTransparency = 1
+avatar.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
+avatar.ScaleType = Enum.ScaleType.Fit
+
 
 -- Tabs
 local Tabs = Instance.new("Frame", Main)
