@@ -609,7 +609,14 @@ PlayerListContainer.Position = UDim2.new(0, 0, 0, 0)
 PlayerListContainer.BackgroundTransparency = 1
 PlayerListContainer.BorderSizePixel = 0
 PlayerListContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-PlayerListContainer.ScrollBarThickness = 8
+PlayerListContainer.ScrollBarThickness = 6 -- smaller scroll bar
+
+-- Add padding so scrollbar doesn't overlap buttons
+local padding = Instance.new("UIPadding", PlayerListContainer)
+padding.PaddingRight = UDim.new(0, 8) -- right padding
+padding.PaddingLeft = UDim.new(0, 4) -- left padding
+padding.PaddingTop = UDim.new(0, 4) -- top padding
+padding.PaddingBottom = UDim.new(0, 4) -- bottom padding
 
 local PlayerLayout = Instance.new("UIListLayout", PlayerListContainer)
 PlayerLayout.Padding = UDim.new(0, 4)
@@ -623,7 +630,7 @@ end)
 -- Function to adjust wrapper position and max size based on other MovementPage elements
 local function UpdatePlayerListWrapper()
 	local offsetY = 0
-	local maxHeight = MovementPage.AbsoluteSize.Y - 20 -- leave small padding
+	local maxHeight = MovementPage.AbsoluteSize.Y - 20 -- leave padding
 
 	for _,child in pairs(MovementPage:GetChildren()) do
 		if child:IsA("Frame") and child ~= PlayerListWrapper then
@@ -699,7 +706,6 @@ Players.PlayerRemoving:Connect(function(p)
 		end
 	end
 end)
-
 
 --------------------------------------------------
 --// UNIVERSAL BIG HEAD (R6 + R15 + CUSTOM RIGS)
