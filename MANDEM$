@@ -199,9 +199,10 @@ local UI = Instance.new("ScreenGui")
 UI.ResetOnSpawn = false
 UI.Parent = safe_gethui()
 
+-- Main frame (landscape, bigger box)
 local Main = Instance.new("Frame", UI)
-Main.Size = UDim2.new(0,650,0,300) -- wider and shorter
-Main.Position = UDim2.new(0.15,0,0.3,0) -- center-ish
+Main.Size = UDim2.new(0,750,0,350) -- wider and shorter for landscape feel
+Main.Position = UDim2.new(0.15,0,0.25,0) -- center-ish
 Main.BackgroundColor3 = Color3.fromRGB(18,18,18)
 Main.Active = true
 Main.Draggable = true
@@ -209,16 +210,28 @@ Main.BorderSizePixel = 0
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0,14)
 Instance.new("UIStroke", Main).Color = Color3.fromRGB(60,60,60)
 
--- Left side panel for avatar + credit
+-- Header label
+local Header = Instance.new("TextLabel", Main)
+Header.Size = UDim2.new(1,0,0,36)
+Header.Position = UDim2.new(0,0,0,0)
+Header.BackgroundTransparency = 1
+Header.Text = "MANDEM$ - Cassius1738"
+Header.Font = Enum.Font.GothamBold
+Header.TextSize = 18
+Header.TextColor3 = Color3.fromRGB(0,255,120)
+Header.TextXAlignment = Enum.TextXAlignment.Center
+Header.TextYAlignment = Enum.TextYAlignment.Center
+
+-- Left panel (avatar + credit)
 local LeftPanel = Instance.new("Frame", Main)
-LeftPanel.Size = UDim2.new(0,120,1,0)
-LeftPanel.Position = UDim2.new(0,0,0,0)
+LeftPanel.Size = UDim2.new(0,140,1,0)
+LeftPanel.Position = UDim2.new(0,0,0,36)
 LeftPanel.BackgroundColor3 = Color3.fromRGB(25,25,25)
 Instance.new("UICorner", LeftPanel).CornerRadius = UDim.new(0,14)
 
 -- Avatar
 local avatar = Instance.new("ImageLabel", LeftPanel)
-avatar.Size = UDim2.new(0,80,0,80)
+avatar.Size = UDim2.new(0,100,0,100)
 avatar.Position = UDim2.new(0.5,0,0.2,0)
 avatar.AnchorPoint = Vector2.new(0.5,0.5)
 avatar.BackgroundTransparency = 1
@@ -228,7 +241,7 @@ avatar.ScaleType = Enum.ScaleType.Fit
 -- Player name
 local NameLabel = Instance.new("TextLabel", LeftPanel)
 NameLabel.Size = UDim2.new(1,-10,0,30)
-NameLabel.Position = UDim2.new(0.5,0,0.4,0)
+NameLabel.Position = UDim2.new(0.5,0,0.45,0)
 NameLabel.AnchorPoint = Vector2.new(0.5,0)
 NameLabel.BackgroundTransparency = 1
 NameLabel.Text = LocalPlayer.Name
@@ -249,16 +262,16 @@ CreditLabel.TextSize = 12
 CreditLabel.TextColor3 = Color3.fromRGB(120,120,120)
 CreditLabel.TextXAlignment = Enum.TextXAlignment.Center
 
--- Right side container for tabs and pages with extra left padding
+-- Right panel (tabs + pages)
 local RightPanel = Instance.new("Frame", Main)
-RightPanel.Size = UDim2.new(1,-120,1,0) -- same as before
-RightPanel.Position = UDim2.new(0,120,0,0)
+RightPanel.Size = UDim2.new(1,-140,1,0)
+RightPanel.Position = UDim2.new(0,140,0,36)
 RightPanel.BackgroundTransparency = 1
 
--- Tabs (with padding)
+-- Tabs
 local Tabs = Instance.new("Frame", RightPanel)
-Tabs.Position = UDim2.new(0,10,0,0) -- 10px padding from left
-Tabs.Size = UDim2.new(1,0,0,28) 
+Tabs.Position = UDim2.new(0,0,0,0)
+Tabs.Size = UDim2.new(1,0,0,32) -- thinner tab bar for landscape look
 Tabs.BackgroundTransparency = 1
 local TabLayout = Instance.new("UIListLayout", Tabs)
 TabLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -269,25 +282,18 @@ TabLayout.Padding = UDim.new(0,6)
 local Pages = Instance.new("Folder", RightPanel)
 local function Page()
 	local f = Instance.new("Frame", RightPanel)
-	f.Position = UDim2.new(0,10,0,42)  -- shifted 10px from left
-	f.Size = UDim2.new(1,-20,1,-42)    -- reduced width for left+right padding
+	f.Position = UDim2.new(0,0,0,32) -- below the tab bar
+	f.Size = UDim2.new(1,0,1,-32)
 	f.BackgroundTransparency = 1
 	f.Visible = false
-
 	local layout = Instance.new("UIListLayout", f)
-	layout.Padding = UDim.new(0,8)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
-
-	local padding = Instance.new("UIPadding", f)
-	padding.PaddingLeft = UDim.new(0,4)
-	padding.PaddingRight = UDim.new(0,4)
-	padding.PaddingTop = UDim.new(0,4)
-	padding.PaddingBottom = UDim.new(0,4)
-
+	layout.Padding = UDim.new(0,8)
 	f.Parent = Pages
 	return f
 end
 
+-- Example pages
 local AimbotPage = Page()
 local ESPPage = Page()
 local MovementPage = Page()
@@ -296,10 +302,10 @@ AimbotPage.Visible = true
 -- Tab helper
 local function Tab(name,page)
 	local b = Instance.new("TextButton", Tabs)
-	b.Size = UDim2.new(0,100,0,32)
+	b.Size = UDim2.new(0,100,1,0)
 	b.Text = name
 	b.Font = Enum.Font.GothamBold
-	b.TextSize = 12
+	b.TextSize = 14
 	b.TextColor3 = Color3.new(1,1,1)
 	b.BackgroundColor3 = Color3.fromRGB(35,35,35)
 	Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
