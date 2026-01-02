@@ -202,7 +202,7 @@ UI.ResetOnSpawn = false
 UI.Parent = safe_gethui()
 
 local Main = Instance.new("Frame", UI)
-Main.Size = UDim2.new(0,620,0,360) -- landscape & bigger
+Main.Size = UDim2.new(0,620,0,360)
 Main.Position = UDim2.new(0.25,0,0.25,0)
 Main.BackgroundColor3 = Color3.fromRGB(18,18,18)
 Main.Active = true
@@ -241,88 +241,69 @@ avatar.Image = Players:GetUserThumbnailAsync(
 avatar.ScaleType = Enum.ScaleType.Fit
 Instance.new("UICorner", avatar).CornerRadius = UDim.new(1,0)
 
--- Name
-local Name = Instance.new("TextLabel", Profile)
-Name.Position = UDim2.new(0,60,0,8)
-Name.Size = UDim2.new(1,-60,0,18)
-Name.BackgroundTransparency = 1
-Name.Text = "Cassius1738"
-Name.Font = Enum.Font.GothamBold
-Name.TextSize = 14
-Name.TextColor3 = Color3.new(1,1,1)
-Name.TextXAlignment = Enum.TextXAlignment.Left
+-- Name, Username, YouTube, Discord
+local function createLabel(parent,posY,text,size,color)
+	local lbl = Instance.new("TextLabel", parent)
+	lbl.Position = UDim2.new(0,60,0,posY)
+	lbl.Size = size
+	lbl.BackgroundTransparency = 1
+	lbl.Text = text
+	lbl.Font = Enum.Font.Gotham
+	lbl.TextSize = 12
+	lbl.TextColor3 = color
+	lbl.TextXAlignment = Enum.TextXAlignment.Left
+	return lbl
+end
 
--- Username
-local Handle = Instance.new("TextLabel", Profile)
-Handle.Position = UDim2.new(0,60,0,26)
-Handle.Size = UDim2.new(1,-60,0,14)
-Handle.BackgroundTransparency = 1
-Handle.Text = "@Cassius1738"
-Handle.Font = Enum.Font.Gotham
-Handle.TextSize = 12
-Handle.TextColor3 = Color3.fromRGB(170,170,170)
-Handle.TextXAlignment = Enum.TextXAlignment.Left
-
--- YouTube
-local YouTube = Instance.new("TextLabel", Profile)
-YouTube.Position = UDim2.new(0,60,0,42)
-YouTube.Size = UDim2.new(1,-60,0,14)
-YouTube.BackgroundTransparency = 1
-YouTube.Text = "YouTube: Cassius1337"
-YouTube.Font = Enum.Font.Gotham
-YouTube.TextSize = 11
-YouTube.TextColor3 = Color3.fromRGB(200,200,200)
-YouTube.TextXAlignment = Enum.TextXAlignment.Left
-
--- Discord
-local Discord = Instance.new("TextLabel", Profile)
-Discord.Position = UDim2.new(0,60,0,56)
-Discord.Size = UDim2.new(1,-60,0,14)
-Discord.BackgroundTransparency = 1
-Discord.Text = "discord.gg/M3Wr8ZcJQA"
-Discord.Font = Enum.Font.Gotham
-Discord.TextSize = 11
-Discord.TextColor3 = Color3.fromRGB(120,180,255)
-Discord.TextXAlignment = Enum.TextXAlignment.Left
+createLabel(Profile,8,"Cassius1738",UDim2.new(1,-60,0,18),Color3.new(1,1,1)).Font = Enum.Font.GothamBold
+createLabel(Profile,26,"@Cassius1738",UDim2.new(1,-60,0,14),Color3.fromRGB(170,170,170))
+createLabel(Profile,42,"YouTube: Cassius1337",UDim2.new(1,-60,0,14),Color3.fromRGB(200,200,200))
+createLabel(Profile,56,"discord.gg/M3Wr8ZcJQA",UDim2.new(1,-60,0,14),Color3.fromRGB(120,180,255))
 
 --------------------------------------------------
 -- TABS
 --------------------------------------------------
 local Tabs = Instance.new("Frame", Main)
-Tabs.Position = UDim2.new(0,10,0,82) -- small left padding
+Tabs.Position = UDim2.new(0,10,0,82)
 Tabs.Size = UDim2.new(1,0,0,36)
 Tabs.BackgroundTransparency = 1
 
 local TabLayout = Instance.new("UIListLayout", Tabs)
 TabLayout.FillDirection = Enum.FillDirection.Horizontal
-TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left -- left-aligned
-TabLayout.Padding = UDim.new(0,6) 
+TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+TabLayout.Padding = UDim.new(0,6)
 
 --------------------------------------------------
--- PAGES 
+-- PAGES
 --------------------------------------------------
 local Pages = Instance.new("Folder", Main)
 
+-- Function to create a scrollable page
 local function Page()
-    local f = Instance.new("Frame", Main)
-    f.Position = UDim2.new(0,10,0,128)   -- start below header & tabs
-    f.Size = UDim2.new(1,-20,1,-138)     -- fills main, with some padding
-    f.BackgroundTransparency = 1
-    f.Visible = false
+	local f = Instance.new("Frame", Pages)
+	f.Size = UDim2.new(1, -20, 1, -138)
+	f.Position = UDim2.new(0, 10, 0, 128)
+	f.BackgroundTransparency = 1
+	f.Visible = false
 
-    -- Use vertical layout for controls
-    local layout = Instance.new("UIListLayout", f)
-    layout.SortOrder = Enum.SortOrder.LayoutOrder
-    layout.Padding = UDim.new(0,8) -- spacing between buttons/sliders
+	local ScrollFrame = Instance.new("ScrollingFrame", f)
+	ScrollFrame.Size = UDim2.new(1,0,1,0)
+	ScrollFrame.Position = UDim2.new(0,0,0,0)
+	ScrollFrame.BackgroundTransparency = 1
+	ScrollFrame.ScrollBarThickness = 8
+	ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
-    f.Parent = Pages
-    return f
+	local layout = Instance.new("UIListLayout", ScrollFrame)
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Padding = UDim.new(0,8)
+
+	return f, ScrollFrame
 end
 
-local AimbotPage = Page()
-local ESPPage = Page()
-local MovementPage = Page()
-AimbotPage.Visible = true
+local AimbotPage, AimbotScroll = Page()
+local ESPPage, ESPScroll = Page()
+local MovementPage, MovementScroll = Page()
+AimbotPage.Visible = true -- default
 
 --------------------------------------------------
 -- TAB FUNCTION
