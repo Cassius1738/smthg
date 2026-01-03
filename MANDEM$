@@ -544,12 +544,33 @@ IdleTimerLabel(AntiAFKPage)
 --------------------------------------------------
 --// Aimbot Page
 --------------------------------------------------
+
+-- Clear old UI if reloading
+for _, c in pairs(AimbotPage:GetChildren()) do
+    c:Destroy()
+end
+
+-- Scrollable container
+local AimbotScroll = Instance.new("ScrollingFrame")
+AimbotScroll.Parent = AimbotPage
+AimbotScroll.Size = UDim2.new(1,0,1,0)
+AimbotScroll.BackgroundTransparency = 1
+AimbotScroll.ScrollBarThickness = 8
+AimbotScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+AimbotScroll.CanvasSize = UDim2.new(0,0,0,0)
+
+local Layout = Instance.new("UIListLayout", AimbotScroll)
+Layout.SortOrder = Enum.SortOrder.LayoutOrder
+Layout.Padding = UDim.new(0,8)
+
+--------------------------------------------------
 -- Enable Aimbot Toggle
+--------------------------------------------------
 local function AimbotCircleToggle(parent)
     local holder = Instance.new("Frame", parent)
-    holder.Size = UDim2.new(1,0,0,32)
+    holder.Size = UDim2.new(1,-12,0,32)
     holder.BackgroundTransparency = 1
-    holder.LayoutOrder = 1 -- ensures it's on top
+    holder.LayoutOrder = 1
 
     local label = Instance.new("TextLabel", holder)
     label.Size = UDim2.new(1,-40,1,0)
@@ -577,156 +598,184 @@ local function AimbotCircleToggle(parent)
         btn.TextColor3 = _G.AimbotGUIEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
     end)
 end
-AimbotCircleToggle(AimbotPage)
 
--- Aim Part Dropdown
+--------------------------------------------------
+-- Aim Part Dropdown (FIXED)
+--------------------------------------------------
 local function AimPartDropdown(parent)
-	local holder = Instance.new("Frame", parent)
-	holder.Size = UDim2.new(1,0,0,32)
-	holder.BackgroundTransparency = 1
-	holder.LayoutOrder = 2 -- second element
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,-12,0,32)
+    holder.BackgroundTransparency = 1
+    holder.LayoutOrder = 2
 
-	local label = Instance.new("TextLabel", holder)
-	label.Size = UDim2.new(0.5,0,1,0)
-	label.BackgroundTransparency = 1
-	label.Text = "Aim Part"
-	label.Font = Enum.Font.Gotham
-	label.TextSize = 13
-	label.TextColor3 = Color3.new(1,1,1)
-	label.TextXAlignment = Enum.TextXAlignment.Left
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(0.5,0,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = "Aim Part"
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
 
-	local dropdown = Instance.new("TextButton", holder)
-	dropdown.Size = UDim2.new(0.45,0,1,0)
-	dropdown.Position = UDim2.new(0.5,0,0,0)
-	dropdown.BackgroundColor3 = Color3.fromRGB(35,35,35)
-	dropdown.Text = _G.AimPart
-	dropdown.TextColor3 = Color3.new(1,1,1)
-	dropdown.Font = Enum.Font.Gotham
-	dropdown.TextSize = 13
-	Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0,8)
-	local options = {"Head","UpperTorso","LowerTorso"}
-	local open = false
-	local listFrame
-	dropdown.MouseButton1Click:Connect(function()
-		if open then if listFrame then listFrame:Destroy() end open = false else
-			listFrame = Instance.new("Frame", parent)
-			listFrame.Position = UDim2.new(0,0,0,32)
-			listFrame.Size = UDim2.new(1,0,0,#options*30)
-			listFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
-			Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0,8)
-			local layout = Instance.new("UIListLayout", listFrame)
-			layout.Padding = UDim.new(0,2)
-			for _,opt in pairs(options) do
-				local btn = Instance.new("TextButton", listFrame)
-				btn.Size = UDim2.new(1,0,0,30)
-				btn.BackgroundColor3 = Color3.fromRGB(45,45,45)
-				btn.Text = opt
-				btn.TextColor3 = Color3.new(1,1,1)
-				btn.Font = Enum.Font.Gotham
-				btn.TextSize = 13
-				Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
-				btn.MouseButton1Click:Connect(function()
-					_G.AimPart = opt
-					dropdown.Text = opt
-					listFrame:Destroy()
-					open = false
-				end)
-			end
-			open = true
-		end
-	end)
+    local dropdown = Instance.new("TextButton", holder)
+    dropdown.Size = UDim2.new(0.45,0,1,0)
+    dropdown.Position = UDim2.new(0.5,0,0,0)
+    dropdown.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    dropdown.Text = _G.AimPart
+    dropdown.TextColor3 = Color3.new(1,1,1)
+    dropdown.Font = Enum.Font.Gotham
+    dropdown.TextSize = 13
+    Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0,8)
+
+    local options = {"Head","UpperTorso","LowerTorso"}
+    local open = false
+    local listFrame
+
+    dropdown.MouseButton1Click:Connect(function()
+        if open then
+            if listFrame then listFrame:Destroy() end
+            open = false
+            return
+        end
+
+        listFrame = Instance.new("Frame")
+        listFrame.Parent = holder
+        listFrame.Position = UDim2.new(0,0,1,4)
+        listFrame.Size = UDim2.new(1,0,0,#options * 30)
+        listFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
+        listFrame.ZIndex = 10
+        Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0,8)
+
+        local layout = Instance.new("UIListLayout", listFrame)
+        layout.Padding = UDim.new(0,2)
+
+        for _, opt in ipairs(options) do
+            local btn = Instance.new("TextButton", listFrame)
+            btn.Size = UDim2.new(1,0,0,30)
+            btn.BackgroundColor3 = Color3.fromRGB(45,45,45)
+            btn.Text = opt
+            btn.TextColor3 = Color3.new(1,1,1)
+            btn.Font = Enum.Font.Gotham
+            btn.TextSize = 13
+            Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
+
+            btn.MouseButton1Click:Connect(function()
+                _G.AimPart = opt
+                dropdown.Text = opt
+                listFrame:Destroy()
+                open = false
+            end)
+        end
+
+        open = true
+    end)
 end
-AimPartDropdown(AimbotPage)
 
+--------------------------------------------------
 -- Smoothness Slider
+--------------------------------------------------
 local function SmoothnessSlider(parent)
-	local holder = Instance.new("Frame", parent)
-	holder.Size = UDim2.new(1,0,0,40)
-	holder.BackgroundTransparency = 1
-	holder.LayoutOrder = 3 -- third element
-	local label = Instance.new("TextLabel", holder)
-	label.Size = UDim2.new(0.6,0,1,0)
-	label.BackgroundTransparency = 1
-	label.Text = "Smoothness: "..string.format("%.2f", _G.Sensitivity)
-	label.Font = Enum.Font.Gotham
-	label.TextSize = 13
-	label.TextColor3 = Color3.new(1,1,1)
-	label.TextXAlignment = Enum.TextXAlignment.Left
-	local sliderBar = Instance.new("Frame", holder)
-	sliderBar.Size = UDim2.new(0.35,0,0.3,0)
-	sliderBar.Position = UDim2.new(0.6,0,0.35,0)
-	sliderBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
-	Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1,0)
-	local fill = Instance.new("Frame", sliderBar)
-	fill.Size = UDim2.new((_G.Sensitivity-0.01)/0.19,0,1,0)
-	fill.BackgroundColor3 = Color3.fromRGB(0,255,120)
-	Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
-	local handle = Instance.new("Frame", sliderBar)
-	handle.Size = UDim2.new(0,16,0,16)
-	handle.Position = UDim2.new(fill.Size.X.Scale, 0, 0.5, -8)
-	handle.BackgroundColor3 = Color3.fromRGB(0,255,120)
-	Instance.new("UICorner", handle).CornerRadius = UDim.new(1,0)
-	local dragging = false
-	handle.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true Main.Active = false end
-	end)
-	handle.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false Main.Active = true end
-	end)
-	UserInputService.InputChanged:Connect(function(input)
-		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-			local mouseX = math.clamp(input.Position.X - sliderBar.AbsolutePosition.X,0,sliderBar.AbsoluteSize.X)
-			local val = mouseX / sliderBar.AbsoluteSize.X
-			_G.Sensitivity = math.clamp(val*0.19+0.01, 0.01, 0.2)
-			fill.Size = UDim2.new(val,0,1,0)
-			handle.Position = UDim2.new(val,0,0.5,-8)
-			label.Text = "Smoothness: "..string.format("%.2f", _G.Sensitivity)
-		end
-	end)
-end
-SmoothnessSlider(AimbotPage)
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,-12,0,40)
+    holder.BackgroundTransparency = 1
+    holder.LayoutOrder = 3
 
--- Keybind Button
-local function KeybindButton(parent)
-	local holder = Instance.new("Frame", parent)
-	holder.Size = UDim2.new(1,0,0,32)
-	holder.BackgroundTransparency = 1
-	holder.LayoutOrder = 4 -- last element
-	local label = Instance.new("TextLabel", holder)
-	label.Size = UDim2.new(0.5,0,1,0)
-	label.BackgroundTransparency = 1
-	label.Text = "Aimbot Key: ".._G.AimbotKey.Name
-	label.Font = Enum.Font.Gotham
-	label.TextSize = 13
-	label.TextColor3 = Color3.new(1,1,1)
-	label.TextXAlignment = Enum.TextXAlignment.Left
-	local btn = Instance.new("TextButton", holder)
-	btn.Size = UDim2.new(0.45,0,1,0)
-	btn.Position = UDim2.new(0.5,0,0,0)
-	btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
-	btn.Text = "Set Key"
-	btn.TextColor3 = Color3.new(1,1,1)
-	btn.Font = Enum.Font.Gotham
-	btn.TextSize = 13
-	Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
-	local waiting = false
-	btn.MouseButton1Click:Connect(function()
-		if waiting then return end
-		waiting = true
-		btn.Text = "Press Key..."
-		local conn
-		conn = UserInputService.InputBegan:Connect(function(input,gp)
-			if input.UserInputType == Enum.UserInputType.Keyboard then
-				_G.AimbotKey = input.KeyCode
-				label.Text = "Aimbot Key: ".._G.AimbotKey.Name
-				btn.Text = "Set Key"
-				waiting = false
-				conn:Disconnect()
-			end
-		end)
-	end)
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(0.6,0,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = "Smoothness: "..string.format("%.2f", _G.Sensitivity)
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local sliderBar = Instance.new("Frame", holder)
+    sliderBar.Size = UDim2.new(0.35,0,0.3,0)
+    sliderBar.Position = UDim2.new(0.6,0,0.35,0)
+    sliderBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
+    Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1,0)
+
+    local fill = Instance.new("Frame", sliderBar)
+    fill.Size = UDim2.new((_G.Sensitivity-0.01)/0.19,0,1,0)
+    fill.BackgroundColor3 = Color3.fromRGB(0,255,120)
+    Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
+
+    local handle = Instance.new("Frame", sliderBar)
+    handle.Size = UDim2.new(0,16,0,16)
+    handle.Position = UDim2.new(fill.Size.X.Scale,0,0.5,-8)
+    handle.BackgroundColor3 = Color3.fromRGB(0,255,120)
+    Instance.new("UICorner", handle).CornerRadius = UDim.new(1,0)
+
+    local dragging = false
+    handle.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true Main.Active = false end
+    end)
+    handle.InputEnded:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false Main.Active = true end
+    end)
+
+    UserInputService.InputChanged:Connect(function(i)
+        if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
+            local x = math.clamp(i.Position.X - sliderBar.AbsolutePosition.X,0,sliderBar.AbsoluteSize.X)
+            local v = x / sliderBar.AbsoluteSize.X
+            _G.Sensitivity = math.clamp(v*0.19+0.01,0.01,0.2)
+            fill.Size = UDim2.new(v,0,1,0)
+            handle.Position = UDim2.new(v,0,0.5,-8)
+            label.Text = "Smoothness: "..string.format("%.2f", _G.Sensitivity)
+        end
+    end)
 end
-KeybindButton(AimbotPage)
+
+--------------------------------------------------
+-- Keybind Button
+--------------------------------------------------
+local function KeybindButton(parent)
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,-12,0,32)
+    holder.BackgroundTransparency = 1
+    holder.LayoutOrder = 4
+
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(0.5,0,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = "Aimbot Key: ".._G.AimbotKey.Name
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local btn = Instance.new("TextButton", holder)
+    btn.Size = UDim2.new(0.45,0,1,0)
+    btn.Position = UDim2.new(0.5,0,0,0)
+    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    btn.Text = "Set Key"
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 13
+    btn.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
+
+    btn.MouseButton1Click:Connect(function()
+        btn.Text = "Press Key..."
+        local conn
+        conn = UserInputService.InputBegan:Connect(function(i)
+            if i.UserInputType == Enum.UserInputType.Keyboard then
+                _G.AimbotKey = i.KeyCode
+                label.Text = "Aimbot Key: ".._G.AimbotKey.Name
+                btn.Text = "Set Key"
+                conn:Disconnect()
+            end
+        end)
+    end)
+end
+
+--------------------------------------------------
+-- Build UI
+--------------------------------------------------
+AimbotCircleToggle(AimbotScroll)
+AimPartDropdown(AimbotScroll)
+SmoothnessSlider(AimbotScroll)
+KeybindButton(AimbotScroll)
+
 
 --------------------------------------------------
 --// ESP Page
