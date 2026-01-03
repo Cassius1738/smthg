@@ -1007,18 +1007,106 @@ for _,c in pairs(MovementPage:GetChildren()) do
     c:Destroy()
 end
 
+-- Settings
+local SCROLLBAR_WIDTH = 12 -- space for scrollbar
+local RIGHT_PADDING = 12   -- padding so toggles/sliders aren't cramped
+
 -- Scrollable frame
 local ScrollFrame = Instance.new("ScrollingFrame")
 ScrollFrame.Parent = MovementPage
-ScrollFrame.Size = UDim2.new(1,0,1,0)
-ScrollFrame.Position = UDim2.new(0,0,0,0)
+ScrollFrame.Size = UDim2.new(1, -SCROLLBAR_WIDTH, 1, 0) -- leave room for scrollbar
+ScrollFrame.Position = UDim2.new(0, 0, 0, 0)
 ScrollFrame.BackgroundTransparency = 1
-ScrollFrame.ScrollBarThickness = 8
+ScrollFrame.ScrollBarThickness = SCROLLBAR_WIDTH
 ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
 local Layout = Instance.new("UIListLayout", ScrollFrame)
 Layout.SortOrder = Enum.SortOrder.LayoutOrder
 Layout.Padding = UDim.new(0,8)
+
+-- Adjusted CircleToggle for padding
+local function CircleToggle(parent,text,flag)
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1, -RIGHT_PADDING, 0, 32)
+    holder.BackgroundTransparency = 1
+
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(1,-40,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local btn = Instance.new("TextButton", holder)
+    btn.Size = UDim2.new(0,22,0,22)
+    btn.Position = UDim2.new(1,-26,0.5,-11)
+    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    btn.Text = "○"
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.TextColor3 = Color3.fromRGB(200,200,200)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+
+    btn.MouseButton1Click:Connect(function()
+        _G[flag] = not _G[flag]
+        btn.Text = _G[flag] and "●" or "○"
+        btn.TextColor3 = _G[flag] and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+    end)
+end
+
+-- Adjusted Slider for padding
+local function Slider(parent,text,flag,min,max)
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1, -RIGHT_PADDING, 0, 40)
+    holder.BackgroundTransparency = 1
+
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(0.6,0,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = text..": ".._G[flag]
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local sliderBar = Instance.new("Frame", holder)
+    sliderBar.Size = UDim2.new(0.35,0,0.3,0)
+    sliderBar.Position = UDim2.new(0.6,0,0.35,0)
+    sliderBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
+    Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1,0)
+
+    local fill = Instance.new("Frame", sliderBar)
+    fill.Size = UDim2.new((_G[flag]-min)/(max-min),0,1,0)
+    fill.BackgroundColor3 = Color3.fromRGB(0,255,120)
+    Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
+
+    local handle = Instance.new("Frame", sliderBar)
+    handle.Size = UDim2.new(0,16,0,16)
+    handle.Position = UDim2.new(fill.Size.X.Scale,0,0.5,-8)
+    handle.BackgroundColor3 = Color3.fromRGB(0,255,120)
+    Instance.new("UICorner", handle).CornerRadius = UDim.new(1,0)
+
+    local dragging = false
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true Main.Active = false end
+    end)
+    handle.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false Main.Active = true end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local mouseX = math.clamp(input.Position.X - sliderBar.AbsolutePosition.X,0,sliderBar.AbsoluteSize.X)
+            local val = mouseX / sliderBar.AbsoluteSize.X
+            _G[flag] = math.clamp(math.floor(val*(max-min)+min),min,max)
+            fill.Size = UDim2.new(val,0,1,0)
+            handle.Position = UDim2.new(val,0,0.5,-8)
+            label.Text = text..": ".._G[flag]
+        end
+    end)
+end
 
 -- Toggles + Sliders
 CircleToggle(ScrollFrame,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
@@ -1027,6 +1115,7 @@ CircleToggle(ScrollFrame,"No Jump Cooldown","NoCooldownJumpEnabled")
 CircleToggle(ScrollFrame,"Enable Walk Speed","SpeedEnabled")
 Slider(ScrollFrame,"Walk Speed","WalkSpeedValue",16,100)
 BigHeadCircleToggle(ScrollFrame)
+
 
 --------------------------------------------------
 --// Noclip + Fly logic (fixed)
