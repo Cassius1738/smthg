@@ -44,6 +44,8 @@ _G.FlySpeed = 50
 
 _G.AntiAFK = false
 _G.IdleSeconds = 0
+_G.IdleMinutes = 0
+_G.IdleHours = 0
 
 
 --------------------------------------------------
@@ -425,26 +427,94 @@ Tab("Anti-AFK", AntiAFKPage)
 --// Anti-AFK Page
 --------------------------------------------------
 
+-- defaults
+_G.AntiAFK = _G.AntiAFK or false
+
+_G.IdleSeconds = _G.IdleSeconds or 0
+_G.IdleMinutes = _G.IdleMinutes or 0
+_G.IdleHours   = _G.IdleHours   or 0
+
+-- streak tracking
+_G.CurrentIdleStreak = _G.CurrentIdleStreak or 0
+_G.LongestIdleStreak = _G.LongestIdleStreak or 0
+
 CircleToggle(AntiAFKPage, "Enable Anti-AFK", "AntiAFK")
+
+-- idle counter + streak tracker
+task.spawn(function()
+    while true do
+        task.wait(1)
+
+        if _G.AntiAFK then
+            -- total idle time
+            _G.IdleSeconds += 1
+            _G.CurrentIdleStreak += 1
+
+            if _G.IdleSeconds >= 60 then
+                _G.IdleSeconds = 0
+                _G.IdleMinutes += 1
+            end
+
+            if _G.IdleMinutes >= 60 then
+                _G.IdleMinutes = 0
+                _G.IdleHours += 1
+            end
+
+            -- update longest streak
+            if _G.CurrentIdleStreak > _G.LongestIdleStreak then
+                _G.LongestIdleStreak = _G.CurrentIdleStreak
+            end
+        else
+            -- pause streak when disabled
+            _G.CurrentIdleStreak = 0
+        end
+    end
+end)
 
 local function IdleTimerLabel(parent)
     local holder = Instance.new("Frame", parent)
-    holder.Size = UDim2.new(1,0,0,28)
+    holder.Size = UDim2.new(1,0,0,48)
     holder.BackgroundTransparency = 1
 
     local label = Instance.new("TextLabel", holder)
-    label.Size = UDim2.new(1,0,1,0)
+    label.Size = UDim2.new(1,0,0,24)
     label.BackgroundTransparency = 1
     label.Font = Enum.Font.Gotham
     label.TextSize = 13
     label.TextColor3 = Color3.fromRGB(180,180,180)
     label.TextXAlignment = Enum.TextXAlignment.Left
 
+    local longest = Instance.new("TextLabel", holder)
+    longest.Position = UDim2.new(0,0,0,24)
+    longest.Size = UDim2.new(1,0,0,24)
+    longest.BackgroundTransparency = 1
+    longest.Font = Enum.Font.Gotham
+    longest.TextSize = 13
+    longest.TextColor3 = Color3.fromRGB(140,140,140)
+    longest.TextXAlignment = Enum.TextXAlignment.Left
+
     task.spawn(function()
         while label.Parent do
-            local mins = math.floor(_G.IdleSeconds / 60)
-            local secs = _G.IdleSeconds % 60
-            label.Text = string.format("Idle Time: %02d:%02d", mins, secs)
+            if _G.AntiAFK then
+                label.Text = string.format(
+                    "Idle Time: %02dh %02dm %02ds",
+                    _G.IdleHours,
+                    _G.IdleMinutes,
+                    _G.IdleSeconds
+                )
+
+                local ls = _G.LongestIdleStreak
+                longest.Text = string.format(
+                    "Longest Streak: %02dh %02dm %02ds",
+                    math.floor(ls / 3600),
+                    math.floor(ls % 3600 / 60),
+                    ls % 60
+                )
+            else
+                label.Text = "Idle Time: Paused"
+                longest.Text = "Longest Streak: --"
+            end
+
             task.wait(1)
         end
     end)
