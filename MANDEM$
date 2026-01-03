@@ -1179,37 +1179,6 @@ Slider(ScrollFrame,"Walk Speed","WalkSpeedValue",16,100)
 BigHeadCircleToggle(ScrollFrame)
 
 --------------------------------------------------
--- Player Teleport List
---------------------------------------------------
-local function CreatePlayerButton(player)
-    if player == LocalPlayer then return end
-    local holder = Instance.new("Frame", ScrollFrame)
-    holder.Size = UDim2.new(1,0,0,36)
-    holder.BackgroundTransparency = 1
-
-    local btn = Instance.new("TextButton", holder)
-    btn.Size = UDim2.new(1,0,1,0)
-    btn.Text = player.Name
-    btn.Font = Enum.Font.Gotham
-    btn.TextSize = 13
-    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
-    btn.TextColor3 = Color3.new(1,1,1)
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
-
-    btn.MouseButton1Click:Connect(function()
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            LocalPlayer.Character.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame + Vector3.new(0,5,0)
-        end
-    end)
-end
-
--- Initial player buttons
-for _,p in pairs(Players:GetPlayers()) do CreatePlayerButton(p) end
-Players.PlayerAdded:Connect(CreatePlayerButton)
-
-
-
---------------------------------------------------
 --// Noclip + Fly logic (fixed)
 --------------------------------------------------
 RunService.Stepped:Connect(function()
