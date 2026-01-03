@@ -1068,23 +1068,17 @@ Slider(ScrollFrame,"Walk Speed","WalkSpeedValue",16,100)
 BigHeadCircleToggle(ScrollFrame)
 
 --------------------------------------------------
---// MOVEMENT PAGE
+--// MOVEMENT PAGE CLEAN SCROLLABLE
 --------------------------------------------------
+for _,c in pairs(MovementPage:GetChildren()) do c:Destroy() end
 
--- Clear previous children if reloading
-for _,c in pairs(MovementPage:GetChildren()) do
-    c:Destroy()
-end
+local SCROLLBAR_WIDTH = 12
+local RIGHT_PADDING = 12
 
--- Settings
-local SCROLLBAR_WIDTH = 12 -- space for scrollbar
-local RIGHT_PADDING = 12   -- padding so toggles/sliders aren't cramped
-
--- Scrollable frame
 local ScrollFrame = Instance.new("ScrollingFrame")
 ScrollFrame.Parent = MovementPage
-ScrollFrame.Size = UDim2.new(1, -SCROLLBAR_WIDTH, 1, 0) -- leave room for scrollbar
-ScrollFrame.Position = UDim2.new(0, 0, 0, 0)
+ScrollFrame.Size = UDim2.new(1, -SCROLLBAR_WIDTH, 1, 0)
+ScrollFrame.Position = UDim2.new(0,0,0,0)
 ScrollFrame.BackgroundTransparency = 1
 ScrollFrame.ScrollBarThickness = SCROLLBAR_WIDTH
 ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -1093,10 +1087,10 @@ local Layout = Instance.new("UIListLayout", ScrollFrame)
 Layout.SortOrder = Enum.SortOrder.LayoutOrder
 Layout.Padding = UDim.new(0,8)
 
--- Adjusted CircleToggle for padding
+-- Helper: Toggle Button
 local function CircleToggle(parent,text,flag)
     local holder = Instance.new("Frame", parent)
-    holder.Size = UDim2.new(1, -RIGHT_PADDING, 0, 32)
+    holder.Size = UDim2.new(1,-RIGHT_PADDING,0,32)
     holder.BackgroundTransparency = 1
 
     local label = Instance.new("TextLabel", holder)
@@ -1125,10 +1119,10 @@ local function CircleToggle(parent,text,flag)
     end)
 end
 
--- Adjusted Slider for padding
+-- Helper: Slider
 local function Slider(parent,text,flag,min,max)
     local holder = Instance.new("Frame", parent)
-    holder.Size = UDim2.new(1, -RIGHT_PADDING, 0, 40)
+    holder.Size = UDim2.new(1,-RIGHT_PADDING,0,40)
     holder.BackgroundTransparency = 1
 
     local label = Instance.new("TextLabel", holder)
@@ -1164,7 +1158,6 @@ local function Slider(parent,text,flag,min,max)
     handle.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false Main.Active = true end
     end)
-
     UserInputService.InputChanged:Connect(function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local mouseX = math.clamp(input.Position.X - sliderBar.AbsolutePosition.X,0,sliderBar.AbsoluteSize.X)
@@ -1184,6 +1177,36 @@ CircleToggle(ScrollFrame,"No Jump Cooldown","NoCooldownJumpEnabled")
 CircleToggle(ScrollFrame,"Enable Walk Speed","SpeedEnabled")
 Slider(ScrollFrame,"Walk Speed","WalkSpeedValue",16,100)
 BigHeadCircleToggle(ScrollFrame)
+
+--------------------------------------------------
+-- Player Teleport List
+--------------------------------------------------
+local function CreatePlayerButton(player)
+    if player == LocalPlayer then return end
+    local holder = Instance.new("Frame", ScrollFrame)
+    holder.Size = UDim2.new(1,0,0,36)
+    holder.BackgroundTransparency = 1
+
+    local btn = Instance.new("TextButton", holder)
+    btn.Size = UDim2.new(1,0,1,0)
+    btn.Text = player.Name
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 13
+    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    btn.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
+
+    btn.MouseButton1Click:Connect(function()
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame + Vector3.new(0,5,0)
+        end
+    end)
+end
+
+-- Initial player buttons
+for _,p in pairs(Players:GetPlayers()) do CreatePlayerButton(p) end
+Players.PlayerAdded:Connect(CreatePlayerButton)
+
 
 
 --------------------------------------------------
