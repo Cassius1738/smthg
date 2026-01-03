@@ -604,12 +604,12 @@ end
 --------------------------------------------------
 local function AimPartDropdown(parent)
     local holder = Instance.new("Frame", parent)
-    holder.Size = UDim2.new(1,-12,0,32)
+    holder.Size = UDim2.new(1, -12, 0, 32)
     holder.BackgroundTransparency = 1
     holder.LayoutOrder = 2
 
     local label = Instance.new("TextLabel", holder)
-    label.Size = UDim2.new(0.5,0,1,0)
+    label.Size = UDim2.new(0.5, 0, 1, 0)
     label.BackgroundTransparency = 1
     label.Text = "Aim Part"
     label.Font = Enum.Font.Gotham
@@ -618,8 +618,8 @@ local function AimPartDropdown(parent)
     label.TextXAlignment = Enum.TextXAlignment.Left
 
     local dropdown = Instance.new("TextButton", holder)
-    dropdown.Size = UDim2.new(0.45,0,1,0)
-    dropdown.Position = UDim2.new(0.5,0,0,0)
+    dropdown.Size = UDim2.new(0.45, 0, 1, 0)
+    dropdown.Position = UDim2.new(0.5, 0, 0, 0)
     dropdown.BackgroundColor3 = Color3.fromRGB(35,35,35)
     dropdown.Text = _G.AimPart
     dropdown.TextColor3 = Color3.new(1,1,1)
@@ -627,27 +627,35 @@ local function AimPartDropdown(parent)
     dropdown.TextSize = 13
     Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0,8)
 
-    local options = {"Head","UpperTorso","LowerTorso"}
+    local options = {"Head", "UpperTorso", "LowerTorso"}
     local open = false
     local listFrame
 
+    local function CloseDropdown()
+        if listFrame then
+            listFrame:Destroy()
+            listFrame = nil
+            open = false
+        end
+    end
+
     dropdown.MouseButton1Click:Connect(function()
         if open then
-            if listFrame then listFrame:Destroy() end
-            open = false
+            CloseDropdown()
             return
         end
 
         listFrame = Instance.new("Frame")
         listFrame.Parent = holder
         listFrame.Position = UDim2.new(0,0,1,4)
-        listFrame.Size = UDim2.new(1,0,0,#options * 30)
+        listFrame.Size = UDim2.new(1,0,0,#options*30)
         listFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
         listFrame.ZIndex = 10
         Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0,8)
 
         local layout = Instance.new("UIListLayout", listFrame)
         layout.Padding = UDim.new(0,2)
+        layout.SortOrder = Enum.SortOrder.LayoutOrder
 
         for _, opt in ipairs(options) do
             local btn = Instance.new("TextButton", listFrame)
@@ -662,12 +670,24 @@ local function AimPartDropdown(parent)
             btn.MouseButton1Click:Connect(function()
                 _G.AimPart = opt
                 dropdown.Text = opt
-                listFrame:Destroy()
-                open = false
+                CloseDropdown()
             end)
         end
 
         open = true
+    end)
+
+    -- Close dropdown if clicked outside
+    UserInputService.InputBegan:Connect(function(input, gp)
+        if open and input.UserInputType == Enum.UserInputType.MouseButton1 then
+            local mousePos = UserInputService:GetMouseLocation()
+            local absPos = listFrame.AbsolutePosition
+            local absSize = listFrame.AbsoluteSize
+            if not (mousePos.X >= absPos.X and mousePos.X <= absPos.X + absSize.X and
+                    mousePos.Y >= absPos.Y and mousePos.Y <= absPos.Y + absSize.Y) then
+                CloseDropdown()
+            end
+        end
     end)
 end
 
