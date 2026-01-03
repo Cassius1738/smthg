@@ -42,6 +42,10 @@ _G.ESP_Tracer = false
 _G.NoclipFlyEnabled = false
 _G.FlySpeed = 50
 
+_G.AntiAFK = false
+_G.IdleSeconds = 0
+
+
 --------------------------------------------------
 --// INPUT HANDLING
 --------------------------------------------------
@@ -67,6 +71,33 @@ UserInputService.InputEnded:Connect(function(i)
 	elseif i.UserInputType == Enum.UserInputType.Keyboard and i.KeyCode == _G.AimbotKey then
 		AimbotDebounce = false
 	end
+end)
+
+local VirtualUser = game:GetService("VirtualUser")
+
+-- reset idle time on real input
+local function ResetIdle()
+    _G.IdleSeconds = 0
+end
+
+UserInputService.InputBegan:Connect(ResetIdle)
+UserInputService.InputChanged:Connect(ResetIdle)
+UserInputService.InputEnded:Connect(ResetIdle)
+
+-- count idle seconds
+task.spawn(function()
+    while true do
+        task.wait(1)
+        _G.IdleSeconds += 1
+    end
+end)
+
+-- Anti-AFK trigger
+LocalPlayer.Idled:Connect(function()
+    if _G.AntiAFK then
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
+    end
 end)
 
 --------------------------------------------------
@@ -322,6 +353,8 @@ end
 local AimbotPage = Page()
 local ESPPage = Page()
 local MovementPage = Page()
+local AntiAFKPage = Page()
+
 AimbotPage.Visible = true
 
 --------------------------------------------------
@@ -348,6 +381,38 @@ end
 Tab("Aimbot",AimbotPage)
 Tab("ESP",ESPPage)
 Tab("Movement",MovementPage)
+Tab("Anti-AFK", AntiAFKPage)
+
+--------------------------------------------------
+--// Anti-AFK Page
+--------------------------------------------------
+
+CircleToggle(AntiAFKPage, "Enable Anti-AFK", "AntiAFK")
+
+local function IdleTimerLabel(parent)
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,0,0,28)
+    holder.BackgroundTransparency = 1
+
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(1,0,1,0)
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.fromRGB(180,180,180)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    task.spawn(function()
+        while label.Parent do
+            local mins = math.floor(_G.IdleSeconds / 60)
+            local secs = _G.IdleSeconds % 60
+            label.Text = string.format("Idle Time: %02d:%02d", mins, secs)
+            task.wait(1)
+        end
+    end)
+end
+
+IdleTimerLabel(AntiAFKPage)
 
 --------------------------------------------------
 --// HELPER FUNCTIONS
@@ -389,10 +454,10 @@ end
 --------------------------------------------------
 --// Aimbot Page
 --------------------------------------------------
--- Enable Aimbot
+-- Enable Aimbot Toggle
 local function AimbotCircleToggle(parent)
     local holder = Instance.new("Frame", parent)
-    holder.Size = UDim2.new(1,0,0,32) -- full width of page
+    holder.Size = UDim2.new(1,0,0,32)
     holder.BackgroundTransparency = 1
     holder.LayoutOrder = 1 -- ensures it's on top
 
@@ -422,7 +487,6 @@ local function AimbotCircleToggle(parent)
         btn.TextColor3 = _G.AimbotGUIEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
     end)
 end
-
 AimbotCircleToggle(AimbotPage)
 
 -- Aim Part Dropdown
@@ -430,6 +494,8 @@ local function AimPartDropdown(parent)
 	local holder = Instance.new("Frame", parent)
 	holder.Size = UDim2.new(1,0,0,32)
 	holder.BackgroundTransparency = 1
+	holder.LayoutOrder = 2 -- second element
+
 	local label = Instance.new("TextLabel", holder)
 	label.Size = UDim2.new(0.5,0,1,0)
 	label.BackgroundTransparency = 1
@@ -438,6 +504,7 @@ local function AimPartDropdown(parent)
 	label.TextSize = 13
 	label.TextColor3 = Color3.new(1,1,1)
 	label.TextXAlignment = Enum.TextXAlignment.Left
+
 	local dropdown = Instance.new("TextButton", holder)
 	dropdown.Size = UDim2.new(0.45,0,1,0)
 	dropdown.Position = UDim2.new(0.5,0,0,0)
@@ -486,6 +553,7 @@ local function SmoothnessSlider(parent)
 	local holder = Instance.new("Frame", parent)
 	holder.Size = UDim2.new(1,0,0,40)
 	holder.BackgroundTransparency = 1
+	holder.LayoutOrder = 3 -- third element
 	local label = Instance.new("TextLabel", holder)
 	label.Size = UDim2.new(0.6,0,1,0)
 	label.BackgroundTransparency = 1
@@ -533,6 +601,7 @@ local function KeybindButton(parent)
 	local holder = Instance.new("Frame", parent)
 	holder.Size = UDim2.new(1,0,0,32)
 	holder.BackgroundTransparency = 1
+	holder.LayoutOrder = 4 -- last element
 	local label = Instance.new("TextLabel", holder)
 	label.Size = UDim2.new(0.5,0,1,0)
 	label.BackgroundTransparency = 1
@@ -587,7 +656,7 @@ for _, c in pairs(MovementPage:GetChildren()) do
 end
 
 -- Single scrolling frame for all movement options + player list
-local SCROLLBAR_WIDTH = 12 -- space for the scrollbar
+local SCROLLBAR_WIDTH = 18 -- space for the scrollbar
 
 local ScrollFrame = Instance.new("ScrollingFrame")
 ScrollFrame.Parent = MovementPage
