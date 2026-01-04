@@ -1231,39 +1231,9 @@ end)
 
 
 --------------------------------------------------
---// FPS BOOST TAB (Optimized)
+--// FPS BOOST BUTTON FUNCTION
 --------------------------------------------------
-
--- Create FPS Boost Page
-local FPSTab = Page()
-Tab("FPS Boost", FPSTab)
-
--- Scrollable frame
-local ScrollFrame = Instance.new("ScrollingFrame")
-ScrollFrame.Parent = FPSTab
-ScrollFrame.Size = UDim2.new(1,0,1,0)
-ScrollFrame.Position = UDim2.new(0,0,0,0)
-ScrollFrame.BackgroundTransparency = 1
-ScrollFrame.ScrollBarThickness = 8
-ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-
-local Layout = Instance.new("UIListLayout", ScrollFrame)
-Layout.SortOrder = Enum.SortOrder.LayoutOrder
-Layout.Padding = UDim.new(0,8)
-
--- Cache particles and water once
-local Particles = {}
-local WaterParts = {}
-for _, obj in pairs(workspace:GetDescendants()) do
-    if obj:IsA("ParticleEmitter") or obj:IsA("Trail") then
-        table.insert(Particles, obj)
-    elseif obj:IsA("Water") or obj.Name:lower():find("water") then
-        table.insert(WaterParts, obj)
-    end
-end
-
--- Toggle helper
-local function CircleToggle(parent, text, flag, callback)
+local function FPSBoostToggle(parent)
     local holder = Instance.new("Frame", parent)
     holder.Size = UDim2.new(1,0,0,32)
     holder.BackgroundTransparency = 1
@@ -1271,7 +1241,7 @@ local function CircleToggle(parent, text, flag, callback)
     local label = Instance.new("TextLabel", holder)
     label.Size = UDim2.new(1,-40,1,0)
     label.BackgroundTransparency = 1
-    label.Text = text
+    label.Text = "FPS Boost"
     label.Font = Enum.Font.Gotham
     label.TextSize = 13
     label.TextColor3 = Color3.new(1,1,1)
@@ -1287,131 +1257,73 @@ local function CircleToggle(parent, text, flag, callback)
     btn.TextColor3 = Color3.fromRGB(200,200,200)
     Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
 
+    -- Cache heavy objects ONCE
+    local Decals, Parts = {}, {}
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("Decal") or obj:IsA("Texture") then
+            table.insert(Decals, obj)
+        elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") then
+            table.insert(Decals, obj) -- include particles & trails
+        elseif obj:IsA("BasePart") then
+            table.insert(Parts, {obj=obj, material=obj.Material})
+        end
+    end
+
+    -- Optional terrain cache
+    local Terrain = Workspace:FindFirstChildOfClass("Terrain")
+    local TerrainCache = nil
+    if Terrain then
+        TerrainCache = {
+            WaterWaveSize = Terrain.WaterWaveSize,
+            WaterReflectance = Terrain.WaterReflectance,
+            WaterTransparency = Terrain.WaterTransparency
+        }
+    end
+
+    -- Button click
     btn.MouseButton1Click:Connect(function()
-        _G[flag] = not _G[flag]
-        btn.Text = _G[flag] and "●" or "○"
-        btn.TextColor3 = _G[flag] and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
-        if callback then callback(_G[flag]) end
-    end)
-end
+        _G.FPSBoost = not _G.FPSBoost
+        btn.Text = _G.FPSBoost and "●" or "○"
+        btn.TextColor3 = _G.FPSBoost and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
 
--- FPS Toggle Functions
-_G.FPSDisableShadows = false
-CircleToggle(ScrollFrame,"Disable Shadows","FPSDisableShadows",function(state)
-    game:GetService("Lighting").GlobalShadows = not state
-end)
+        -- Toggle decals, particles, trails
+        for _, obj in pairs(Decals) do
+            if obj:IsA("ParticleEmitter") or obj:IsA("Trail") then
+                obj.Enabled = not _G.FPSBoost
+            else
+                obj.Transparency = _G.FPSBoost and 1 or 0
+            end
+        end
 
-_G.FPSDisableParticles = false
-CircleToggle(ScrollFrame,"Disable Particles","FPSDisableParticles",function(state)
-    for _, p in pairs(Particles) do
-        p.Enabled = not state
-    end
-end)
+        -- Simplify part materials
+        for _, data in pairs(Parts) do
+            if data.obj and data.obj.Parent then
+                data.obj.Material = _G.FPSBoost and Enum.Material.SmoothPlastic or data.material
+            end
+        end
 
-_G.FPSDisableWater = false
-CircleToggle(ScrollFrame,"Disable Water Effects","FPSDisableWater",function(state)
-    for _, w in pairs(WaterParts) do
-        w.Transparency = state and 1 or 0
-    end
-end)
+        -- Lighting
+        Lighting.GlobalShadows = not _G.FPSBoost
+        for _, effect in pairs(Lighting:GetChildren()) do
+            if effect:IsA("PostEffect") then
+                effect.Enabled = not _G.FPSBoost
+            end
+        end
 
--- FPS Slider
-_G.FPSLimit = 60
-local function Slider(parent,text,flag,min,max)
-    local holder = Instance.new("Frame", parent)
-    holder.Size = UDim2.new(1,0,0,40)
-    holder.BackgroundTransparency = 1
-
-    local label = Instance.new("TextLabel", holder)
-    label.Size = UDim2.new(0.6,0,1,0)
-    label.BackgroundTransparency = 1
-    label.Text = text..": ".._G[flag]
-    label.Font = Enum.Font.Gotham
-    label.TextSize = 13
-    label.TextColor3 = Color3.new(1,1,1)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-
-    local sliderBar = Instance.new("Frame", holder)
-    sliderBar.Size = UDim2.new(0.35,0,0.3,0)
-    sliderBar.Position = UDim2.new(0.6,0,0.35,0)
-    sliderBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
-    Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1,0)
-
-    local fill = Instance.new("Frame", sliderBar)
-    fill.Size = UDim2.new((_G[flag]-min)/(max-min),0,1,0)
-    fill.BackgroundColor3 = Color3.fromRGB(0,255,120)
-    Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
-
-    local handle = Instance.new("Frame", sliderBar)
-    handle.Size = UDim2.new(0,16,0,16)
-    handle.Position = UDim2.new(fill.Size.X.Scale,0,0.5,-8)
-    handle.BackgroundColor3 = Color3.fromRGB(0,255,120)
-    Instance.new("UICorner", handle).CornerRadius = UDim.new(1,0)
-
-    local dragging = false
-    handle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end
-    end)
-    handle.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local mouseX = math.clamp(input.Position.X - sliderBar.AbsolutePosition.X,0,sliderBar.AbsoluteSize.X)
-            local val = math.floor(mouseX / sliderBar.AbsoluteSize.X * (max-min) + min)
-            _G[flag] = val
-            fill.Size = UDim2.new((val-min)/(max-min),0,1,0)
-            handle.Position = UDim2.new((val-min)/(max-min),0,0.5,-8)
-            label.Text = text..": "..val
-
-            settings().Rendering.FrameRateManager.TargetFrameRate = _G.FPSLimit
+        -- Terrain optimization
+        if Terrain and TerrainCache then
+            if _G.FPSBoost then
+                Terrain.WaterWaveSize = 0
+                Terrain.WaterReflectance = 0
+                Terrain.WaterTransparency = 1
+            else
+                Terrain.WaterWaveSize = TerrainCache.WaterWaveSize
+                Terrain.WaterReflectance = TerrainCache.WaterReflectance
+                Terrain.WaterTransparency = TerrainCache.WaterTransparency
+            end
         end
     end)
 end
-
-Slider(ScrollFrame,"FPS Limit","FPSLimit",30,240)
-
--- Maximum FPS Boost
-_G.FPSMaxBoost = false
-CircleToggle(ScrollFrame,"Maximum FPS Boost","FPSMaxBoost",function(state)
-    if state then
-        -- Disable all decals
-        for _, dec in pairs(workspace:GetDescendants()) do
-            if dec:IsA("Decal") or dec:IsA("Texture") then
-                dec.Transparency = 1
-            elseif dec:IsA("ParticleEmitter") or dec:IsA("Trail") then
-                dec.Enabled = false
-            elseif dec:IsA("Light") then
-                dec.Enabled = false
-            end
-        end
-
-        -- Remove post-processing effects
-        local lighting = game:GetService("Lighting")
-        for _, effect in pairs(lighting:GetChildren()) do
-            if effect:IsA("BlurEffect") or effect:IsA("BloomEffect") or 
-               effect:IsA("ColorCorrectionEffect") or effect:IsA("SunRaysEffect") or 
-               effect:IsA("DepthOfFieldEffect") then
-                effect.Enabled = false
-            end
-        end
-
-        -- Optional: make all parts simple gray
-        for _, part in pairs(workspace:GetDescendants()) do
-            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                part.Material = Enum.Material.SmoothPlastic
-                part.Reflectance = 0
-            end
-        end
-
-        -- Disable shadows completely
-        game:GetService("Lighting").GlobalShadows = false
-    else
-        -- If you want, you can add code to restore everything here
-        -- Otherwise leaving off for simplicity
-    end
-end)
 
 
 --------------------------------------------------
