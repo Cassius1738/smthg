@@ -190,16 +190,27 @@ RunService.RenderStepped:Connect(function()
 		if char and hum and hum.Health > 0 and hrp and (not _G.TeamCheck or player.Team ~= LocalPlayer.Team) then
 			local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
 
-			-- Box (distance-based scaling)
-			local boxSize = Vector2.new(35,50) -- default size for health bar if box disabled
+			-- Box (full-body, distance-aware)
+			local boxSize = Vector2.new(35,50) -- default fallback
 			if _G.ESP_Box and onScreen then
-				local distance = (Camera.CFrame.Position - hrp.Position).Magnitude
-				local scale = math.clamp(1000 / distance, 10, 50)
-				boxSize = Vector2.new(35,50) * scale / 35
-				objs.Box.Size = boxSize
-				objs.Box.Position = Vector2.new(pos.X - boxSize.X/2, pos.Y - boxSize.Y/2)
-				objs.Box.Visible = true
-				objs.Box.Color = _G.CircleColor
+				local head = char:FindFirstChild("Head")
+				if head then
+					local headScreen, headOnScreen = Camera:WorldToViewportPoint(head.Position)
+					local rootScreen, rootOnScreen = Camera:WorldToViewportPoint(hrp.Position)
+					if headOnScreen and rootOnScreen then
+						local height = math.abs(headScreen.Y - rootScreen.Y)
+						local width = height / 1.6 -- approximate humanoid width
+						boxSize = Vector2.new(width, height)
+						objs.Box.Size = boxSize
+						objs.Box.Position = Vector2.new(rootScreen.X - width/2, rootScreen.Y - height/2)
+						objs.Box.Visible = true
+						objs.Box.Color = _G.CircleColor
+					else
+						objs.Box.Visible = false
+					end
+				else
+					objs.Box.Visible = false
+				end
 			else
 				objs.Box.Visible = false
 			end
@@ -207,7 +218,8 @@ RunService.RenderStepped:Connect(function()
 			-- Name
 			if _G.ESP_Name and onScreen then
 				objs.Name.Text = player.Name
-				objs.Name.Position = Vector2.new(pos.X, pos.Y - 35)
+				objs.Name.Position = Vector2.new(pos.X, pos.Y - boxSize.Y/2 - 10)
+				objs.Name.Size = math.clamp(14 * (boxSize.Y/50), 8, 20) -- scale font with box
 				objs.Name.Visible = true
 				objs.Name.Color = _G.CircleColor
 			else
@@ -224,7 +236,7 @@ RunService.RenderStepped:Connect(function()
 				objs.Tracer.Visible = false
 			end
 
-			-- Health bar (independent of box)
+			-- Health bar
 			if _G.ESP_HealthBar and onScreen then
 				local hp = math.clamp(hum.Health,0,hum.MaxHealth)
 				local hpPercent = hp / hum.MaxHealth
@@ -261,9 +273,6 @@ RunService.RenderStepped:Connect(function()
 		end
 	end
 end)
-
-
-
 
 --------------------------------------------------
 --// GUI
