@@ -190,14 +190,19 @@ RunService.RenderStepped:Connect(function()
 		if char and hum and hum.Health > 0 and hrp and (not _G.TeamCheck or player.Team ~= LocalPlayer.Team) then
 			local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
 
-			-- Box
+			-- Box (distance-based scaling)
+			local boxSize = Vector2.new(35,50) -- default size for health bar if box disabled
 			if _G.ESP_Box and onScreen then
-				local size = Vector2.new(35,50)
-				objs.Box.Size = size
-				objs.Box.Position = Vector2.new(pos.X - size.X/2, pos.Y - size.Y/2)
+				local distance = (Camera.CFrame.Position - hrp.Position).Magnitude
+				local scale = math.clamp(1000 / distance, 10, 50)
+				boxSize = Vector2.new(35,50) * scale / 35
+				objs.Box.Size = boxSize
+				objs.Box.Position = Vector2.new(pos.X - boxSize.X/2, pos.Y - boxSize.Y/2)
 				objs.Box.Visible = true
 				objs.Box.Color = _G.CircleColor
-			else objs.Box.Visible = false end
+			else
+				objs.Box.Visible = false
+			end
 
 			-- Name
 			if _G.ESP_Name and onScreen then
@@ -205,7 +210,9 @@ RunService.RenderStepped:Connect(function()
 				objs.Name.Position = Vector2.new(pos.X, pos.Y - 35)
 				objs.Name.Visible = true
 				objs.Name.Color = _G.CircleColor
-			else objs.Name.Visible = false end
+			else
+				objs.Name.Visible = false
+			end
 
 			-- Tracer
 			if _G.ESP_Tracer and onScreen then
@@ -213,23 +220,24 @@ RunService.RenderStepped:Connect(function()
 				objs.Tracer.To = Vector2.new(pos.X,pos.Y)
 				objs.Tracer.Visible = true
 				objs.Tracer.Color = _G.CircleColor
-			else objs.Tracer.Visible = false end
+			else
+				objs.Tracer.Visible = false
+			end
 
-			-- Health bar
+			-- Health bar (independent of box)
 			if _G.ESP_HealthBar and onScreen then
 				local hp = math.clamp(hum.Health,0,hum.MaxHealth)
 				local hpPercent = hp / hum.MaxHealth
-				local size = objs.Box.Size or Vector2.new(35,50)
 
 				-- Background
-				objs.HealthBG.Size = Vector2.new(4, size.Y)
-				objs.HealthBG.Position = Vector2.new(objs.Box.Position.X - 6, objs.Box.Position.Y)
+				objs.HealthBG.Size = Vector2.new(4, boxSize.Y)
+				objs.HealthBG.Position = Vector2.new(pos.X - boxSize.X/2 - 6, pos.Y - boxSize.Y/2)
 				objs.HealthBG.Visible = true
 
 				-- Health fill
-				objs.Health.Size = Vector2.new(4, size.Y * hpPercent)
-				objs.Health.Position = Vector2.new(objs.Box.Position.X - 6, objs.Box.Position.Y + (size.Y * (1 - hpPercent)))
-				
+				objs.Health.Size = Vector2.new(4, boxSize.Y * hpPercent)
+				objs.Health.Position = Vector2.new(pos.X - boxSize.X/2 - 6, pos.Y - boxSize.Y/2 + (boxSize.Y * (1 - hpPercent)))
+
 				-- Color based on HP
 				if hpPercent > 0.7 then
 					objs.Health.Color = Color3.fromRGB(0,255,0)
@@ -253,6 +261,8 @@ RunService.RenderStepped:Connect(function()
 		end
 	end
 end)
+
+
 
 
 --------------------------------------------------
