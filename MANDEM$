@@ -207,16 +207,25 @@ RunService.RenderStepped:Connect(function()
 				objs.Tracer.To = Vector2.new(pos.X, pos.Y)
 				objs.Tracer.Visible = true
 				objs.Tracer.Color = _G.CircleColor
-			else objs.Tracer.Visible = false end
+			else
+				objs.Tracer.Visible = false
+			end
 
 			-- Health Bar (vertical rectangle on left of box)
 			if _G.ESP_HealthBar and onScreen and _G.ESP_Box then
 				local hpPercent = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
 				local boxSize = objs.Box.Size
 				local healthHeight = boxSize.Y * hpPercent
-				objs.HealthBar.Size = Vector2.new(4, healthHeight)
-				objs.HealthBar.Position = Vector2.new(objs.Box.Position.X - 6, objs.Box.Position.Y + (boxSize.Y - healthHeight))
+				local barOffset = 6 -- distance from the box
+				local barWidth = 4   -- width of the health bar
+
+				objs.HealthBar.Size = Vector2.new(barWidth, healthHeight)
+				objs.HealthBar.Position = Vector2.new(
+					objs.Box.Position.X - barOffset,
+					objs.Box.Position.Y + (boxSize.Y - healthHeight)
+				)
 				objs.HealthBar.Visible = true
+
 				-- Health color
 				if hpPercent > 0.7 then
 					objs.HealthBar.Color = Color3.fromRGB(0,255,0)
@@ -237,6 +246,7 @@ RunService.RenderStepped:Connect(function()
 		end
 	end
 end)
+
 
 
 --------------------------------------------------
