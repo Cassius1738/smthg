@@ -424,15 +424,22 @@ local function AimbotCircleToggle(parent)
 end
 AimbotCircleToggle(AimbotPage)
 
--- Aim Part Dropdown
+-- Aim Part Dropdown (FIXED – expands instead of floating)
 local function AimPartDropdown(parent)
-    local holder = Instance.new("Frame", parent)
-    holder.Size = UDim2.new(1,0,0,32)
-    holder.BackgroundTransparency = 1
-    holder.LayoutOrder = 2 -- second element
+    local BASE_HEIGHT = 32
+    local OPTION_HEIGHT = 30
+    local options = {"Head","UpperTorso","LowerTorso"}
+    local open = false
 
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,0,0,BASE_HEIGHT)
+    holder.BackgroundTransparency = 1
+    holder.LayoutOrder = 2
+    holder.ClipsDescendants = true -- VERY IMPORTANT
+
+    -- Label
     local label = Instance.new("TextLabel", holder)
-    label.Size = UDim2.new(0.5,0,1,0)
+    label.Size = UDim2.new(0.5,0,0,BASE_HEIGHT)
     label.BackgroundTransparency = 1
     label.Text = "Aim Part"
     label.Font = Enum.Font.Gotham
@@ -440,8 +447,9 @@ local function AimPartDropdown(parent)
     label.TextColor3 = Color3.new(1,1,1)
     label.TextXAlignment = Enum.TextXAlignment.Left
 
+    -- Dropdown button
     local dropdown = Instance.new("TextButton", holder)
-    dropdown.Size = UDim2.new(0.45,0,1,0)
+    dropdown.Size = UDim2.new(0.45,0,0,BASE_HEIGHT)
     dropdown.Position = UDim2.new(0.5,0,0,0)
     dropdown.BackgroundColor3 = Color3.fromRGB(35,35,35)
     dropdown.Text = _G.AimPart
@@ -450,65 +458,51 @@ local function AimPartDropdown(parent)
     dropdown.TextSize = 13
     Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0,8)
 
-    local options = {"Head","UpperTorso","LowerTorso"}
-    local open = false
-    local listFrame
+    -- Options container (INSIDE holder)
+    local listFrame = Instance.new("Frame", holder)
+    listFrame.Position = UDim2.new(0,0,0,BASE_HEIGHT)
+    listFrame.Size = UDim2.new(1,0,0,0)
+    listFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    listFrame.Visible = false
+    Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0,8)
+
+    local layout = Instance.new("UIListLayout", listFrame)
+    layout.Padding = UDim.new(0,2)
+
+    for _, opt in ipairs(options) do
+        local btn = Instance.new("TextButton", listFrame)
+        btn.Size = UDim2.new(1,0,0,OPTION_HEIGHT)
+        btn.BackgroundColor3 = Color3.fromRGB(45,45,45)
+        btn.Text = opt
+        btn.TextColor3 = Color3.new(1,1,1)
+        btn.Font = Enum.Font.Gotham
+        btn.TextSize = 13
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
+
+        btn.MouseButton1Click:Connect(function()
+            _G.AimPart = opt
+            dropdown.Text = opt
+            open = false
+            listFrame.Visible = false
+            holder.Size = UDim2.new(1,0,0,BASE_HEIGHT)
+        end)
+    end
 
     dropdown.MouseButton1Click:Connect(function()
+        open = not open
         if open then
-            if listFrame then listFrame:Destroy() end
-            open = false
+            listFrame.Visible = true
+            listFrame.Size = UDim2.new(1,0,0,#options * OPTION_HEIGHT)
+            holder.Size = UDim2.new(1,0,0,BASE_HEIGHT + (#options * OPTION_HEIGHT))
         else
-            -- Parent to same container as holder, so layout stays consistent
-            listFrame = Instance.new("Frame", parent)
-            listFrame.Size = UDim2.new(1,0,0,#options*30)
-            listFrame.Position = UDim2.new(0,0,0,holder.AbsoluteSize.Y) -- below the holder
-            listFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
-            listFrame.ZIndex = 10
-            Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0,8)
-
-            local layout = Instance.new("UIListLayout", listFrame)
-            layout.Padding = UDim.new(0,2)
-
-            for _, opt in pairs(options) do
-                local btn = Instance.new("TextButton", listFrame)
-                btn.Size = UDim2.new(1,0,0,30)
-                btn.BackgroundColor3 = Color3.fromRGB(45,45,45)
-                btn.Text = opt
-                btn.TextColor3 = Color3.new(1,1,1)
-                btn.Font = Enum.Font.Gotham
-                btn.TextSize = 13
-                Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
-
-                btn.MouseButton1Click:Connect(function()
-                    _G.AimPart = opt
-                    dropdown.Text = opt
-                    listFrame:Destroy()
-                    open = false
-                end)
-            end
-            open = true
-
-            -- Close dropdown if clicking outside
-            local conn
-            conn = UserInputService.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    if not listFrame then return end
-                    local mousePos = Vector2.new(input.Position.X, input.Position.Y)
-                    local framePos = listFrame.AbsolutePosition
-                    local frameSize = listFrame.AbsoluteSize
-                    if mousePos.X < framePos.X or mousePos.X > framePos.X + frameSize.X or
-                       mousePos.Y < framePos.Y or mousePos.Y > framePos.Y + frameSize.Y then
-                        listFrame:Destroy()
-                        open = false
-                        conn:Disconnect()
-                    end
-                end
-            end)
+            listFrame.Visible = false
+            holder.Size = UDim2.new(1,0,0,BASE_HEIGHT)
         end
     end)
 end
+
 AimPartDropdown(AimbotPage)
+
 
 -- Smoothness Slider
 local function SmoothnessSlider(parent)
