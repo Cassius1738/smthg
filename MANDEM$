@@ -1,4 +1,106 @@
 --------------------------------------------------
+--// BYPASS NG MANDEM$ - Cassius1738
+--------------------------------------------------
+
+--// Cache
+local getgenv, getnamecallmethod, hookmetamethod, hookfunction, newcclosure, checkcaller, lower, gsub, match =
+    getgenv, getnamecallmethod, hookmetamethod, hookfunction, newcclosure, checkcaller,
+    string.lower, string.gsub, string.match
+
+--// Loaded check
+if getgenv().ED_AntiKick then
+    return
+end
+
+--// Variables
+local cloneref = cloneref or function(...) return ... end
+local clonefunction = clonefunction or function(...) return ... end
+
+local Players = cloneref(game:GetService("Players"))
+local LocalPlayer = Players.LocalPlayer
+local StarterGui = cloneref(game:GetService("StarterGui"))
+
+local SetCore = clonefunction(StarterGui.SetCore)
+local FindFirstChild = clonefunction(game.FindFirstChild)
+
+local CompareInstances = (CompareInstances and function(a, b)
+    if typeof(a) == "Instance" and typeof(b) == "Instance" then
+        return CompareInstances(a, b)
+    end
+end) or function(a, b)
+    return typeof(a) == "Instance" and typeof(b) == "Instance"
+end
+
+local CanCastToSTDString = function(...)
+    return pcall(FindFirstChild, game, ...)
+end
+
+--// Global Variables
+getgenv().ED_AntiKick = {
+    Enabled = true,
+    SendNotifications = true,
+    CheckCaller = true
+}
+
+--// Main
+local OldNamecall
+OldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(...)
+    local self, message = ...
+    local method = getnamecallmethod()
+
+    if ((getgenv().ED_AntiKick.CheckCaller and not checkcaller()) or true)
+        and CompareInstances(self, LocalPlayer)
+        and gsub(method, "^%l", string.upper) == "Kick"
+        and ED_AntiKick.Enabled then
+
+        if CanCastToSTDString(message) then
+            if getgenv().ED_AntiKick.SendNotifications then
+                SetCore(StarterGui, "SendNotification", {
+                    Title = "MANDEM$ - Bypass",
+                    Text = "Successfully intercepted an attempted kick.",
+                    Icon = "rbxassetid://6238540373",
+                    Duration = 2
+                })
+            end
+            return
+        end
+    end
+
+    return OldNamecall(...)
+end))
+
+local OldFunction
+OldFunction = hookfunction(LocalPlayer.Kick, function(...)
+    local self, Message = ...
+
+    if ((ED_AntiKick.CheckCaller and not checkcaller()) or true)
+        and CompareInstances(self, LocalPlayer)
+        and ED_AntiKick.Enabled then
+
+        if CanCastToSTDString(Message) then
+            if ED_AntiKick.SendNotifications then
+                SetCore(StarterGui, "SendNotification", {
+                    Title = "MANDEM$ - Bypass",
+                    Text = "Successfully intercepted an attempted kick.",
+                    Icon = "rbxassetid://6238540373",
+                    Duration = 2
+                })
+            end
+            return
+        end
+    end
+end)
+
+if getgenv().ED_AntiKick.SendNotifications then
+    StarterGui:SetCore("SendNotification", {
+        Title = "MANDEM$ - Bypass",
+        Text = "Bypass loaded successfully!",
+        Icon = "rbxassetid://6238537240",
+        Duration = 3
+    })
+end
+
+--------------------------------------------------
 --// SERVICES
 --------------------------------------------------
 local Players = game:GetService("Players")
