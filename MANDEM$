@@ -72,25 +72,20 @@ end)
 --------------------------------------------------
 --// UNIVERSAL INSTANT AIMLOCK LOOP (R6, R15, CUSTOM RIGS)
 --------------------------------------------------
-
--- Save original camera type for restoration
-local OriginalCameraType = Camera.CameraType
-
--- Get the aim part of a character (universal)
 local function GetAimPart(character)
-    -- Try selected part first
+    -- try the selected part
     if character:FindFirstChild(_G.AimPart) then
         return character[_G.AimPart]
     end
 
-    -- Fallback common parts
+    -- fallback common parts
     for _, partName in ipairs({"Head","UpperTorso","HumanoidRootPart"}) do
         if character:FindFirstChild(partName) then
             return character[partName]
         end
     end
 
-    -- Last resort: first BasePart
+    -- last resort: first visible BasePart
     for _, part in pairs(character:GetChildren()) do
         if part:IsA("BasePart") then
             return part
@@ -100,7 +95,6 @@ local function GetAimPart(character)
     return nil
 end
 
--- Get closest target based on FOV circle
 local function GetClosestTarget()
     local closest, dist = nil, _G.CircleRadius
     local mousePos = UserInputService:GetMouseLocation()
@@ -108,6 +102,7 @@ local function GetClosestTarget()
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character then
             local hum = player.Character:FindFirstChildOfClass("Humanoid")
+            -- IGNORE DEAD TARGETS
             if hum and hum.Health > 0 and (not _G.TeamCheck or player.Team ~= LocalPlayer.Team) then
                 local aimPart = GetAimPart(player.Character)
                 if aimPart then
@@ -126,40 +121,21 @@ local function GetClosestTarget()
     return closest
 end
 
--- Optional: lock mouse to center for games that fight camera
-local function EnableMouseLock()
-    UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
-end
-
-local function DisableMouseLock()
-    UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-end
-
--- Instant aimlock loop
+-- instant aimlock loop
 RunService.RenderStepped:Connect(function()
-    -- If aimbot is off, restore camera and mouse
-    if not _G.AimbotEnabled or not _G.AimbotGUIEnabled then
-        if Camera.CameraType ~= OriginalCameraType then
-            Camera.CameraType = OriginalCameraType
-        end
-        DisableMouseLock()
-        return
-    end
+    -- Only aim if enabled AND keybind held
+    if not _G.AimbotEnabled or not _G.AimbotGUIEnabled or not Holding then return end
 
-    -- Force camera control
-    if Camera.CameraType ~= Enum.CameraType.Scriptable then
-        Camera.CameraType = Enum.CameraType.Scriptable
-    end
-
-    -- Optional: lock mouse to center
-    EnableMouseLock()
-
-    -- Stop if dead
+    -- stop if player dead
     local myHum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
     if not myHum or myHum.Health <= 0 then return end
 
     local target = GetClosestTarget()
     if target and target.Character then
+        local hum = target.Character:FindFirstChildOfClass("Humanoid")
+        -- STOP if target dead (extra safety)
+        if not hum or hum.Health <= 0 then return end
+
         local aimPart = GetAimPart(target.Character)
         if aimPart then
             -- instantly snap camera to target
@@ -167,6 +143,7 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
+
 
 --------------------------------------------------
 --// FOV CIRCLE
