@@ -2,14 +2,12 @@
 --// BYPASS ANTI CHEAT BY MANDEM$ - Cassius1738
 --------------------------------------------------
 
--- Prevent multiple loads
 if _G.SolaraAntiKickLoaded then return end
 _G.SolaraAntiKickLoaded = true
 
 local Players = game:GetService("Players")
 local StarterGui = game:GetService("StarterGui")
 local LocalPlayer = Players.LocalPlayer
-local SetCore = StarterGui.SetCore
 
 -- Safe notification
 local function Notify(text)
@@ -23,36 +21,35 @@ local function Notify(text)
     end)
 end
 
--- Hook __namecall to block server kicks
+-- Overwrite LocalPlayer:Kick safely
 do
-    local mt = getrawmetatable(game)
-    if not mt then return end
-    setreadonly(mt,false)
-    local oldNamecall = mt.__namecall
-    mt.__namecall = newcclosure(function(self, ...)
-        local method = getnamecallmethod()
-        local args = {...}
-        if self == LocalPlayer and method:lower():find("kick") then
-            Notify("Server kick intercepted!")
-            return
+    local success, oldKick = pcall(function()
+        return LocalPlayer.Kick
+    end)
+    if success and oldKick then
+        LocalPlayer.Kick = function(...) 
+            Notify("Kick attempt blocked!")
         end
-        return oldNamecall(self, ...)
-    end)
-    setreadonly(mt,true)
+    end
 end
 
--- Hook LocalPlayer:Kick()
+-- Overwrite SetCore("KickPlayer") if used
 do
-    local oldKick = LocalPlayer.Kick
-    LocalPlayer.Kick = newcclosure(function(...)
-        Notify("ANTI CHEAT? KAYANG I BYPASS NG MANDEM$ "YAN!")
-        return
+    local success, oldSetCore = pcall(function()
+        return StarterGui.SetCore
     end)
+    if success and oldSetCore then
+        StarterGui.SetCore = function(self, core, data)
+            if core == "KickPlayer" then
+                Notify("KickPlayer intercepted!")
+                return
+            end
+            return oldSetCore(self, core, data)
+        end
+    end
 end
 
--- Notify once loaded
-Notify("Solara Anti-Kick loaded!")
-
+Notify("ANTI CHEAT? KAYA I BYPASS NG MANDEM$ "YAN!")
 --------------------------------------------------
 --// SERVICES
 --------------------------------------------------
