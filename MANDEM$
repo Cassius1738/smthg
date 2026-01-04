@@ -91,33 +91,56 @@ local function GetClosestPlayer()
 end
 
 --------------------------------------------------
---// AIM LOCK WITH FOV CHECK
+--// AIM LOCK (ROBUST VERSION)
 --------------------------------------------------
+-- Helper: Get the correct part to aim at
+local function GetBestAimPart(character)
+	-- R15 head/torso
+	local parts = {"Head","UpperTorso","LowerTorso"}
+	for _, p in pairs(parts) do
+		local part = character:FindFirstChild(p)
+		if part then
+			return part
+		end
+	end
+	-- fallback: first BasePart with "head" or "torso" in name
+	for _, part in pairs(character:GetChildren()) do
+		if part:IsA("BasePart") and (part.Name:lower():find("head") or part.Name:lower():find("torso")) then
+			return part
+		end
+	end
+	return nil
+end
+
+-- Get closest alive player inside FOV
 local function GetClosestTargetInFOV()
 	local closestPlayer, closestDist = nil, _G.CircleRadius
 	local mousePos = UserInputService:GetMouseLocation()
 
 	for _, player in pairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer and player.Character and player.Character:FindFirstChildOfClass("Humanoid") and player.Character.Humanoid.Health > 0 then
-			if not _G.TeamCheck or player.Team ~= LocalPlayer.Team then
-				local aimPart = GetBestAimPart(player.Character)
-				if aimPart then
-					local screenPos, onScreen = Camera:WorldToViewportPoint(aimPart.Position)
-					if onScreen then
-						local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
-						if dist < closestDist then
-							closestDist = dist
-							closestPlayer = player
+		if player ~= LocalPlayer and player.Character then
+			local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+			if humanoid and humanoid.Health > 0 then -- ignore dead
+				if not _G.TeamCheck or player.Team ~= LocalPlayer.Team then
+					local aimPart = GetBestAimPart(player.Character)
+					if aimPart then
+						local screenPos, onScreen = Camera:WorldToViewportPoint(aimPart.Position)
+						if onScreen then
+							local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+							if dist < closestDist then
+								closestDist = dist
+								closestPlayer = player
+							end
 						end
 					end
 				end
 			end
 		end
 	end
-
 	return closestPlayer
 end
 
+-- Aim Lock Loop
 RunService.RenderStepped:Connect(function()
 	if Holding and _G.AimbotEnabled and _G.AimbotGUIEnabled then
 		local target = GetClosestTargetInFOV()
@@ -126,9 +149,9 @@ RunService.RenderStepped:Connect(function()
 			if aimPart then
 				local camPos = Camera.CFrame.Position
 				local targetPos = aimPart.Position
-				-- Snap or smooth
+				-- Smooth or instant
 				if _G.Sensitivity >= 1 then
-					Camera.CFrame = CFrame.new(camPos, targetPos) -- instant snap
+					Camera.CFrame = CFrame.new(camPos, targetPos) -- instant
 				else
 					Camera.CFrame = CFrame.new(camPos, camPos:Lerp(targetPos, _G.Sensitivity)) -- smooth
 				end
@@ -136,6 +159,7 @@ RunService.RenderStepped:Connect(function()
 		end
 	end
 end)
+
 
 --------------------------------------------------
 --// FOV CIRCLE
