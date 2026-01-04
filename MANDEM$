@@ -1,21 +1,21 @@
 --------------------------------------------------
---// UNIVERSAL ANTI-KICK (Server-side bypass)
+--// BYPASS ANTI CHEAT BY MANDEM$ - Cassius1738
 --------------------------------------------------
 
 -- Prevent multiple loads
-if getgenv().UniversalAntiKick then return end
-getgenv().UniversalAntiKick = true
+if _G.SolaraAntiKickLoaded then return end
+_G.SolaraAntiKickLoaded = true
 
 local Players = game:GetService("Players")
 local StarterGui = game:GetService("StarterGui")
 local LocalPlayer = Players.LocalPlayer
 local SetCore = StarterGui.SetCore
 
--- Send notification safely
+-- Safe notification
 local function Notify(text)
     pcall(function()
-        SetCore(StarterGui, "SendNotification", {
-            Title = "Anti-Kick",
+        StarterGui:SetCore("SendNotification", {
+            Title = "MANDEM$ - Cassius1738",
             Text = text,
             Duration = 2,
             Icon = "rbxassetid://6238540373"
@@ -23,29 +23,35 @@ local function Notify(text)
     end)
 end
 
--- Hook __namecall to block any server Kick
-local mt = getrawmetatable(game)
-setreadonly(mt,false)
-local oldNamecall = mt.__namecall
-mt.__namecall = newcclosure(function(self, ...)
-    local method = getnamecallmethod()
-    local args = {...}
-    if self == LocalPlayer and method:lower():find("kick") then
-        Notify("Server kick intercepted!")
+-- Hook __namecall to block server kicks
+do
+    local mt = getrawmetatable(game)
+    if not mt then return end
+    setreadonly(mt,false)
+    local oldNamecall = mt.__namecall
+    mt.__namecall = newcclosure(function(self, ...)
+        local method = getnamecallmethod()
+        local args = {...}
+        if self == LocalPlayer and method:lower():find("kick") then
+            Notify("Server kick intercepted!")
+            return
+        end
+        return oldNamecall(self, ...)
+    end)
+    setreadonly(mt,true)
+end
+
+-- Hook LocalPlayer:Kick()
+do
+    local oldKick = LocalPlayer.Kick
+    LocalPlayer.Kick = newcclosure(function(...)
+        Notify("ANTI CHEAT? KAYANG I BYPASS NG MANDEM$ "YAN!")
         return
-    end
-    return oldNamecall(self, ...)
-end)
-setreadonly(mt,true)
+    end)
+end
 
--- Hook LocalPlayer:Kick() function
-LocalPlayer.Kick = newcclosure(function(...)
-    Notify("Kick attempt blocked!")
-end)
-
--- Immediate feedback
-Notify("Universal Anti-Kick loaded!")
-
+-- Notify once loaded
+Notify("Solara Anti-Kick loaded!")
 
 --------------------------------------------------
 --// SERVICES
