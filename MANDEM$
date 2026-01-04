@@ -322,7 +322,6 @@ end
 local AimbotPage = Page()
 local ESPPage = Page()
 local MovementPage = Page()
-local AntiAFKPage = Page()
 
 AimbotPage.Visible = true
 
@@ -351,7 +350,6 @@ end
 Tab("Aimbot",AimbotPage)
 Tab("ESP",ESPPage)
 Tab("Movement",MovementPage)
-Tab("Anti-AFK", AntiAFKPage)
 
 
 --------------------------------------------------
