@@ -91,8 +91,31 @@ local function GetClosestPlayer()
 end
 
 --------------------------------------------------
---// AIMLOCK LOOP (SMOOTH & DEAD-SAFE)
+--// UNIVERSAL AIMLOCK LOOP (R6, R15, CUSTOM RIGS)
 --------------------------------------------------
+local function GetAimPart(character)
+    -- try the selected part
+    if character:FindFirstChild(_G.AimPart) then
+        return character[_G.AimPart]
+    end
+
+    -- fallback common parts
+    for _, partName in ipairs({"Head","UpperTorso","HumanoidRootPart"}) do
+        if character:FindFirstChild(partName) then
+            return character[partName]
+        end
+    end
+
+    -- last resort: first visible BasePart
+    for _, part in pairs(character:GetChildren()) do
+        if part:IsA("BasePart") then
+            return part
+        end
+    end
+
+    return nil
+end
+
 local function GetClosestTarget()
     local closest, dist = nil, _G.CircleRadius
     local mousePos = UserInputService:GetMouseLocation()
@@ -100,14 +123,16 @@ local function GetClosestTarget()
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character then
             local hum = player.Character:FindFirstChildOfClass("Humanoid")
-            local hrp = player.Character:FindFirstChild("HumanoidRootPart")
-            if hum and hum.Health > 0 and hrp and (not _G.TeamCheck or player.Team ~= LocalPlayer.Team) then
-                local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
-                if onScreen then
-                    local mag = (Vector2.new(pos.X,pos.Y) - mousePos).Magnitude
-                    if mag < dist then
-                        closest = player
-                        dist = mag
+            if hum and hum.Health > 0 and (not _G.TeamCheck or player.Team ~= LocalPlayer.Team) then
+                local aimPart = GetAimPart(player.Character)
+                if aimPart then
+                    local pos, onScreen = Camera:WorldToViewportPoint(aimPart.Position)
+                    if onScreen then
+                        local mag = (Vector2.new(pos.X,pos.Y) - mousePos).Magnitude
+                        if mag < dist then
+                            closest = player
+                            dist = mag
+                        end
                     end
                 end
             end
@@ -118,28 +143,23 @@ end
 
 -- aimlock loop
 RunService.RenderStepped:Connect(function()
-    -- must be enabled and holding RMB
     if not _G.AimbotEnabled or not _G.AimbotGUIEnabled or not Holding then return end
-    
-    -- stop if you are dead
+
+    -- stop if dead
     local myHum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
     if not myHum or myHum.Health <= 0 then return end
 
     local target = GetClosestTarget()
     if target and target.Character then
-        local hum = target.Character:FindFirstChildOfClass("Humanoid")
-        if hum and hum.Health > 0 then
-            local aimPart = target.Character:FindFirstChild(_G.AimPart) or target.Character:FindFirstChild("Head")
-            if aimPart then
-                local camPos = Camera.CFrame.Position
-                local dir = (aimPart.Position - camPos)
-                local newCF = Camera.CFrame:Lerp(CFrame.new(camPos, camPos + dir), _G.Sensitivity)
-                Camera.CFrame = newCF
-            end
+        local aimPart = GetAimPart(target.Character)
+        if aimPart then
+            local camPos = Camera.CFrame.Position
+            local dir = (aimPart.Position - camPos)
+            local newCF = Camera.CFrame:Lerp(CFrame.new(camPos, camPos + dir), _G.Sensitivity)
+            Camera.CFrame = newCF
         end
     end
 end)
-
 
 --------------------------------------------------
 --// FOV CIRCLE
