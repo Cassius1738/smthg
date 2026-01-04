@@ -157,13 +157,13 @@ local function CreateESP(p)
 	tracer.Color = _G.CircleColor
 	tracer.Thickness = 1
 
-	local healthText = Drawing.new("Text")
-	healthText.Visible = false
-	healthText.Center = true
-	healthText.Outline = true
-	healthText.Size = 14
+	local healthBar = Drawing.new("Square") -- vertical rectangle for health
+	healthBar.Visible = false
+	healthBar.Filled = true
+	healthBar.Thickness = 1
+	healthBar.Color = Color3.fromRGB(0,255,0)
 
-	ESPObjects[p] = {Box = box, Name = name, Tracer = tracer, Health = healthText}
+	ESPObjects[p] = {Box = box, Name = name, Tracer = tracer, HealthBar = healthBar}
 end
 
 for _, p in pairs(Players:GetPlayers()) do CreateESP(p) end
@@ -209,32 +209,35 @@ RunService.RenderStepped:Connect(function()
 				objs.Tracer.Color = _G.CircleColor
 			else objs.Tracer.Visible = false end
 
-			-- Health
-			if _G.ESP_HealthBar and onScreen then
-				local hp = math.clamp(hum.Health, 0, hum.MaxHealth)
-				local hpPercent = hp / hum.MaxHealth
+			-- Health Bar (vertical rectangle on left of box)
+			if _G.ESP_HealthBar and onScreen and _G.ESP_Box then
+				local hpPercent = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
+				local boxSize = objs.Box.Size
+				local healthHeight = boxSize.Y * hpPercent
+				objs.HealthBar.Size = Vector2.new(4, healthHeight)
+				objs.HealthBar.Position = Vector2.new(objs.Box.Position.X - 6, objs.Box.Position.Y + (boxSize.Y - healthHeight))
+				objs.HealthBar.Visible = true
+				-- Health color
 				if hpPercent > 0.7 then
-					objs.Health.Color = Color3.fromRGB(0,255,0)
+					objs.HealthBar.Color = Color3.fromRGB(0,255,0)
 				elseif hpPercent > 0.3 then
-					objs.Health.Color = Color3.fromRGB(255,255,0)
+					objs.HealthBar.Color = Color3.fromRGB(255,255,0)
 				else
-					objs.Health.Color = Color3.fromRGB(255,0,0)
+					objs.HealthBar.Color = Color3.fromRGB(255,0,0)
 				end
-				objs.Health.Text = math.floor(hp).." HP"
-				objs.Health.Position = Vector2.new(pos.X, pos.Y + 35)
-				objs.Health.Visible = true
 			else
-				objs.Health.Visible = false
+				objs.HealthBar.Visible = false
 			end
 
 		else
 			objs.Box.Visible = false
 			objs.Name.Visible = false
 			objs.Tracer.Visible = false
-			objs.Health.Visible = false
+			objs.HealthBar.Visible = false
 		end
 	end
 end)
+
 --------------------------------------------------
 --// GUI
 --------------------------------------------------
