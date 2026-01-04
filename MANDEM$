@@ -151,7 +151,6 @@ local function CreateESP(p)
 	tracer.Color = _G.CircleColor
 	tracer.Thickness = 1
 
-	-- Health bar
 	local healthBarBG = Drawing.new("Square")
 	healthBarBG.Visible = false
 	healthBarBG.Color = Color3.fromRGB(50,50,50)
@@ -190,24 +189,35 @@ RunService.RenderStepped:Connect(function()
 		if char and hum and hum.Health > 0 and hrp and (not _G.TeamCheck or player.Team ~= LocalPlayer.Team) then
 			local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
 
-			-- Box (full-body, distance-aware)
-			local boxSize = Vector2.new(35,50) -- default fallback
+			-- Box (full-body, universal)
+			local boxSize = Vector2.new(35,50)
 			if _G.ESP_Box and onScreen then
-				local head = char:FindFirstChild("Head")
-				if head then
-					local headScreen, headOnScreen = Camera:WorldToViewportPoint(head.Position)
-					local rootScreen, rootOnScreen = Camera:WorldToViewportPoint(hrp.Position)
-					if headOnScreen and rootOnScreen then
-						local height = math.abs(headScreen.Y - rootScreen.Y)
-						local width = height / 1.6 -- approximate humanoid width
-						boxSize = Vector2.new(width, height)
-						objs.Box.Size = boxSize
-						objs.Box.Position = Vector2.new(rootScreen.X - width/2, rootScreen.Y - height/2)
-						objs.Box.Visible = true
-						objs.Box.Color = _G.CircleColor
-					else
-						objs.Box.Visible = false
+				-- Find top (Head)
+				local topPart = char:FindFirstChild("Head") or hrp
+				-- Find bottom (lowest BasePart)
+				local bottomPart = hrp
+				for _, part in pairs(char:GetDescendants()) do
+					if part:IsA("BasePart") then
+						if part.Position.Y < bottomPart.Position.Y then
+							bottomPart = part
+						end
 					end
+				end
+
+				local topScreen, topOnScreen = Camera:WorldToViewportPoint(topPart.Position)
+				local bottomScreen, bottomOnScreen = Camera:WorldToViewportPoint(bottomPart.Position)
+
+				if topOnScreen and bottomOnScreen then
+					local height = math.abs(topScreen.Y - bottomScreen.Y)
+					local width = height / 1.6 -- humanoid width approximation
+					local centerX = (topScreen.X + bottomScreen.X)/2
+					local centerY = (topScreen.Y + bottomScreen.Y)/2
+
+					boxSize = Vector2.new(width, height)
+					objs.Box.Size = boxSize
+					objs.Box.Position = Vector2.new(centerX - width/2, centerY - height/2)
+					objs.Box.Visible = true
+					objs.Box.Color = _G.CircleColor
 				else
 					objs.Box.Visible = false
 				end
@@ -219,7 +229,7 @@ RunService.RenderStepped:Connect(function()
 			if _G.ESP_Name and onScreen then
 				objs.Name.Text = player.Name
 				objs.Name.Position = Vector2.new(pos.X, pos.Y - boxSize.Y/2 - 10)
-				objs.Name.Size = math.clamp(14 * (boxSize.Y/50), 8, 20) -- scale font with box
+				objs.Name.Size = math.clamp(14 * (boxSize.Y/50), 8, 20)
 				objs.Name.Visible = true
 				objs.Name.Color = _G.CircleColor
 			else
@@ -241,16 +251,13 @@ RunService.RenderStepped:Connect(function()
 				local hp = math.clamp(hum.Health,0,hum.MaxHealth)
 				local hpPercent = hp / hum.MaxHealth
 
-				-- Background
 				objs.HealthBG.Size = Vector2.new(4, boxSize.Y)
 				objs.HealthBG.Position = Vector2.new(pos.X - boxSize.X/2 - 6, pos.Y - boxSize.Y/2)
 				objs.HealthBG.Visible = true
 
-				-- Health fill
 				objs.Health.Size = Vector2.new(4, boxSize.Y * hpPercent)
 				objs.Health.Position = Vector2.new(pos.X - boxSize.X/2 - 6, pos.Y - boxSize.Y/2 + (boxSize.Y * (1 - hpPercent)))
 
-				-- Color based on HP
 				if hpPercent > 0.7 then
 					objs.Health.Color = Color3.fromRGB(0,255,0)
 				elseif hpPercent > 0.3 then
@@ -263,7 +270,6 @@ RunService.RenderStepped:Connect(function()
 				objs.Health.Visible = false
 				objs.HealthBG.Visible = false
 			end
-
 		else
 			objs.Box.Visible = false
 			objs.Name.Visible = false
