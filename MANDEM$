@@ -70,27 +70,6 @@ UserInputService.InputEnded:Connect(function(i)
 end)
 
 --------------------------------------------------
---// GET CLOSEST PLAYER
---------------------------------------------------
-local function GetClosestPlayer()
-	local closest, dist = nil, _G.CircleRadius
-	local mouse = UserInputService:GetMouseLocation()
-	for _,v in pairs(Players:GetPlayers()) do
-		if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 and (not _G.TeamCheck or v.Team ~= LocalPlayer.Team) then
-			local pos, onscreen = Camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
-			if onscreen then
-				local mag = (Vector2.new(pos.X,pos.Y) - mouse).Magnitude
-				if mag < dist then
-					dist = mag
-					closest = v
-				end
-			end
-		end
-	end
-	return closest
-end
-
---------------------------------------------------
 --// UNIVERSAL INSTANT AIMLOCK LOOP (R6, R15, CUSTOM RIGS)
 --------------------------------------------------
 local function GetAimPart(character)
