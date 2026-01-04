@@ -91,7 +91,7 @@ local function GetClosestPlayer()
 end
 
 --------------------------------------------------
---// UNIVERSAL AIMLOCK LOOP (R6, R15, CUSTOM RIGS)
+--// UNIVERSAL INSTANT AIMLOCK LOOP (R6, R15, CUSTOM RIGS)
 --------------------------------------------------
 local function GetAimPart(character)
     -- try the selected part
@@ -141,7 +141,7 @@ local function GetClosestTarget()
     return closest
 end
 
--- aimlock loop
+-- instant aimlock loop
 RunService.RenderStepped:Connect(function()
     if not _G.AimbotEnabled or not _G.AimbotGUIEnabled or not Holding then return end
 
@@ -153,13 +153,12 @@ RunService.RenderStepped:Connect(function()
     if target and target.Character then
         local aimPart = GetAimPart(target.Character)
         if aimPart then
-            local camPos = Camera.CFrame.Position
-            local dir = (aimPart.Position - camPos)
-            local newCF = Camera.CFrame:Lerp(CFrame.new(camPos, camPos + dir), _G.Sensitivity)
-            Camera.CFrame = newCF
+            -- instantly snap camera to target
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, aimPart.Position)
         end
     end
 end)
+
 
 --------------------------------------------------
 --// FOV CIRCLE
