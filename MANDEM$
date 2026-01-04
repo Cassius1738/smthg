@@ -91,75 +91,61 @@ local function GetClosestPlayer()
 end
 
 --------------------------------------------------
---// AIM LOCK (ROBUST VERSION)
+--// AIM LOCK TOGGLE WITH KEYBIND
 --------------------------------------------------
--- Helper: Get the correct part to aim at
-local function GetBestAimPart(character)
-	-- R15 head/torso
-	local parts = {"Head","UpperTorso","LowerTorso"}
-	for _, p in pairs(parts) do
-		local part = character:FindFirstChild(p)
-		if part then
-			return part
-		end
-	end
-	-- fallback: first BasePart with "head" or "torso" in name
-	for _, part in pairs(character:GetChildren()) do
-		if part:IsA("BasePart") and (part.Name:lower():find("head") or part.Name:lower():find("torso")) then
-			return part
-		end
-	end
-	return nil
-end
+local AimbotDebounce = false
 
--- Get closest alive player inside FOV
-local function GetClosestTargetInFOV()
-	local closestPlayer, closestDist = nil, _G.CircleRadius
-	local mousePos = UserInputService:GetMouseLocation()
+UserInputService.InputBegan:Connect(function(input, gp)
+	if gp then return end
 
-	for _, player in pairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer and player.Character then
-			local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-			if humanoid and humanoid.Health > 0 then -- ignore dead
-				if not _G.TeamCheck or player.Team ~= LocalPlayer.Team then
-					local aimPart = GetBestAimPart(player.Character)
-					if aimPart then
-						local screenPos, onScreen = Camera:WorldToViewportPoint(aimPart.Position)
-						if onScreen then
-							local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
-							if dist < closestDist then
-								closestDist = dist
-								closestPlayer = player
-							end
-						end
-					end
-				end
-			end
+	-- Right mouse hold (aiming)
+	if input.UserInputType == Enum.UserInputType.MouseButton2 then
+		Holding = true
+
+	-- Toggle aimbot
+	elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == _G.AimbotKey then
+		if not AimbotDebounce then
+			_G.AimbotEnabled = not _G.AimbotEnabled
+			AimbotDebounce = true
+			print("Aimbot Enabled:", _G.AimbotEnabled)
 		end
-	end
-	return closestPlayer
-end
 
--- Aim Lock Loop
+	-- Toggle Noclip Fly (optional)
+	elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.N then
+		_G.NoclipFlyEnabled = not _G.NoclipFlyEnabled
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton2 then
+		Holding = false
+	elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == _G.AimbotKey then
+		AimbotDebounce = false
+	end
+end)
+
+--------------------------------------------------
+--// AIM LOCK LOOP (with dead check)
+--------------------------------------------------
 RunService.RenderStepped:Connect(function()
-	if Holding and _G.AimbotEnabled and _G.AimbotGUIEnabled then
-		local target = GetClosestTargetInFOV()
-		if target and target.Character then
+	local myHumanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+	if not myHumanoid or myHumanoid.Health <= 0 then return end -- stop if you are dead
+	if not _G.AimbotEnabled or not _G.AimbotGUIEnabled then return end -- stop if disabled
+	if not Holding then return end -- stop if not holding right mouse
+
+	local target = GetClosestTargetInFOV()
+	if target and target.Character then
+		local humanoid = target.Character:FindFirstChildOfClass("Humanoid")
+		if humanoid and humanoid.Health > 0 then
 			local aimPart = GetBestAimPart(target.Character)
 			if aimPart then
 				local camPos = Camera.CFrame.Position
 				local targetPos = aimPart.Position
-				-- Smooth or instant
-				if _G.Sensitivity >= 1 then
-					Camera.CFrame = CFrame.new(camPos, targetPos) -- instant
-				else
-					Camera.CFrame = CFrame.new(camPos, camPos:Lerp(targetPos, _G.Sensitivity)) -- smooth
-				end
+				Camera.CFrame = CFrame.new(camPos, camPos:Lerp(targetPos, _G.Sensitivity))
 			end
 		end
 	end
 end)
-
 
 --------------------------------------------------
 --// FOV CIRCLE
