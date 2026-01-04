@@ -389,6 +389,22 @@ end
 --------------------------------------------------
 --// Aimbot Page
 --------------------------------------------------
+-- Make Aimbot Page scrollable
+local AimbotPage = Page()
+
+-- Scroll container
+local AimbotScroll = Instance.new("ScrollingFrame")
+AimbotScroll.Parent = AimbotPage
+AimbotScroll.Size = UDim2.new(1,0,1,0)
+AimbotScroll.CanvasSize = UDim2.new(0,0,0,0)
+AimbotScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+AimbotScroll.ScrollBarThickness = 6
+AimbotScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+AimbotScroll.BackgroundTransparency = 1
+
+local AimbotLayout = Instance.new("UIListLayout", AimbotScroll)
+AimbotLayout.Padding = UDim.new(0,8)
+
 -- Enable Aimbot Toggle
 local function AimbotCircleToggle(parent)
     local holder = Instance.new("Frame", parent)
@@ -422,7 +438,7 @@ local function AimbotCircleToggle(parent)
         btn.TextColor3 = _G.AimbotGUIEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
     end)
 end
-AimbotCircleToggle(AimbotPage)
+AimbotCircleToggle(AimbotScroll)
 
 -- Aim Part Dropdown (FIXED – expands instead of floating)
 local function AimPartDropdown(parent)
@@ -501,7 +517,7 @@ local function AimPartDropdown(parent)
     end)
 end
 
-AimPartDropdown(AimbotPage)
+AimPartDropdown(AimbotScroll)
 
 
 -- Smoothness Slider
@@ -550,7 +566,7 @@ local function SmoothnessSlider(parent)
 		end
 	end)
 end
-SmoothnessSlider(AimbotPage)
+SmoothnessSlider(AimbotScroll)
 
 -- Keybind Button
 local function KeybindButton(parent)
@@ -592,7 +608,7 @@ local function KeybindButton(parent)
 		end)
 	end)
 end
-KeybindButton(AimbotPage)
+KeybindButton(AimbotScroll)
 
 --------------------------------------------------
 --// ESP Page
