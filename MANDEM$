@@ -72,20 +72,25 @@ end)
 --------------------------------------------------
 --// UNIVERSAL INSTANT AIMLOCK LOOP (R6, R15, CUSTOM RIGS)
 --------------------------------------------------
+
+-- Save original camera type for restoration
+local OriginalCameraType = Camera.CameraType
+
+-- Get the aim part of a character (universal)
 local function GetAimPart(character)
-    -- try the selected part
+    -- Try selected part first
     if character:FindFirstChild(_G.AimPart) then
         return character[_G.AimPart]
     end
 
-    -- fallback common parts
+    -- Fallback common parts
     for _, partName in ipairs({"Head","UpperTorso","HumanoidRootPart"}) do
         if character:FindFirstChild(partName) then
             return character[partName]
         end
     end
 
-    -- last resort: first visible BasePart
+    -- Last resort: first BasePart
     for _, part in pairs(character:GetChildren()) do
         if part:IsA("BasePart") then
             return part
@@ -95,6 +100,7 @@ local function GetAimPart(character)
     return nil
 end
 
+-- Get closest target based on FOV circle
 local function GetClosestTarget()
     local closest, dist = nil, _G.CircleRadius
     local mousePos = UserInputService:GetMouseLocation()
@@ -120,11 +126,35 @@ local function GetClosestTarget()
     return closest
 end
 
--- instant aimlock loop
-RunService.RenderStepped:Connect(function()
-    if not _G.AimbotEnabled or not _G.AimbotGUIEnabled or not Holding then return end
+-- Optional: lock mouse to center for games that fight camera
+local function EnableMouseLock()
+    UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+end
 
-    -- stop if dead
+local function DisableMouseLock()
+    UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+end
+
+-- Instant aimlock loop
+RunService.RenderStepped:Connect(function()
+    -- If aimbot is off, restore camera and mouse
+    if not _G.AimbotEnabled or not _G.AimbotGUIEnabled then
+        if Camera.CameraType ~= OriginalCameraType then
+            Camera.CameraType = OriginalCameraType
+        end
+        DisableMouseLock()
+        return
+    end
+
+    -- Force camera control
+    if Camera.CameraType ~= Enum.CameraType.Scriptable then
+        Camera.CameraType = Enum.CameraType.Scriptable
+    end
+
+    -- Optional: lock mouse to center
+    EnableMouseLock()
+
+    -- Stop if dead
     local myHum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
     if not myHum or myHum.Health <= 0 then return end
 
@@ -137,7 +167,6 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
-
 
 --------------------------------------------------
 --// FOV CIRCLE
