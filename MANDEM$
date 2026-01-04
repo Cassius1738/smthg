@@ -128,6 +128,12 @@ end)
 --------------------------------------------------
 --// ESP
 --------------------------------------------------
+_G.ESPEnabled = _G.ESPEnabled or false
+_G.ESP_Box = _G.ESP_Box or false
+_G.ESP_Name = _G.ESP_Name or false
+_G.ESP_Tracer = _G.ESP_Tracer or false
+_G.ESP_HealthBar = _G.ESP_HealthBar or false
+
 local ESPObjects = {}
 
 local function CreateESP(p)
@@ -151,7 +157,6 @@ local function CreateESP(p)
 	tracer.Color = _G.CircleColor
 	tracer.Thickness = 1
 
-	-- Health display
 	local healthText = Drawing.new("Text")
 	healthText.Visible = false
 	healthText.Center = true
@@ -161,11 +166,11 @@ local function CreateESP(p)
 	ESPObjects[p] = {Box = box, Name = name, Tracer = tracer, Health = healthText}
 end
 
-for _,p in pairs(Players:GetPlayers()) do CreateESP(p) end
+for _, p in pairs(Players:GetPlayers()) do CreateESP(p) end
 Players.PlayerAdded:Connect(CreateESP)
 Players.PlayerRemoving:Connect(function(p)
 	if ESPObjects[p] then
-		for _,v in pairs(ESPObjects[p]) do v:Remove() end
+		for _, v in pairs(ESPObjects[p]) do v:Remove() end
 		ESPObjects[p] = nil
 	end
 end)
@@ -199,14 +204,14 @@ RunService.RenderStepped:Connect(function()
 			-- Tracer
 			if _G.ESP_Tracer and onScreen then
 				objs.Tracer.From = bottom
-				objs.Tracer.To = Vector2.new(pos.X,pos.Y)
+				objs.Tracer.To = Vector2.new(pos.X, pos.Y)
 				objs.Tracer.Visible = true
 				objs.Tracer.Color = _G.CircleColor
 			else objs.Tracer.Visible = false end
 
 			-- Health
-			if onScreen then
-				local hp = math.clamp(hum.Health,0,hum.MaxHealth)
+			if _G.ESP_HealthBar and onScreen then
+				local hp = math.clamp(hum.Health, 0, hum.MaxHealth)
 				local hpPercent = hp / hum.MaxHealth
 				if hpPercent > 0.7 then
 					objs.Health.Color = Color3.fromRGB(0,255,0)
@@ -226,11 +231,10 @@ RunService.RenderStepped:Connect(function()
 			objs.Box.Visible = false
 			objs.Name.Visible = false
 			objs.Tracer.Visible = false
-			if objs.Health then objs.Health.Visible = false end
+			objs.Health.Visible = false
 		end
 	end
 end)
-
 --------------------------------------------------
 --// GUI
 --------------------------------------------------
@@ -724,6 +728,7 @@ KeybindButton(AimbotScroll)
 CircleToggle(ESPPage,"ESP Box","ESP_Box")
 CircleToggle(ESPPage,"ESP Name","ESP_Name")
 CircleToggle(ESPPage,"ESP Tracer","ESP_Tracer")
+CircleToggle(ESPPage, "ESP Health Bar", "ESP_HealthBar")
 CircleToggle(ESPPage,"Team Check","TeamCheck")
 
 --------------------------------------------------
