@@ -322,7 +322,10 @@ end
 local AimbotPage = Page()
 local ESPPage = Page()
 local MovementPage = Page()
+local AntiAFKPage = Page()
+
 AimbotPage.Visible = true
+
 
 --------------------------------------------------
 -- TAB FUNCTION
@@ -348,6 +351,8 @@ end
 Tab("Aimbot",AimbotPage)
 Tab("ESP",ESPPage)
 Tab("Movement",MovementPage)
+Tab("Anti-AFK", AntiAFKPage)
+
 
 --------------------------------------------------
 --// HELPER FUNCTIONS
@@ -385,6 +390,61 @@ local function CircleToggle(parent, text, flag)
         btn.TextColor3 = _G[flag] and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
     end)
 end
+
+--------------------------------------------------
+--// ANTI-AFK PAGE
+--------------------------------------------------
+-- Create page once
+local AntiAFKPage = Page()
+Tab("Anti-AFK", AntiAFKPage)
+
+-- Global variable
+_G.AntiAFKEnabled = _G.AntiAFKEnabled or false
+
+-- Toggle UI
+local function AntiAFKToggle(parent)
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,0,0,32)
+    holder.BackgroundTransparency = 1
+
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(1,-40,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = "Enable Anti-AFK"
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local btn = Instance.new("TextButton", holder)
+    btn.Size = UDim2.new(0,22,0,22)
+    btn.Position = UDim2.new(1,-26,0.5,-11)
+    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    btn.Text = _G.AntiAFKEnabled and "●" or "○"
+    btn.TextColor3 = _G.AntiAFKEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+
+    btn.MouseButton1Click:Connect(function()
+        _G.AntiAFKEnabled = not _G.AntiAFKEnabled
+        btn.Text = _G.AntiAFKEnabled and "●" or "○"
+        btn.TextColor3 = _G.AntiAFKEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+    end)
+end
+
+-- Add toggle to the page
+AntiAFKToggle(AntiAFKPage)
+
+-- Anti-AFK logic
+local VirtualUser = game:GetService("VirtualUser")
+Players.LocalPlayer.Idled:Connect(function()
+    if _G.AntiAFKEnabled then
+        VirtualUser:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+        task.wait(1)
+        VirtualUser:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+    end
+end)
 
 --------------------------------------------------
 --// Aimbot Page 
@@ -1040,29 +1100,35 @@ end
 AddPlayerTeleportButtons(ScrollFrame)
 
 --------------------------------------------------
---// WalkSpeed & No Jump Cooldown Fix
+--// UNIVERSAL WALK SPEED & NO JUMP COOLDOWN
 --------------------------------------------------
-local UserInputService = game:GetService("UserInputService")
-local LocalPlayer = game:GetService("Players").LocalPlayer
-
--- WalkSpeed
 RunService.Stepped:Connect(function()
     local char = LocalPlayer.Character
     if char then
+        -- Try to find a humanoid
         local humanoid = char:FindFirstChildOfClass("Humanoid")
+        
         if humanoid then
+            -- WalkSpeed for any humanoid
             humanoid.WalkSpeed = _G.SpeedEnabled and _G.WalkSpeedValue or 16
+        else
+            -- fallback for custom rigs without Humanoid
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") and part.Name:lower():find("root") then
+                    -- move root part velocity if WalkSpeed enabled
+                    if _G.SpeedEnabled then
+                        part.Velocity = part.Velocity.Unit * _G.WalkSpeedValue
+                    end
+                end
+            end
         end
     end
 end)
 
--- No Jump Cooldown (spacebar auto jump)
+-- No Jump Cooldown (works for any humanoid)
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
-
-    if input.UserInputType == Enum.UserInputType.Keyboard
-    and input.KeyCode == Enum.KeyCode.Space then
-
+    if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.Space then
         local char = LocalPlayer.Character
         if char then
             local humanoid = char:FindFirstChildOfClass("Humanoid")
@@ -1074,7 +1140,6 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
         end
     end
 end)
-
 
 --------------------------------------------------
 --// SHOW / HIDE MENU
