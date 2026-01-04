@@ -91,61 +91,55 @@ local function GetClosestPlayer()
 end
 
 --------------------------------------------------
---// AIM LOCK TOGGLE WITH KEYBIND
+--// AIMLOCK LOOP (SMOOTH & DEAD-SAFE)
 --------------------------------------------------
-local AimbotDebounce = false
+local function GetClosestTarget()
+    local closest, dist = nil, _G.CircleRadius
+    local mousePos = UserInputService:GetMouseLocation()
 
-UserInputService.InputBegan:Connect(function(input, gp)
-	if gp then return end
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local hum = player.Character:FindFirstChildOfClass("Humanoid")
+            local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+            if hum and hum.Health > 0 and hrp and (not _G.TeamCheck or player.Team ~= LocalPlayer.Team) then
+                local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+                if onScreen then
+                    local mag = (Vector2.new(pos.X,pos.Y) - mousePos).Magnitude
+                    if mag < dist then
+                        closest = player
+                        dist = mag
+                    end
+                end
+            end
+        end
+    end
+    return closest
+end
 
-	-- Right mouse hold (aiming)
-	if input.UserInputType == Enum.UserInputType.MouseButton2 then
-		Holding = true
-
-	-- Toggle aimbot
-	elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == _G.AimbotKey then
-		if not AimbotDebounce then
-			_G.AimbotEnabled = not _G.AimbotEnabled
-			AimbotDebounce = true
-			print("Aimbot Enabled:", _G.AimbotEnabled)
-		end
-
-	-- Toggle Noclip Fly (optional)
-	elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.N then
-		_G.NoclipFlyEnabled = not _G.NoclipFlyEnabled
-	end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton2 then
-		Holding = false
-	elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == _G.AimbotKey then
-		AimbotDebounce = false
-	end
-end)
-
---------------------------------------------------
---// AIM LOCK LOOP (with dead check)
---------------------------------------------------
+-- aimlock loop
 RunService.RenderStepped:Connect(function()
-	local myHumanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-	if not myHumanoid or myHumanoid.Health <= 0 then return end -- stop if you are dead
-	if not _G.AimbotEnabled or not _G.AimbotGUIEnabled then return end -- stop if disabled
-	if not Holding then return end -- stop if not holding right mouse
+    -- must be enabled and holding RMB
+    if not _G.AimbotEnabled or not _G.AimbotGUIEnabled or not Holding then return end
+    
+    -- stop if you are dead
+    local myHum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if not myHum or myHum.Health <= 0 then return end
 
-	local target = GetClosestTargetInFOV()
-	if target and target.Character then
-		local humanoid = target.Character:FindFirstChildOfClass("Humanoid")
-		if humanoid and humanoid.Health > 0 then
-			local aimPart = GetBestAimPart(target.Character)
-			if aimPart then
-				local camPos = Camera.CFrame.Position
-				local targetPos = aimPart.Position
-				Camera.CFrame = CFrame.new(camPos, camPos:Lerp(targetPos, _G.Sensitivity))
-			end
-		end
-	end
+    local target = GetClosestTarget()
+    if target and target.Character then
+        local hum = target.Character:FindFirstChildOfClass("Humanoid")
+        if hum and hum.Health > 0 then
+            local aimPart = target.Character:FindFirstChild(_G.AimPart) or target.Character:FindFirstChild("Head")
+            if aimPart then
+                local camPos = Camera.CFrame.Position
+                local dir = (aimPart.Position - camPos)
+                local newCF = Camera.CFrame:Lerp(CFrame.new(camPos, camPos + dir), _G.Sensitivity)
+                Camera.CFrame = newCF
+            end
+        end
+    end
 end)
+
 
 --------------------------------------------------
 --// FOV CIRCLE
