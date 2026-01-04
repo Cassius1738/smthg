@@ -91,20 +91,60 @@ local function GetClosestPlayer()
 end
 
 --------------------------------------------------
---// AIMBOT LOOP
+--// UNIVERSAL AIMBOT LOOP
 --------------------------------------------------
+-- Finds the best aim part in any rig
+local function FindBestTargetPart(character)
+	-- Try the user-selected aim part first
+	if _G.AimPart and character:FindFirstChild(_G.AimPart) then
+		return character[_G.AimPart]
+	end
+
+	-- Common Roblox parts
+	for _, name in ipairs({"Head","UpperTorso","LowerTorso","Torso","HumanoidRootPart"}) do
+		local part = character:FindFirstChild(name)
+		if part and part:IsA("BasePart") then
+			return part
+		end
+	end
+
+	-- Search all descendants for hitbox-like parts
+	for _, part in pairs(character:GetDescendants()) do
+		if part:IsA("BasePart") then
+			local lname = part.Name:lower()
+			if lname:find("head") or lname:find("torso") or lname:find("hitbox") then
+				return part
+			end
+		end
+	end
+
+	-- Fallback: first BasePart
+	for _, part in pairs(character:GetDescendants()) do
+		if part:IsA("BasePart") then
+			return part
+		end
+	end
+
+	return nil
+end
+
+-- Main aimbot loop
 RunService.RenderStepped:Connect(function()
 	if Holding and _G.AimbotEnabled and _G.AimbotGUIEnabled then
 		local target = GetClosestPlayer()
-		if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
-			TweenService:Create(
-				Camera,
-				TweenInfo.new(_G.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
-				{CFrame = CFrame.new(Camera.CFrame.Position, target.Character[_G.AimPart].Position)}
-			):Play()
+		if target and target.Character and target.Character:FindFirstChildOfClass("Humanoid") then
+			local aimPart = FindBestTargetPart(target.Character)
+			if aimPart then
+				TweenService:Create(
+					Camera,
+					TweenInfo.new(_G.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+					{CFrame = CFrame.new(Camera.CFrame.Position, aimPart.Position)}
+				):Play()
+			end
 		end
 	end
 end)
+
 
 --------------------------------------------------
 --// FOV CIRCLE
@@ -132,43 +172,22 @@ local ESPObjects = {}
 
 local function CreateESP(p)
 	if p == LocalPlayer then return end
-
 	local box = Drawing.new("Square")
 	box.Visible = false
 	box.Color = _G.CircleColor
 	box.Thickness = 2
 	box.Filled = false
-
 	local name = Drawing.new("Text")
 	name.Visible = false
 	name.Center = true
 	name.Outline = true
 	name.Size = 14
 	name.Color = _G.CircleColor
-
 	local tracer = Drawing.new("Line")
 	tracer.Visible = false
 	tracer.Color = _G.CircleColor
 	tracer.Thickness = 1
-
-	local healthBarBG = Drawing.new("Square")
-	healthBarBG.Visible = false
-	healthBarBG.Color = Color3.fromRGB(50,50,50)
-	healthBarBG.Filled = true
-	healthBarBG.Thickness = 1
-
-	local healthBar = Drawing.new("Square")
-	healthBar.Visible = false
-	healthBar.Filled = true
-	healthBar.Thickness = 1
-
-	ESPObjects[p] = {
-		Box = box,
-		Name = name,
-		Tracer = tracer,
-		HealthBG = healthBarBG,
-		Health = healthBar
-	}
+	ESPObjects[p] = {Box = box, Name = name, Tracer = tracer}
 end
 
 for _,p in pairs(Players:GetPlayers()) do CreateESP(p) end
@@ -188,109 +207,32 @@ RunService.RenderStepped:Connect(function()
 		local hrp = char and char:FindFirstChild("HumanoidRootPart")
 		if char and hum and hum.Health > 0 and hrp and (not _G.TeamCheck or player.Team ~= LocalPlayer.Team) then
 			local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
-
-			-- Find top and bottom parts for universal rig
-			local topPart = char:FindFirstChild("Head") or hrp
-			local bottomPart = hrp
-			for _, part in pairs(char:GetDescendants()) do
-				if part:IsA("BasePart") then
-					if part.Position.Y < bottomPart.Position.Y then
-						bottomPart = part
-					end
-				end
-			end
-
-			local topScreen, topOnScreen = Camera:WorldToViewportPoint(topPart.Position)
-			local bottomScreen, bottomOnScreen = Camera:WorldToViewportPoint(bottomPart.Position)
-
-			local boxSize = Vector2.new(35,50)
-
-			-- Box
-			if _G.ESP_Box and topOnScreen and bottomOnScreen then
-				local height = math.abs(topScreen.Y - bottomScreen.Y)
-				local width = height / 1.6
-				local centerX = (topScreen.X + bottomScreen.X)/2
-				local centerY = (topScreen.Y + bottomScreen.Y)/2
-
-				boxSize = Vector2.new(width, height)
-				objs.Box.Size = boxSize
-				objs.Box.Position = Vector2.new(centerX - width/2, centerY - height/2)
+			if _G.ESP_Box and onScreen then
+				local size = Vector2.new(35,50)
+				objs.Box.Size = size
+				objs.Box.Position = Vector2.new(pos.X - size.X/2, pos.Y - size.Y/2)
 				objs.Box.Visible = true
 				objs.Box.Color = _G.CircleColor
-			else
-				objs.Box.Visible = false
-			end
-
-			-- Name
-			if _G.ESP_Name and topOnScreen then
+			else objs.Box.Visible = false end
+			if _G.ESP_Name and onScreen then
 				objs.Name.Text = player.Name
-				objs.Name.Position = Vector2.new(pos.X, pos.Y - boxSize.Y/2 - 10)
-				objs.Name.Size = math.clamp(14 * (boxSize.Y/50), 8, 20)
+				objs.Name.Position = Vector2.new(pos.X, pos.Y - 35)
 				objs.Name.Visible = true
 				objs.Name.Color = _G.CircleColor
-			else
-				objs.Name.Visible = false
-			end
-
-			-- Tracer
+			else objs.Name.Visible = false end
 			if _G.ESP_Tracer and onScreen then
 				objs.Tracer.From = bottom
 				objs.Tracer.To = Vector2.new(pos.X,pos.Y)
 				objs.Tracer.Visible = true
 				objs.Tracer.Color = _G.CircleColor
-			else
-				objs.Tracer.Visible = false
-			end
-
-			-- Health bar (independent)
-			if _G.ESP_HealthBar and topOnScreen and bottomOnScreen then
-				local hp = math.clamp(hum.Health,0,hum.MaxHealth)
-				local hpPercent = hp / hum.MaxHealth
-
-				-- Determine bar size and position
-				local height = math.abs(topScreen.Y - bottomScreen.Y)
-				local width = 4
-				local healthX
-				if _G.ESP_Box and objs.Box.Visible then
-					healthX = objs.Box.Position.X - width - 2 -- left of box
-				else
-					healthX = (topScreen.X + bottomScreen.X)/2 - width/2 -- center if no box
-				end
-				local healthY = bottomScreen.Y - height
-
-				-- Background
-				objs.HealthBG.Size = Vector2.new(width, height)
-				objs.HealthBG.Position = Vector2.new(healthX, healthY)
-				objs.HealthBG.Color = Color3.fromRGB(50,50,50)
-				objs.HealthBG.Visible = true
-
-				-- Fill
-				objs.Health.Size = Vector2.new(width, height * hpPercent)
-				objs.Health.Position = Vector2.new(healthX, healthY + height * (1 - hpPercent))
-
-				-- Color
-				if hpPercent > 0.7 then
-					objs.Health.Color = Color3.fromRGB(0,255,0)
-				elseif hpPercent > 0.3 then
-					objs.Health.Color = Color3.fromRGB(255,255,0)
-				else
-					objs.Health.Color = Color3.fromRGB(255,0,0)
-				end
-				objs.Health.Visible = true
-			else
-				objs.Health.Visible = false
-				objs.HealthBG.Visible = false
-			end
+			else objs.Tracer.Visible = false end
 		else
 			objs.Box.Visible = false
 			objs.Name.Visible = false
 			objs.Tracer.Visible = false
-			objs.Health.Visible = false
-			objs.HealthBG.Visible = false
 		end
 	end
 end)
-
 
 --------------------------------------------------
 --// GUI
@@ -420,9 +362,7 @@ end
 local AimbotPage = Page()
 local ESPPage = Page()
 local MovementPage = Page()
-
 AimbotPage.Visible = true
-
 
 --------------------------------------------------
 -- TAB FUNCTION
@@ -448,7 +388,6 @@ end
 Tab("Aimbot",AimbotPage)
 Tab("ESP",ESPPage)
 Tab("Movement",MovementPage)
-
 
 --------------------------------------------------
 --// HELPER FUNCTIONS
@@ -488,84 +427,8 @@ local function CircleToggle(parent, text, flag)
 end
 
 --------------------------------------------------
---// ANTI-AFK PAGE
+--// Aimbot Page
 --------------------------------------------------
--- Create page once
-local AntiAFKPage = Page()
-Tab("Anti-AFK", AntiAFKPage)
-
--- Global variable
-_G.AntiAFKEnabled = _G.AntiAFKEnabled or false
-
--- Toggle UI
-local function AntiAFKToggle(parent)
-    local holder = Instance.new("Frame", parent)
-    holder.Size = UDim2.new(1,0,0,32)
-    holder.BackgroundTransparency = 1
-
-    local label = Instance.new("TextLabel", holder)
-    label.Size = UDim2.new(1,-40,1,0)
-    label.BackgroundTransparency = 1
-    label.Text = "Enable Anti-AFK"
-    label.Font = Enum.Font.Gotham
-    label.TextSize = 13
-    label.TextColor3 = Color3.new(1,1,1)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-
-    local btn = Instance.new("TextButton", holder)
-    btn.Size = UDim2.new(0,22,0,22)
-    btn.Position = UDim2.new(1,-26,0.5,-11)
-    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
-    btn.Text = _G.AntiAFKEnabled and "●" or "○"
-    btn.TextColor3 = _G.AntiAFKEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 16
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
-
-    btn.MouseButton1Click:Connect(function()
-        _G.AntiAFKEnabled = not _G.AntiAFKEnabled
-        btn.Text = _G.AntiAFKEnabled and "●" or "○"
-        btn.TextColor3 = _G.AntiAFKEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
-    end)
-end
-
--- Add toggle to the page
-AntiAFKToggle(AntiAFKPage)
-
--- Anti-AFK logic
-local VirtualUser = game:GetService("VirtualUser")
-Players.LocalPlayer.Idled:Connect(function()
-    if _G.AntiAFKEnabled then
-        VirtualUser:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-        task.wait(1)
-        VirtualUser:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-    end
-end)
-
---------------------------------------------------
---// Aimbot Page 
---------------------------------------------------
--- Scroll container INSIDE existing AimbotPage
-local AimbotScroll = Instance.new("ScrollingFrame")
-AimbotScroll.Parent = AimbotPage
-AimbotScroll.Size = UDim2.new(1,0,1,0)
-AimbotScroll.CanvasSize = UDim2.new(0,0,0,0)
-AimbotScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-AimbotScroll.ScrollBarThickness = 6
-AimbotScroll.ScrollingDirection = Enum.ScrollingDirection.Y
-AimbotScroll.BackgroundTransparency = 1
-
--- add padding to make scrollbar and content look better
-local padding = Instance.new("UIPadding", AimbotScroll)
-padding.PaddingRight = UDim.new(0, 8) -- moves scrollbar slightly right
-padding.PaddingLeft = UDim.new(0, 4)
-padding.PaddingTop = UDim.new(0, 4)
-padding.PaddingBottom = UDim.new(0, 6)
-
-local AimbotLayout = Instance.new("UIListLayout", AimbotScroll)
-AimbotLayout.Padding = UDim.new(0,8)
-
-
 -- Enable Aimbot Toggle
 local function AimbotCircleToggle(parent)
     local holder = Instance.new("Frame", parent)
@@ -599,95 +462,66 @@ local function AimbotCircleToggle(parent)
         btn.TextColor3 = _G.AimbotGUIEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
     end)
 end
-AimbotCircleToggle(AimbotScroll)
+AimbotCircleToggle(AimbotPage)
 
--- Aim Part Dropdown (FIXED – expands instead of floating)
+-- Aim Part Dropdown
 local function AimPartDropdown(parent)
-    local BASE_HEIGHT = 32
-    local OPTION_HEIGHT = 30
-    local GAP = 8 -- spacing between dropdown button and options
-    local options = {"Head","UpperTorso","LowerTorso"}
-    local open = false
+	local holder = Instance.new("Frame", parent)
+	holder.Size = UDim2.new(1,0,0,32)
+	holder.BackgroundTransparency = 1
+	holder.LayoutOrder = 2 -- second element
 
-    local holder = Instance.new("Frame", parent)
-    holder.Size = UDim2.new(1,0,0,BASE_HEIGHT)
-    holder.BackgroundTransparency = 1
-    holder.LayoutOrder = 2
-    holder.ClipsDescendants = true -- VERY IMPORTANT
+	local label = Instance.new("TextLabel", holder)
+	label.Size = UDim2.new(0.5,0,1,0)
+	label.BackgroundTransparency = 1
+	label.Text = "Aim Part"
+	label.Font = Enum.Font.Gotham
+	label.TextSize = 13
+	label.TextColor3 = Color3.new(1,1,1)
+	label.TextXAlignment = Enum.TextXAlignment.Left
 
-    -- Label
-    local label = Instance.new("TextLabel", holder)
-    label.Size = UDim2.new(0.5,0,0,BASE_HEIGHT)
-    label.BackgroundTransparency = 1
-    label.Text = "Aim Part"
-    label.Font = Enum.Font.Gotham
-    label.TextSize = 13
-    label.TextColor3 = Color3.new(1,1,1)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-
-    -- Dropdown button
-    local dropdown = Instance.new("TextButton", holder)
-    dropdown.Size = UDim2.new(0.45,0,0,BASE_HEIGHT)
-    dropdown.Position = UDim2.new(0.5,0,0,0)
-    dropdown.BackgroundColor3 = Color3.fromRGB(35,35,35)
-    dropdown.Text = _G.AimPart
-    dropdown.TextColor3 = Color3.new(1,1,1)
-    dropdown.Font = Enum.Font.Gotham
-    dropdown.TextSize = 13
-    Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0,8)
-
-    -- Spacer for visual gap
-    local spacer = Instance.new("Frame", holder)
-    spacer.Position = UDim2.new(0,0,0,BASE_HEIGHT)
-    spacer.Size = UDim2.new(1,0,GAP,0)
-    spacer.BackgroundTransparency = 1
-
-    -- Options container (INSIDE holder)
-    local listFrame = Instance.new("Frame", holder)
-    listFrame.Position = UDim2.new(0,0,0,BASE_HEIGHT + GAP)
-    listFrame.Size = UDim2.new(1,0,0,0)
-    listFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
-    listFrame.Visible = false
-    Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0,8)
-
-    local layout = Instance.new("UIListLayout", listFrame)
-    layout.Padding = UDim.new(0,2)
-
-    for _, opt in ipairs(options) do
-        local btn = Instance.new("TextButton", listFrame)
-        btn.Size = UDim2.new(1,0,0,OPTION_HEIGHT)
-        btn.BackgroundColor3 = Color3.fromRGB(45,45,45)
-        btn.Text = opt
-        btn.TextColor3 = Color3.new(1,1,1)
-        btn.Font = Enum.Font.Gotham
-        btn.TextSize = 13
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
-
-        btn.MouseButton1Click:Connect(function()
-            _G.AimPart = opt
-            dropdown.Text = opt
-            open = false
-            listFrame.Visible = false
-            holder.Size = UDim2.new(1,0,0,BASE_HEIGHT)
-        end)
-    end
-
-    dropdown.MouseButton1Click:Connect(function()
-        open = not open
-        if open then
-            listFrame.Visible = true
-            listFrame.Size = UDim2.new(1,0,0,#options * OPTION_HEIGHT)
-            holder.Size = UDim2.new(1,0,0,BASE_HEIGHT + GAP + (#options * OPTION_HEIGHT))
-        else
-            listFrame.Visible = false
-            holder.Size = UDim2.new(1,0,0,BASE_HEIGHT)
-        end
-    end)
+	local dropdown = Instance.new("TextButton", holder)
+	dropdown.Size = UDim2.new(0.45,0,1,0)
+	dropdown.Position = UDim2.new(0.5,0,0,0)
+	dropdown.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	dropdown.Text = _G.AimPart
+	dropdown.TextColor3 = Color3.new(1,1,1)
+	dropdown.Font = Enum.Font.Gotham
+	dropdown.TextSize = 13
+	Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0,8)
+	local options = {"Head","UpperTorso","LowerTorso"}
+	local open = false
+	local listFrame
+	dropdown.MouseButton1Click:Connect(function()
+		if open then if listFrame then listFrame:Destroy() end open = false else
+			listFrame = Instance.new("Frame", parent)
+			listFrame.Position = UDim2.new(0,0,0,32)
+			listFrame.Size = UDim2.new(1,0,0,#options*30)
+			listFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
+			Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0,8)
+			local layout = Instance.new("UIListLayout", listFrame)
+			layout.Padding = UDim.new(0,2)
+			for _,opt in pairs(options) do
+				local btn = Instance.new("TextButton", listFrame)
+				btn.Size = UDim2.new(1,0,0,30)
+				btn.BackgroundColor3 = Color3.fromRGB(45,45,45)
+				btn.Text = opt
+				btn.TextColor3 = Color3.new(1,1,1)
+				btn.Font = Enum.Font.Gotham
+				btn.TextSize = 13
+				Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
+				btn.MouseButton1Click:Connect(function()
+					_G.AimPart = opt
+					dropdown.Text = opt
+					listFrame:Destroy()
+					open = false
+				end)
+			end
+			open = true
+		end
+	end)
 end
-
-AimPartDropdown(AimbotScroll)
-
-
+AimPartDropdown(AimbotPage)
 
 -- Smoothness Slider
 local function SmoothnessSlider(parent)
@@ -735,7 +569,7 @@ local function SmoothnessSlider(parent)
 		end
 	end)
 end
-SmoothnessSlider(AimbotScroll)
+SmoothnessSlider(AimbotPage)
 
 -- Keybind Button
 local function KeybindButton(parent)
@@ -777,7 +611,7 @@ local function KeybindButton(parent)
 		end)
 	end)
 end
-KeybindButton(AimbotScroll)
+KeybindButton(AimbotPage)
 
 --------------------------------------------------
 --// ESP Page
@@ -785,7 +619,6 @@ KeybindButton(AimbotScroll)
 CircleToggle(ESPPage,"ESP Box","ESP_Box")
 CircleToggle(ESPPage,"ESP Name","ESP_Name")
 CircleToggle(ESPPage,"ESP Tracer","ESP_Tracer")
-CircleToggle(ESPPage, "ESP Health Bar", "ESP_HealthBar")
 CircleToggle(ESPPage,"Team Check","TeamCheck")
 
 --------------------------------------------------
@@ -1197,39 +1030,29 @@ end
 AddPlayerTeleportButtons(ScrollFrame)
 
 --------------------------------------------------
---// UNIVERSAL WALK SPEED & NO JUMP COOLDOWN (FIXED)
+--// WalkSpeed & No Jump Cooldown Fix
 --------------------------------------------------
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = game:GetService("Players").LocalPlayer
+
+-- WalkSpeed
 RunService.Stepped:Connect(function()
     local char = LocalPlayer.Character
     if char then
         local humanoid = char:FindFirstChildOfClass("Humanoid")
-        
         if humanoid then
-            if _G.SpeedEnabled then
-                humanoid.WalkSpeed = _G.WalkSpeedValue
-            end
-            -- if SpeedEnabled is false, don't change WalkSpeed
-        else
-            -- fallback for custom rigs without Humanoid
-            if _G.SpeedEnabled then
-                for _, part in pairs(char:GetDescendants()) do
-                    if part:IsA("BasePart") and part.Name:lower():find("root") then
-                        -- scale velocity only when SpeedEnabled
-                        local direction = part.Velocity.Unit
-                        if direction.Magnitude > 0 then
-                            part.Velocity = direction * _G.WalkSpeedValue
-                        end
-                    end
-                end
-            end
+            humanoid.WalkSpeed = _G.SpeedEnabled and _G.WalkSpeedValue or 16
         end
     end
 end)
 
--- No Jump Cooldown (works for any humanoid)
+-- No Jump Cooldown (spacebar auto jump)
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
-    if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.Space then
+
+    if input.UserInputType == Enum.UserInputType.Keyboard
+    and input.KeyCode == Enum.KeyCode.Space then
+
         local char = LocalPlayer.Character
         if char then
             local humanoid = char:FindFirstChildOfClass("Humanoid")
@@ -1241,6 +1064,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
         end
     end
 end)
+
 
 --------------------------------------------------
 --// SHOW / HIDE MENU
