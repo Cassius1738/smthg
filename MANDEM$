@@ -459,11 +459,10 @@ local function AimPartDropdown(parent)
             if listFrame then listFrame:Destroy() end
             open = false
         else
-            -- Create overlay frame at the top level (UI) instead of inside holder
-            listFrame = Instance.new("Frame", UI) -- parent it to the main UI, not holder
-            listFrame.Size = UDim2.new(0, holder.AbsoluteSize.X, 0, #options * 30)
-            local holderPos = holder:AbsolutePosition()
-            listFrame.Position = UDim2.new(0, holderPos.X, 0, holderPos.Y + holder.AbsoluteSize.Y)
+            -- Parent to same container as holder, so layout stays consistent
+            listFrame = Instance.new("Frame", parent)
+            listFrame.Size = UDim2.new(1,0,0,#options*30)
+            listFrame.Position = UDim2.new(0,0,0,holder.AbsoluteSize.Y) -- below the holder
             listFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
             listFrame.ZIndex = 10
             Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0,8)
@@ -494,13 +493,13 @@ local function AimPartDropdown(parent)
             local conn
             conn = UserInputService.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    if not listFrame or not input.Position then return end
-                    local pos = Vector2.new(input.Position.X, input.Position.Y)
+                    if not listFrame then return end
+                    local mousePos = Vector2.new(input.Position.X, input.Position.Y)
                     local framePos = listFrame.AbsolutePosition
                     local frameSize = listFrame.AbsoluteSize
-                    if pos.X < framePos.X or pos.X > framePos.X + frameSize.X or
-                       pos.Y < framePos.Y or pos.Y > framePos.Y + frameSize.Y then
-                        if listFrame then listFrame:Destroy() end
+                    if mousePos.X < framePos.X or mousePos.X > framePos.X + frameSize.X or
+                       mousePos.Y < framePos.Y or mousePos.Y > framePos.Y + frameSize.Y then
+                        listFrame:Destroy()
                         open = false
                         conn:Disconnect()
                     end
