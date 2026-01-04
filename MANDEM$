@@ -205,6 +205,7 @@ RunService.RenderStepped:Connect(function()
 
 			local boxSize = Vector2.new(35,50)
 
+			-- Box
 			if _G.ESP_Box and topOnScreen and bottomOnScreen then
 				local height = math.abs(topScreen.Y - bottomScreen.Y)
 				local width = height / 1.6
@@ -241,19 +242,31 @@ RunService.RenderStepped:Connect(function()
 				objs.Tracer.Visible = false
 			end
 
-			-- Health bar (same size as box)
+			-- Health bar (independent)
 			if _G.ESP_HealthBar and topOnScreen and bottomOnScreen then
 				local hp = math.clamp(hum.Health,0,hum.MaxHealth)
 				local hpPercent = hp / hum.MaxHealth
 
+				-- Determine bar size and position
+				local height = math.abs(topScreen.Y - bottomScreen.Y)
+				local width = 4
+				local healthX
+				if _G.ESP_Box and objs.Box.Visible then
+					healthX = objs.Box.Position.X - width - 2 -- left of box
+				else
+					healthX = (topScreen.X + bottomScreen.X)/2 - width/2 -- center if no box
+				end
+				local healthY = bottomScreen.Y - height
+
 				-- Background
-				objs.HealthBG.Size = Vector2.new(4, boxSize.Y)
-				objs.HealthBG.Position = Vector2.new(boxSize.X > 0 and (objs.Box.Position.X - 6) or pos.X - 6, objs.Box.Position.Y)
+				objs.HealthBG.Size = Vector2.new(width, height)
+				objs.HealthBG.Position = Vector2.new(healthX, healthY)
+				objs.HealthBG.Color = Color3.fromRGB(50,50,50)
 				objs.HealthBG.Visible = true
 
 				-- Fill
-				objs.Health.Size = Vector2.new(4, boxSize.Y * hpPercent)
-				objs.Health.Position = Vector2.new(boxSize.X > 0 and (objs.Box.Position.X - 6) or pos.X - 6, objs.Box.Position.Y + (boxSize.Y * (1 - hpPercent)))
+				objs.Health.Size = Vector2.new(width, height * hpPercent)
+				objs.Health.Position = Vector2.new(healthX, healthY + height * (1 - hpPercent))
 
 				-- Color
 				if hpPercent > 0.7 then
