@@ -91,60 +91,51 @@ local function GetClosestPlayer()
 end
 
 --------------------------------------------------
---// UNIVERSAL AIMBOT LOOP
+--// AIM LOCK WITH FOV CHECK
 --------------------------------------------------
--- Finds the best aim part in any rig
-local function FindBestTargetPart(character)
-	-- Try the user-selected aim part first
-	if _G.AimPart and character:FindFirstChild(_G.AimPart) then
-		return character[_G.AimPart]
-	end
+local function GetClosestTargetInFOV()
+	local closestPlayer, closestDist = nil, _G.CircleRadius
+	local mousePos = UserInputService:GetMouseLocation()
 
-	-- Common Roblox parts
-	for _, name in ipairs({"Head","UpperTorso","LowerTorso","Torso","HumanoidRootPart"}) do
-		local part = character:FindFirstChild(name)
-		if part and part:IsA("BasePart") then
-			return part
-		end
-	end
-
-	-- Search all descendants for hitbox-like parts
-	for _, part in pairs(character:GetDescendants()) do
-		if part:IsA("BasePart") then
-			local lname = part.Name:lower()
-			if lname:find("head") or lname:find("torso") or lname:find("hitbox") then
-				return part
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer and player.Character and player.Character:FindFirstChildOfClass("Humanoid") and player.Character.Humanoid.Health > 0 then
+			if not _G.TeamCheck or player.Team ~= LocalPlayer.Team then
+				local aimPart = GetBestAimPart(player.Character)
+				if aimPart then
+					local screenPos, onScreen = Camera:WorldToViewportPoint(aimPart.Position)
+					if onScreen then
+						local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+						if dist < closestDist then
+							closestDist = dist
+							closestPlayer = player
+						end
+					end
+				end
 			end
 		end
 	end
 
-	-- Fallback: first BasePart
-	for _, part in pairs(character:GetDescendants()) do
-		if part:IsA("BasePart") then
-			return part
-		end
-	end
-
-	return nil
+	return closestPlayer
 end
 
--- Main aimbot loop
 RunService.RenderStepped:Connect(function()
 	if Holding and _G.AimbotEnabled and _G.AimbotGUIEnabled then
-		local target = GetClosestPlayer()
-		if target and target.Character and target.Character:FindFirstChildOfClass("Humanoid") then
-			local aimPart = FindBestTargetPart(target.Character)
+		local target = GetClosestTargetInFOV()
+		if target and target.Character then
+			local aimPart = GetBestAimPart(target.Character)
 			if aimPart then
-				TweenService:Create(
-					Camera,
-					TweenInfo.new(_G.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
-					{CFrame = CFrame.new(Camera.CFrame.Position, aimPart.Position)}
-				):Play()
+				local camPos = Camera.CFrame.Position
+				local targetPos = aimPart.Position
+				-- Snap or smooth
+				if _G.Sensitivity >= 1 then
+					Camera.CFrame = CFrame.new(camPos, targetPos) -- instant snap
+				else
+					Camera.CFrame = CFrame.new(camPos, camPos:Lerp(targetPos, _G.Sensitivity)) -- smooth
+				end
 			end
 		end
 	end
 end)
-
 
 --------------------------------------------------
 --// FOV CIRCLE
