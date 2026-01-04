@@ -191,7 +191,9 @@ RunService.RenderStepped:Connect(function()
 				objs.Box.Position = Vector2.new(pos.X - size.X/2, pos.Y - size.Y/2)
 				objs.Box.Visible = true
 				objs.Box.Color = _G.CircleColor
-			else objs.Box.Visible = false end
+			else
+				objs.Box.Visible = false
+			end
 
 			-- Name
 			if _G.ESP_Name and onScreen then
@@ -199,7 +201,9 @@ RunService.RenderStepped:Connect(function()
 				objs.Name.Position = Vector2.new(pos.X, pos.Y - 35)
 				objs.Name.Visible = true
 				objs.Name.Color = _G.CircleColor
-			else objs.Name.Visible = false end
+			else
+				objs.Name.Visible = false
+			end
 
 			-- Tracer
 			if _G.ESP_Tracer and onScreen then
@@ -211,37 +215,30 @@ RunService.RenderStepped:Connect(function()
 				objs.Tracer.Visible = false
 			end
 
-			-- Health Bar (vertical rectangle on left of player, works even without box)
+			-- Health Bar (vertical rectangle to left of player, works even without box)
 			if _G.ESP_HealthBar and onScreen then
 				local hpPercent = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
+
+				local barWidth = 4
+				local barOffset = 6 -- distance from center (like box left side)
 				
-				-- Get top and bottom of character in screen coordinates
-				local head = char:FindFirstChild("Head")
-				local root = hrp
-				if head and root then
-					local topPos, topOnScreen = Camera:WorldToViewportPoint(head.Position + Vector3.new(0,0.5,0))
-					local bottomPos, bottomOnScreen = Camera:WorldToViewportPoint(root.Position - Vector3.new(0,0.5,0))
-					local charHeight = math.abs(topPos.Y - bottomPos.Y)
-					if charHeight < 10 then charHeight = 50 end -- fallback
+				-- Use box size if box enabled, else default height
+				local boxHeight = _G.ESP_Box and objs.Box.Size.Y or 50
+				local healthHeight = boxHeight * hpPercent
+				local barX = pos.X - barOffset
+				local barY = pos.Y - boxHeight/2 + (boxHeight - healthHeight)
 
-					local healthHeight = charHeight * hpPercent
-					local barWidth = 4
-					local barOffset = 6
-					local barX = pos.X - barOffset
-					local barY = bottomPos.Y + (charHeight - healthHeight)
+				objs.HealthBar.Size = Vector2.new(barWidth, healthHeight)
+				objs.HealthBar.Position = Vector2.new(barX, barY)
+				objs.HealthBar.Visible = true
 
-					objs.HealthBar.Size = Vector2.new(barWidth, healthHeight)
-					objs.HealthBar.Position = Vector2.new(barX, barY)
-					objs.HealthBar.Visible = true
-
-					-- Health color
-					if hpPercent > 0.7 then
-						objs.HealthBar.Color = Color3.fromRGB(0,255,0)
-					elseif hpPercent > 0.3 then
-						objs.HealthBar.Color = Color3.fromRGB(255,255,0)
-					else
-						objs.HealthBar.Color = Color3.fromRGB(255,0,0)
-					end
+				-- Health color
+				if hpPercent > 0.7 then
+					objs.HealthBar.Color = Color3.fromRGB(0,255,0)
+				elseif hpPercent > 0.3 then
+					objs.HealthBar.Color = Color3.fromRGB(255,255,0)
+				else
+					objs.HealthBar.Color = Color3.fromRGB(255,0,0)
 				end
 			else
 				objs.HealthBar.Visible = false
