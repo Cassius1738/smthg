@@ -189,44 +189,39 @@ RunService.RenderStepped:Connect(function()
 		if char and hum and hum.Health > 0 and hrp and (not _G.TeamCheck or player.Team ~= LocalPlayer.Team) then
 			local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
 
-			-- Box (full-body, universal)
-			local boxSize = Vector2.new(35,50)
-			if _G.ESP_Box and onScreen then
-				-- Find top (Head)
-				local topPart = char:FindFirstChild("Head") or hrp
-				-- Find bottom (lowest BasePart)
-				local bottomPart = hrp
-				for _, part in pairs(char:GetDescendants()) do
-					if part:IsA("BasePart") then
-						if part.Position.Y < bottomPart.Position.Y then
-							bottomPart = part
-						end
+			-- Find top and bottom parts for universal rig
+			local topPart = char:FindFirstChild("Head") or hrp
+			local bottomPart = hrp
+			for _, part in pairs(char:GetDescendants()) do
+				if part:IsA("BasePart") then
+					if part.Position.Y < bottomPart.Position.Y then
+						bottomPart = part
 					end
 				end
+			end
 
-				local topScreen, topOnScreen = Camera:WorldToViewportPoint(topPart.Position)
-				local bottomScreen, bottomOnScreen = Camera:WorldToViewportPoint(bottomPart.Position)
+			local topScreen, topOnScreen = Camera:WorldToViewportPoint(topPart.Position)
+			local bottomScreen, bottomOnScreen = Camera:WorldToViewportPoint(bottomPart.Position)
 
-				if topOnScreen and bottomOnScreen then
-					local height = math.abs(topScreen.Y - bottomScreen.Y)
-					local width = height / 1.6 -- humanoid width approximation
-					local centerX = (topScreen.X + bottomScreen.X)/2
-					local centerY = (topScreen.Y + bottomScreen.Y)/2
+			local boxSize = Vector2.new(35,50)
 
-					boxSize = Vector2.new(width, height)
-					objs.Box.Size = boxSize
-					objs.Box.Position = Vector2.new(centerX - width/2, centerY - height/2)
-					objs.Box.Visible = true
-					objs.Box.Color = _G.CircleColor
-				else
-					objs.Box.Visible = false
-				end
+			if _G.ESP_Box and topOnScreen and bottomOnScreen then
+				local height = math.abs(topScreen.Y - bottomScreen.Y)
+				local width = height / 1.6
+				local centerX = (topScreen.X + bottomScreen.X)/2
+				local centerY = (topScreen.Y + bottomScreen.Y)/2
+
+				boxSize = Vector2.new(width, height)
+				objs.Box.Size = boxSize
+				objs.Box.Position = Vector2.new(centerX - width/2, centerY - height/2)
+				objs.Box.Visible = true
+				objs.Box.Color = _G.CircleColor
 			else
 				objs.Box.Visible = false
 			end
 
 			-- Name
-			if _G.ESP_Name and onScreen then
+			if _G.ESP_Name and topOnScreen then
 				objs.Name.Text = player.Name
 				objs.Name.Position = Vector2.new(pos.X, pos.Y - boxSize.Y/2 - 10)
 				objs.Name.Size = math.clamp(14 * (boxSize.Y/50), 8, 20)
@@ -246,18 +241,21 @@ RunService.RenderStepped:Connect(function()
 				objs.Tracer.Visible = false
 			end
 
-			-- Health bar
-			if _G.ESP_HealthBar and onScreen then
+			-- Health bar (same size as box)
+			if _G.ESP_HealthBar and topOnScreen and bottomOnScreen then
 				local hp = math.clamp(hum.Health,0,hum.MaxHealth)
 				local hpPercent = hp / hum.MaxHealth
 
+				-- Background
 				objs.HealthBG.Size = Vector2.new(4, boxSize.Y)
-				objs.HealthBG.Position = Vector2.new(pos.X - boxSize.X/2 - 6, pos.Y - boxSize.Y/2)
+				objs.HealthBG.Position = Vector2.new(boxSize.X > 0 and (objs.Box.Position.X - 6) or pos.X - 6, objs.Box.Position.Y)
 				objs.HealthBG.Visible = true
 
+				-- Fill
 				objs.Health.Size = Vector2.new(4, boxSize.Y * hpPercent)
-				objs.Health.Position = Vector2.new(pos.X - boxSize.X/2 - 6, pos.Y - boxSize.Y/2 + (boxSize.Y * (1 - hpPercent)))
+				objs.Health.Position = Vector2.new(boxSize.X > 0 and (objs.Box.Position.X - 6) or pos.X - 6, objs.Box.Position.Y + (boxSize.Y * (1 - hpPercent)))
 
+				-- Color
 				if hpPercent > 0.7 then
 					objs.Health.Color = Color3.fromRGB(0,255,0)
 				elseif hpPercent > 0.3 then
@@ -279,6 +277,7 @@ RunService.RenderStepped:Connect(function()
 		end
 	end
 end)
+
 
 --------------------------------------------------
 --// GUI
@@ -1185,24 +1184,28 @@ end
 AddPlayerTeleportButtons(ScrollFrame)
 
 --------------------------------------------------
---// UNIVERSAL WALK SPEED & NO JUMP COOLDOWN
+--// UNIVERSAL WALK SPEED & NO JUMP COOLDOWN (FIXED)
 --------------------------------------------------
 RunService.Stepped:Connect(function()
     local char = LocalPlayer.Character
     if char then
-        -- Try to find a humanoid
         local humanoid = char:FindFirstChildOfClass("Humanoid")
         
         if humanoid then
-            -- WalkSpeed for any humanoid
-            humanoid.WalkSpeed = _G.SpeedEnabled and _G.WalkSpeedValue or 16
+            if _G.SpeedEnabled then
+                humanoid.WalkSpeed = _G.WalkSpeedValue
+            end
+            -- if SpeedEnabled is false, don't change WalkSpeed
         else
             -- fallback for custom rigs without Humanoid
-            for _, part in pairs(char:GetDescendants()) do
-                if part:IsA("BasePart") and part.Name:lower():find("root") then
-                    -- move root part velocity if WalkSpeed enabled
-                    if _G.SpeedEnabled then
-                        part.Velocity = part.Velocity.Unit * _G.WalkSpeedValue
+            if _G.SpeedEnabled then
+                for _, part in pairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") and part.Name:lower():find("root") then
+                        -- scale velocity only when SpeedEnabled
+                        local direction = part.Velocity.Unit
+                        if direction.Magnitude > 0 then
+                            part.Velocity = direction * _G.WalkSpeedValue
+                        end
                     end
                 end
             end
@@ -1225,6 +1228,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
         end
     end
 end)
+
 
 --------------------------------------------------
 --// SHOW / HIDE MENU
