@@ -128,12 +128,6 @@ end)
 --------------------------------------------------
 --// ESP
 --------------------------------------------------
-_G.ESPEnabled = _G.ESPEnabled or false
-_G.ESP_Box = _G.ESP_Box or false
-_G.ESP_Name = _G.ESP_Name or false
-_G.ESP_Tracer = _G.ESP_Tracer or false
-_G.ESP_HealthBar = _G.ESP_HealthBar or false
-
 local ESPObjects = {}
 
 local function CreateESP(p)
@@ -157,20 +151,32 @@ local function CreateESP(p)
 	tracer.Color = _G.CircleColor
 	tracer.Thickness = 1
 
-	local healthBar = Drawing.new("Square") -- vertical rectangle for health
+	-- Health bar
+	local healthBarBG = Drawing.new("Square")
+	healthBarBG.Visible = false
+	healthBarBG.Color = Color3.fromRGB(50,50,50)
+	healthBarBG.Filled = true
+	healthBarBG.Thickness = 1
+
+	local healthBar = Drawing.new("Square")
 	healthBar.Visible = false
 	healthBar.Filled = true
 	healthBar.Thickness = 1
-	healthBar.Color = Color3.fromRGB(0,255,0)
 
-	ESPObjects[p] = {Box = box, Name = name, Tracer = tracer, HealthBar = healthBar}
+	ESPObjects[p] = {
+		Box = box,
+		Name = name,
+		Tracer = tracer,
+		HealthBG = healthBarBG,
+		Health = healthBar
+	}
 end
 
-for _, p in pairs(Players:GetPlayers()) do CreateESP(p) end
+for _,p in pairs(Players:GetPlayers()) do CreateESP(p) end
 Players.PlayerAdded:Connect(CreateESP)
 Players.PlayerRemoving:Connect(function(p)
 	if ESPObjects[p] then
-		for _, v in pairs(ESPObjects[p]) do v:Remove() end
+		for _,v in pairs(ESPObjects[p]) do v:Remove() end
 		ESPObjects[p] = nil
 	end
 end)
@@ -191,9 +197,7 @@ RunService.RenderStepped:Connect(function()
 				objs.Box.Position = Vector2.new(pos.X - size.X/2, pos.Y - size.Y/2)
 				objs.Box.Visible = true
 				objs.Box.Color = _G.CircleColor
-			else
-				objs.Box.Visible = false
-			end
+			else objs.Box.Visible = false end
 
 			-- Name
 			if _G.ESP_Name and onScreen then
@@ -201,54 +205,51 @@ RunService.RenderStepped:Connect(function()
 				objs.Name.Position = Vector2.new(pos.X, pos.Y - 35)
 				objs.Name.Visible = true
 				objs.Name.Color = _G.CircleColor
-			else
-				objs.Name.Visible = false
-			end
+			else objs.Name.Visible = false end
 
 			-- Tracer
 			if _G.ESP_Tracer and onScreen then
 				objs.Tracer.From = bottom
-				objs.Tracer.To = Vector2.new(pos.X, pos.Y)
+				objs.Tracer.To = Vector2.new(pos.X,pos.Y)
 				objs.Tracer.Visible = true
 				objs.Tracer.Color = _G.CircleColor
-			else
-				objs.Tracer.Visible = false
-			end
+			else objs.Tracer.Visible = false end
 
-			-- Health Bar (vertical rectangle to left of player, works even without box)
+			-- Health bar
 			if _G.ESP_HealthBar and onScreen then
-				local hpPercent = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
+				local hp = math.clamp(hum.Health,0,hum.MaxHealth)
+				local hpPercent = hp / hum.MaxHealth
+				local size = objs.Box.Size or Vector2.new(35,50)
 
-				local barWidth = 4
-				local barOffset = 6 -- distance from center (like box left side)
+				-- Background
+				objs.HealthBG.Size = Vector2.new(4, size.Y)
+				objs.HealthBG.Position = Vector2.new(objs.Box.Position.X - 6, objs.Box.Position.Y)
+				objs.HealthBG.Visible = true
+
+				-- Health fill
+				objs.Health.Size = Vector2.new(4, size.Y * hpPercent)
+				objs.Health.Position = Vector2.new(objs.Box.Position.X - 6, objs.Box.Position.Y + (size.Y * (1 - hpPercent)))
 				
-				-- Use box size if box enabled, else default height
-				local boxHeight = _G.ESP_Box and objs.Box.Size.Y or 50
-				local healthHeight = boxHeight * hpPercent
-				local barX = pos.X - barOffset
-				local barY = pos.Y - boxHeight/2 + (boxHeight - healthHeight)
-
-				objs.HealthBar.Size = Vector2.new(barWidth, healthHeight)
-				objs.HealthBar.Position = Vector2.new(barX, barY)
-				objs.HealthBar.Visible = true
-
-				-- Health color
+				-- Color based on HP
 				if hpPercent > 0.7 then
-					objs.HealthBar.Color = Color3.fromRGB(0,255,0)
+					objs.Health.Color = Color3.fromRGB(0,255,0)
 				elseif hpPercent > 0.3 then
-					objs.HealthBar.Color = Color3.fromRGB(255,255,0)
+					objs.Health.Color = Color3.fromRGB(255,255,0)
 				else
-					objs.HealthBar.Color = Color3.fromRGB(255,0,0)
+					objs.Health.Color = Color3.fromRGB(255,0,0)
 				end
+				objs.Health.Visible = true
 			else
-				objs.HealthBar.Visible = false
+				objs.Health.Visible = false
+				objs.HealthBG.Visible = false
 			end
 
 		else
 			objs.Box.Visible = false
 			objs.Name.Visible = false
 			objs.Tracer.Visible = false
-			objs.HealthBar.Visible = false
+			objs.Health.Visible = false
+			objs.HealthBG.Visible = false
 		end
 	end
 end)
