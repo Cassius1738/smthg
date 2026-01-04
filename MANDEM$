@@ -441,7 +441,7 @@ AimbotCircleToggle(AimbotScroll)
 local function AimPartDropdown(parent)
     local BASE_HEIGHT = 32
     local OPTION_HEIGHT = 30
-    local GAP = 6
+    local GAP = 12
     local options = {"Head","UpperTorso","LowerTorso"}
     local open = false
 
