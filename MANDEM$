@@ -399,8 +399,16 @@ AimbotScroll.ScrollBarThickness = 6
 AimbotScroll.ScrollingDirection = Enum.ScrollingDirection.Y
 AimbotScroll.BackgroundTransparency = 1
 
+-- add padding to make scrollbar and content look better
+local padding = Instance.new("UIPadding", AimbotScroll)
+padding.PaddingRight = UDim.new(0, 8) -- moves scrollbar slightly right
+padding.PaddingLeft = UDim.new(0, 4)
+padding.PaddingTop = UDim.new(0, 4)
+padding.PaddingBottom = UDim.new(0, 6)
+
 local AimbotLayout = Instance.new("UIListLayout", AimbotScroll)
 AimbotLayout.Padding = UDim.new(0,8)
+
 
 -- Enable Aimbot Toggle
 local function AimbotCircleToggle(parent)
@@ -441,7 +449,7 @@ AimbotCircleToggle(AimbotScroll)
 local function AimPartDropdown(parent)
     local BASE_HEIGHT = 32
     local OPTION_HEIGHT = 30
-    local GAP = 12
+    local GAP = 8 -- spacing between dropdown button and options
     local options = {"Head","UpperTorso","LowerTorso"}
     local open = false
 
@@ -472,9 +480,15 @@ local function AimPartDropdown(parent)
     dropdown.TextSize = 13
     Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0,8)
 
+    -- Spacer for visual gap
+    local spacer = Instance.new("Frame", holder)
+    spacer.Position = UDim2.new(0,0,0,BASE_HEIGHT)
+    spacer.Size = UDim2.new(1,0,GAP,0)
+    spacer.BackgroundTransparency = 1
+
     -- Options container (INSIDE holder)
     local listFrame = Instance.new("Frame", holder)
-    listFrame.Position = UDim2.new(0,0,0,BASE_HEIGHT)
+    listFrame.Position = UDim2.new(0,0,0,BASE_HEIGHT + GAP)
     listFrame.Size = UDim2.new(1,0,0,0)
     listFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
     listFrame.Visible = false
@@ -507,7 +521,7 @@ local function AimPartDropdown(parent)
         if open then
             listFrame.Visible = true
             listFrame.Size = UDim2.new(1,0,0,#options * OPTION_HEIGHT)
-            holder.Size = UDim2.new(1,0,0,BASE_HEIGHT + (#options * OPTION_HEIGHT))
+            holder.Size = UDim2.new(1,0,0,BASE_HEIGHT + GAP + (#options * OPTION_HEIGHT))
         else
             listFrame.Visible = false
             holder.Size = UDim2.new(1,0,0,BASE_HEIGHT)
@@ -516,6 +530,7 @@ local function AimPartDropdown(parent)
 end
 
 AimPartDropdown(AimbotScroll)
+
 
 
 -- Smoothness Slider
