@@ -42,12 +42,6 @@ _G.ESP_Tracer = false
 _G.NoclipFlyEnabled = false
 _G.FlySpeed = 50
 
-_G.AntiAFK = false
-_G.IdleSeconds = 0
-_G.IdleMinutes = 0
-_G.IdleHours = 0
-
-
 --------------------------------------------------
 --// INPUT HANDLING
 --------------------------------------------------
@@ -73,33 +67,6 @@ UserInputService.InputEnded:Connect(function(i)
 	elseif i.UserInputType == Enum.UserInputType.Keyboard and i.KeyCode == _G.AimbotKey then
 		AimbotDebounce = false
 	end
-end)
-
-local VirtualUser = game:GetService("VirtualUser")
-
--- reset idle time on real input
-local function ResetIdle()
-    _G.IdleSeconds = 0
-end
-
-UserInputService.InputBegan:Connect(ResetIdle)
-UserInputService.InputChanged:Connect(ResetIdle)
-UserInputService.InputEnded:Connect(ResetIdle)
-
--- count idle seconds
-task.spawn(function()
-    while true do
-        task.wait(1)
-        _G.IdleSeconds += 1
-    end
-end)
-
--- Anti-AFK trigger
-LocalPlayer.Idled:Connect(function()
-    if _G.AntiAFK then
-        VirtualUser:CaptureController()
-        VirtualUser:ClickButton2(Vector2.new())
-    end
 end)
 
 --------------------------------------------------
@@ -355,9 +322,32 @@ end
 local AimbotPage = Page()
 local ESPPage = Page()
 local MovementPage = Page()
-local AntiAFKPage = Page()
-
 AimbotPage.Visible = true
+
+--------------------------------------------------
+-- TAB FUNCTION
+--------------------------------------------------
+local function Tab(name,page)
+	local b = Instance.new("TextButton", Tabs)
+	b.Size = UDim2.new(0,110,0,32)
+	b.Text = name
+	b.Font = Enum.Font.GothamBold
+	b.TextSize = 12
+	b.TextColor3 = Color3.new(1,1,1)
+	b.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
+
+	b.MouseButton1Click:Connect(function()
+		for _,p in pairs(Pages:GetChildren()) do
+			p.Visible = false
+		end
+		page.Visible = true
+	end)
+end
+
+Tab("Aimbot",AimbotPage)
+Tab("ESP",ESPPage)
+Tab("Movement",MovementPage)
 
 --------------------------------------------------
 --// HELPER FUNCTIONS
@@ -396,181 +386,15 @@ local function CircleToggle(parent, text, flag)
     end)
 end
 
-
---------------------------------------------------
--- TAB FUNCTION
---------------------------------------------------
-local function Tab(name,page)
-	local b = Instance.new("TextButton", Tabs)
-	b.Size = UDim2.new(0,110,0,32)
-	b.Text = name
-	b.Font = Enum.Font.GothamBold
-	b.TextSize = 12
-	b.TextColor3 = Color3.new(1,1,1)
-	b.BackgroundColor3 = Color3.fromRGB(35,35,35)
-	Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
-
-	b.MouseButton1Click:Connect(function()
-		for _,p in pairs(Pages:GetChildren()) do
-			p.Visible = false
-		end
-		page.Visible = true
-	end)
-end
-
-Tab("Aimbot",AimbotPage)
-Tab("ESP",ESPPage)
-Tab("Movement",MovementPage)
-Tab("Anti-AFK", AntiAFKPage)
-
---------------------------------------------------
---// Anti-AFK Page
---------------------------------------------------
-
---// Defaults
-_G.AntiAFK = _G.AntiAFK or false
-
-_G.IdleSeconds = _G.IdleSeconds or 0
-_G.IdleMinutes = _G.IdleMinutes or 0
-_G.IdleHours   = _G.IdleHours   or 0
-
---// Streak Tracking
-_G.CurrentIdleStreak = _G.CurrentIdleStreak or 0
-_G.LongestIdleStreak = _G.LongestIdleStreak or 0
-
---// Anti-AFK Toggle
-CircleToggle(AntiAFKPage, "Enable Anti-AFK", "AntiAFK")
-
---// Services
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local VirtualUser = game:GetService("VirtualUser")
-
---// Idle Counter + Streak Tracker + AFK prevention
-task.spawn(function()
-    while true do
-        task.wait(1)
-
-        if _G.AntiAFK then
-            -- increment idle time
-            _G.IdleSeconds += 1
-            _G.CurrentIdleStreak += 1
-
-            -- convert seconds to minutes/hours
-            if _G.IdleSeconds >= 60 then
-                _G.IdleSeconds = 0
-                _G.IdleMinutes += 1
-            end
-            if _G.IdleMinutes >= 60 then
-                _G.IdleMinutes = 0
-                _G.IdleHours += 1
-            end
-
-            -- update longest streak
-            if _G.CurrentIdleStreak > _G.LongestIdleStreak then
-                _G.LongestIdleStreak = _G.CurrentIdleStreak
-            end
-
-            -- simulate tiny random movement every 5 seconds to prevent AFK
-            if _G.IdleSeconds % 5 == 0 then
-                VirtualUser:CaptureController()
-                -- simulate a tiny mouse move
-                local delta = Vector2.new(math.random(-1,1), math.random(-1,1))
-                VirtualUser:MoveMouse(delta)
-            end
-        else
-            -- pause idle time & streak when disabled
-            _G.CurrentIdleStreak = 0
-        end
-    end
-end)
-
---// GUI Labels
-local function IdleTimerLabel(parent)
-    local holder = Instance.new("Frame", parent)
-    holder.Size = UDim2.new(1,0,0,48)
-    holder.BackgroundTransparency = 1
-
-    -- Idle Time
-    local label = Instance.new("TextLabel", holder)
-    label.Size = UDim2.new(1,0,0,24)
-    label.BackgroundTransparency = 1
-    label.Font = Enum.Font.Gotham
-    label.TextSize = 13
-    label.TextColor3 = Color3.fromRGB(180,180,180)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Text = "Idle Time: 00h 00m 00s"
-
-    -- Longest Streak
-    local longest = Instance.new("TextLabel", holder)
-    longest.Position = UDim2.new(0,0,0,24)
-    longest.Size = UDim2.new(1,0,0,24)
-    longest.BackgroundTransparency = 1
-    longest.Font = Enum.Font.Gotham
-    longest.TextSize = 13
-    longest.TextColor3 = Color3.fromRGB(140,140,140)
-    longest.TextXAlignment = Enum.TextXAlignment.Left
-    longest.Text = "Longest Streak: 00h 00m 00s"
-
-    -- update loop
-    task.spawn(function()
-        while label.Parent do
-            if _G.AntiAFK then
-                label.Text = string.format(
-                    "Idle Time: %02dh %02dm %02ds",
-                    _G.IdleHours,
-                    _G.IdleMinutes,
-                    _G.IdleSeconds
-                )
-
-                local ls = _G.LongestIdleStreak
-                longest.Text = string.format(
-                    "Longest Streak: %02dh %02dm %02ds",
-                    math.floor(ls / 3600),
-                    math.floor(ls % 3600 / 60),
-                    ls % 60
-                )
-            else
-                label.Text = "Idle Time: Paused"
-                longest.Text = "Longest Streak: --"
-            end
-            task.wait(1)
-        end
-    end)
-end
-
-IdleTimerLabel(AntiAFKPage)
-
 --------------------------------------------------
 --// Aimbot Page
 --------------------------------------------------
-
--- Clear old UI if reloading
-for _, c in pairs(AimbotPage:GetChildren()) do
-    c:Destroy()
-end
-
--- Scrollable container
-local AimbotScroll = Instance.new("ScrollingFrame")
-AimbotScroll.Parent = AimbotPage
-AimbotScroll.Size = UDim2.new(1,0,1,0)
-AimbotScroll.BackgroundTransparency = 1
-AimbotScroll.ScrollBarThickness = 8
-AimbotScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-AimbotScroll.CanvasSize = UDim2.new(0,0,0,0)
-
-local Layout = Instance.new("UIListLayout", AimbotScroll)
-Layout.SortOrder = Enum.SortOrder.LayoutOrder
-Layout.Padding = UDim.new(0,8)
-
---------------------------------------------------
 -- Enable Aimbot Toggle
---------------------------------------------------
 local function AimbotCircleToggle(parent)
     local holder = Instance.new("Frame", parent)
-    holder.Size = UDim2.new(1,-12,0,32)
+    holder.Size = UDim2.new(1,0,0,32)
     holder.BackgroundTransparency = 1
-    holder.LayoutOrder = 1
+    holder.LayoutOrder = 1 -- ensures it's on top
 
     local label = Instance.new("TextLabel", holder)
     label.Size = UDim2.new(1,-40,1,0)
@@ -598,204 +422,156 @@ local function AimbotCircleToggle(parent)
         btn.TextColor3 = _G.AimbotGUIEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
     end)
 end
+AimbotCircleToggle(AimbotPage)
 
---------------------------------------------------
--- Aim Part Dropdown (FIXED)
---------------------------------------------------
+-- Aim Part Dropdown
 local function AimPartDropdown(parent)
-    local holder = Instance.new("Frame", parent)
-    holder.Size = UDim2.new(1, -12, 0, 32)
-    holder.BackgroundTransparency = 1
-    holder.LayoutOrder = 2
+	local holder = Instance.new("Frame", parent)
+	holder.Size = UDim2.new(1,0,0,32)
+	holder.BackgroundTransparency = 1
+	holder.LayoutOrder = 2 -- second element
 
-    local label = Instance.new("TextLabel", holder)
-    label.Size = UDim2.new(0.5, 0, 1, 0)
-    label.BackgroundTransparency = 1
-    label.Text = "Aim Part"
-    label.Font = Enum.Font.Gotham
-    label.TextSize = 13
-    label.TextColor3 = Color3.new(1,1,1)
-    label.TextXAlignment = Enum.TextXAlignment.Left
+	local label = Instance.new("TextLabel", holder)
+	label.Size = UDim2.new(0.5,0,1,0)
+	label.BackgroundTransparency = 1
+	label.Text = "Aim Part"
+	label.Font = Enum.Font.Gotham
+	label.TextSize = 13
+	label.TextColor3 = Color3.new(1,1,1)
+	label.TextXAlignment = Enum.TextXAlignment.Left
 
-    local dropdown = Instance.new("TextButton", holder)
-    dropdown.Size = UDim2.new(0.45, 0, 1, 0)
-    dropdown.Position = UDim2.new(0.5, 0, 0, 0)
-    dropdown.BackgroundColor3 = Color3.fromRGB(35,35,35)
-    dropdown.Text = _G.AimPart
-    dropdown.TextColor3 = Color3.new(1,1,1)
-    dropdown.Font = Enum.Font.Gotham
-    dropdown.TextSize = 13
-    Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0,8)
-
-    local options = {"Head", "UpperTorso", "LowerTorso"}
-    local open = false
-    local listFrame
-
-    local function CloseDropdown()
-        if listFrame then
-            listFrame:Destroy()
-            listFrame = nil
-            open = false
-        end
-    end
-
-    dropdown.MouseButton1Click:Connect(function()
-        if open then
-            CloseDropdown()
-            return
-        end
-
-        listFrame = Instance.new("Frame")
-        listFrame.Parent = holder
-        listFrame.Position = UDim2.new(0,0,1,4)
-        listFrame.Size = UDim2.new(1,0,0,#options*30)
-        listFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
-        listFrame.ZIndex = 10
-        Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0,8)
-
-        local layout = Instance.new("UIListLayout", listFrame)
-        layout.Padding = UDim.new(0,2)
-        layout.SortOrder = Enum.SortOrder.LayoutOrder
-
-        for _, opt in ipairs(options) do
-            local btn = Instance.new("TextButton", listFrame)
-            btn.Size = UDim2.new(1,0,0,30)
-            btn.BackgroundColor3 = Color3.fromRGB(45,45,45)
-            btn.Text = opt
-            btn.TextColor3 = Color3.new(1,1,1)
-            btn.Font = Enum.Font.Gotham
-            btn.TextSize = 13
-            Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
-
-            btn.MouseButton1Click:Connect(function()
-                _G.AimPart = opt
-                dropdown.Text = opt
-                CloseDropdown()
-            end)
-        end
-
-        open = true
-    end)
-
-    -- Close dropdown if clicked outside
-    UserInputService.InputBegan:Connect(function(input, gp)
-        if open and input.UserInputType == Enum.UserInputType.MouseButton1 then
-            local mousePos = UserInputService:GetMouseLocation()
-            local absPos = listFrame.AbsolutePosition
-            local absSize = listFrame.AbsoluteSize
-            if not (mousePos.X >= absPos.X and mousePos.X <= absPos.X + absSize.X and
-                    mousePos.Y >= absPos.Y and mousePos.Y <= absPos.Y + absSize.Y) then
-                CloseDropdown()
-            end
-        end
-    end)
+	local dropdown = Instance.new("TextButton", holder)
+	dropdown.Size = UDim2.new(0.45,0,1,0)
+	dropdown.Position = UDim2.new(0.5,0,0,0)
+	dropdown.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	dropdown.Text = _G.AimPart
+	dropdown.TextColor3 = Color3.new(1,1,1)
+	dropdown.Font = Enum.Font.Gotham
+	dropdown.TextSize = 13
+	Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0,8)
+	local options = {"Head","UpperTorso","LowerTorso"}
+	local open = false
+	local listFrame
+	dropdown.MouseButton1Click:Connect(function()
+		if open then if listFrame then listFrame:Destroy() end open = false else
+			listFrame = Instance.new("Frame", parent)
+			listFrame.Position = UDim2.new(0,0,0,32)
+			listFrame.Size = UDim2.new(1,0,0,#options*30)
+			listFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
+			Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0,8)
+			local layout = Instance.new("UIListLayout", listFrame)
+			layout.Padding = UDim.new(0,2)
+			for _,opt in pairs(options) do
+				local btn = Instance.new("TextButton", listFrame)
+				btn.Size = UDim2.new(1,0,0,30)
+				btn.BackgroundColor3 = Color3.fromRGB(45,45,45)
+				btn.Text = opt
+				btn.TextColor3 = Color3.new(1,1,1)
+				btn.Font = Enum.Font.Gotham
+				btn.TextSize = 13
+				Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
+				btn.MouseButton1Click:Connect(function()
+					_G.AimPart = opt
+					dropdown.Text = opt
+					listFrame:Destroy()
+					open = false
+				end)
+			end
+			open = true
+		end
+	end)
 end
+AimPartDropdown(AimbotPage)
 
---------------------------------------------------
 -- Smoothness Slider
---------------------------------------------------
 local function SmoothnessSlider(parent)
-    local holder = Instance.new("Frame", parent)
-    holder.Size = UDim2.new(1,-12,0,40)
-    holder.BackgroundTransparency = 1
-    holder.LayoutOrder = 3
-
-    local label = Instance.new("TextLabel", holder)
-    label.Size = UDim2.new(0.6,0,1,0)
-    label.BackgroundTransparency = 1
-    label.Text = "Smoothness: "..string.format("%.2f", _G.Sensitivity)
-    label.Font = Enum.Font.Gotham
-    label.TextSize = 13
-    label.TextColor3 = Color3.new(1,1,1)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-
-    local sliderBar = Instance.new("Frame", holder)
-    sliderBar.Size = UDim2.new(0.35,0,0.3,0)
-    sliderBar.Position = UDim2.new(0.6,0,0.35,0)
-    sliderBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
-    Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1,0)
-
-    local fill = Instance.new("Frame", sliderBar)
-    fill.Size = UDim2.new((_G.Sensitivity-0.01)/0.19,0,1,0)
-    fill.BackgroundColor3 = Color3.fromRGB(0,255,120)
-    Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
-
-    local handle = Instance.new("Frame", sliderBar)
-    handle.Size = UDim2.new(0,16,0,16)
-    handle.Position = UDim2.new(fill.Size.X.Scale,0,0.5,-8)
-    handle.BackgroundColor3 = Color3.fromRGB(0,255,120)
-    Instance.new("UICorner", handle).CornerRadius = UDim.new(1,0)
-
-    local dragging = false
-    handle.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true Main.Active = false end
-    end)
-    handle.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false Main.Active = true end
-    end)
-
-    UserInputService.InputChanged:Connect(function(i)
-        if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
-            local x = math.clamp(i.Position.X - sliderBar.AbsolutePosition.X,0,sliderBar.AbsoluteSize.X)
-            local v = x / sliderBar.AbsoluteSize.X
-            _G.Sensitivity = math.clamp(v*0.19+0.01,0.01,0.2)
-            fill.Size = UDim2.new(v,0,1,0)
-            handle.Position = UDim2.new(v,0,0.5,-8)
-            label.Text = "Smoothness: "..string.format("%.2f", _G.Sensitivity)
-        end
-    end)
+	local holder = Instance.new("Frame", parent)
+	holder.Size = UDim2.new(1,0,0,40)
+	holder.BackgroundTransparency = 1
+	holder.LayoutOrder = 3 -- third element
+	local label = Instance.new("TextLabel", holder)
+	label.Size = UDim2.new(0.6,0,1,0)
+	label.BackgroundTransparency = 1
+	label.Text = "Smoothness: "..string.format("%.2f", _G.Sensitivity)
+	label.Font = Enum.Font.Gotham
+	label.TextSize = 13
+	label.TextColor3 = Color3.new(1,1,1)
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	local sliderBar = Instance.new("Frame", holder)
+	sliderBar.Size = UDim2.new(0.35,0,0.3,0)
+	sliderBar.Position = UDim2.new(0.6,0,0.35,0)
+	sliderBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
+	Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1,0)
+	local fill = Instance.new("Frame", sliderBar)
+	fill.Size = UDim2.new((_G.Sensitivity-0.01)/0.19,0,1,0)
+	fill.BackgroundColor3 = Color3.fromRGB(0,255,120)
+	Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
+	local handle = Instance.new("Frame", sliderBar)
+	handle.Size = UDim2.new(0,16,0,16)
+	handle.Position = UDim2.new(fill.Size.X.Scale, 0, 0.5, -8)
+	handle.BackgroundColor3 = Color3.fromRGB(0,255,120)
+	Instance.new("UICorner", handle).CornerRadius = UDim.new(1,0)
+	local dragging = false
+	handle.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true Main.Active = false end
+	end)
+	handle.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false Main.Active = true end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+			local mouseX = math.clamp(input.Position.X - sliderBar.AbsolutePosition.X,0,sliderBar.AbsoluteSize.X)
+			local val = mouseX / sliderBar.AbsoluteSize.X
+			_G.Sensitivity = math.clamp(val*0.19+0.01, 0.01, 0.2)
+			fill.Size = UDim2.new(val,0,1,0)
+			handle.Position = UDim2.new(val,0,0.5,-8)
+			label.Text = "Smoothness: "..string.format("%.2f", _G.Sensitivity)
+		end
+	end)
 end
+SmoothnessSlider(AimbotPage)
 
---------------------------------------------------
 -- Keybind Button
---------------------------------------------------
 local function KeybindButton(parent)
-    local holder = Instance.new("Frame", parent)
-    holder.Size = UDim2.new(1,-12,0,32)
-    holder.BackgroundTransparency = 1
-    holder.LayoutOrder = 4
-
-    local label = Instance.new("TextLabel", holder)
-    label.Size = UDim2.new(0.5,0,1,0)
-    label.BackgroundTransparency = 1
-    label.Text = "Aimbot Key: ".._G.AimbotKey.Name
-    label.Font = Enum.Font.Gotham
-    label.TextSize = 13
-    label.TextColor3 = Color3.new(1,1,1)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-
-    local btn = Instance.new("TextButton", holder)
-    btn.Size = UDim2.new(0.45,0,1,0)
-    btn.Position = UDim2.new(0.5,0,0,0)
-    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
-    btn.Text = "Set Key"
-    btn.Font = Enum.Font.Gotham
-    btn.TextSize = 13
-    btn.TextColor3 = Color3.new(1,1,1)
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
-
-    btn.MouseButton1Click:Connect(function()
-        btn.Text = "Press Key..."
-        local conn
-        conn = UserInputService.InputBegan:Connect(function(i)
-            if i.UserInputType == Enum.UserInputType.Keyboard then
-                _G.AimbotKey = i.KeyCode
-                label.Text = "Aimbot Key: ".._G.AimbotKey.Name
-                btn.Text = "Set Key"
-                conn:Disconnect()
-            end
-        end)
-    end)
+	local holder = Instance.new("Frame", parent)
+	holder.Size = UDim2.new(1,0,0,32)
+	holder.BackgroundTransparency = 1
+	holder.LayoutOrder = 4 -- last element
+	local label = Instance.new("TextLabel", holder)
+	label.Size = UDim2.new(0.5,0,1,0)
+	label.BackgroundTransparency = 1
+	label.Text = "Aimbot Key: ".._G.AimbotKey.Name
+	label.Font = Enum.Font.Gotham
+	label.TextSize = 13
+	label.TextColor3 = Color3.new(1,1,1)
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	local btn = Instance.new("TextButton", holder)
+	btn.Size = UDim2.new(0.45,0,1,0)
+	btn.Position = UDim2.new(0.5,0,0,0)
+	btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	btn.Text = "Set Key"
+	btn.TextColor3 = Color3.new(1,1,1)
+	btn.Font = Enum.Font.Gotham
+	btn.TextSize = 13
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
+	local waiting = false
+	btn.MouseButton1Click:Connect(function()
+		if waiting then return end
+		waiting = true
+		btn.Text = "Press Key..."
+		local conn
+		conn = UserInputService.InputBegan:Connect(function(input,gp)
+			if input.UserInputType == Enum.UserInputType.Keyboard then
+				_G.AimbotKey = input.KeyCode
+				label.Text = "Aimbot Key: ".._G.AimbotKey.Name
+				btn.Text = "Set Key"
+				waiting = false
+				conn:Disconnect()
+			end
+		end)
+	end)
 end
-
---------------------------------------------------
--- Build UI
---------------------------------------------------
-AimbotCircleToggle(AimbotScroll)
-AimPartDropdown(AimbotScroll)
-SmoothnessSlider(AimbotScroll)
-KeybindButton(AimbotScroll)
-
+KeybindButton(AimbotPage)
 
 --------------------------------------------------
 --// ESP Page
@@ -1068,107 +844,26 @@ Slider(ScrollFrame,"Walk Speed","WalkSpeedValue",16,100)
 BigHeadCircleToggle(ScrollFrame)
 
 --------------------------------------------------
---// MOVEMENT PAGE CLEAN SCROLLABLE
+--// MOVEMENT PAGE
 --------------------------------------------------
-for _,c in pairs(MovementPage:GetChildren()) do c:Destroy() end
 
-local SCROLLBAR_WIDTH = 12
-local RIGHT_PADDING = 12
+-- Clear previous children if reloading
+for _,c in pairs(MovementPage:GetChildren()) do
+    c:Destroy()
+end
 
+-- Scrollable frame
 local ScrollFrame = Instance.new("ScrollingFrame")
 ScrollFrame.Parent = MovementPage
-ScrollFrame.Size = UDim2.new(1, -SCROLLBAR_WIDTH, 1, 0)
+ScrollFrame.Size = UDim2.new(1,0,1,0)
 ScrollFrame.Position = UDim2.new(0,0,0,0)
 ScrollFrame.BackgroundTransparency = 1
-ScrollFrame.ScrollBarThickness = SCROLLBAR_WIDTH
+ScrollFrame.ScrollBarThickness = 8
 ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
 local Layout = Instance.new("UIListLayout", ScrollFrame)
 Layout.SortOrder = Enum.SortOrder.LayoutOrder
 Layout.Padding = UDim.new(0,8)
-
--- Helper: Toggle Button
-local function CircleToggle(parent,text,flag)
-    local holder = Instance.new("Frame", parent)
-    holder.Size = UDim2.new(1,-RIGHT_PADDING,0,32)
-    holder.BackgroundTransparency = 1
-
-    local label = Instance.new("TextLabel", holder)
-    label.Size = UDim2.new(1,-40,1,0)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.Font = Enum.Font.Gotham
-    label.TextSize = 13
-    label.TextColor3 = Color3.new(1,1,1)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-
-    local btn = Instance.new("TextButton", holder)
-    btn.Size = UDim2.new(0,22,0,22)
-    btn.Position = UDim2.new(1,-26,0.5,-11)
-    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
-    btn.Text = "○"
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 16
-    btn.TextColor3 = Color3.fromRGB(200,200,200)
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
-
-    btn.MouseButton1Click:Connect(function()
-        _G[flag] = not _G[flag]
-        btn.Text = _G[flag] and "●" or "○"
-        btn.TextColor3 = _G[flag] and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
-    end)
-end
-
--- Helper: Slider
-local function Slider(parent,text,flag,min,max)
-    local holder = Instance.new("Frame", parent)
-    holder.Size = UDim2.new(1,-RIGHT_PADDING,0,40)
-    holder.BackgroundTransparency = 1
-
-    local label = Instance.new("TextLabel", holder)
-    label.Size = UDim2.new(0.6,0,1,0)
-    label.BackgroundTransparency = 1
-    label.Text = text..": ".._G[flag]
-    label.Font = Enum.Font.Gotham
-    label.TextSize = 13
-    label.TextColor3 = Color3.new(1,1,1)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-
-    local sliderBar = Instance.new("Frame", holder)
-    sliderBar.Size = UDim2.new(0.35,0,0.3,0)
-    sliderBar.Position = UDim2.new(0.6,0,0.35,0)
-    sliderBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
-    Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1,0)
-
-    local fill = Instance.new("Frame", sliderBar)
-    fill.Size = UDim2.new((_G[flag]-min)/(max-min),0,1,0)
-    fill.BackgroundColor3 = Color3.fromRGB(0,255,120)
-    Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
-
-    local handle = Instance.new("Frame", sliderBar)
-    handle.Size = UDim2.new(0,16,0,16)
-    handle.Position = UDim2.new(fill.Size.X.Scale,0,0.5,-8)
-    handle.BackgroundColor3 = Color3.fromRGB(0,255,120)
-    Instance.new("UICorner", handle).CornerRadius = UDim.new(1,0)
-
-    local dragging = false
-    handle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true Main.Active = false end
-    end)
-    handle.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false Main.Active = true end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local mouseX = math.clamp(input.Position.X - sliderBar.AbsolutePosition.X,0,sliderBar.AbsoluteSize.X)
-            local val = mouseX / sliderBar.AbsoluteSize.X
-            _G[flag] = math.clamp(math.floor(val*(max-min)+min),min,max)
-            fill.Size = UDim2.new(val,0,1,0)
-            handle.Position = UDim2.new(val,0,0.5,-8)
-            label.Text = text..": ".._G[flag]
-        end
-    end)
-end
 
 -- Toggles + Sliders
 CircleToggle(ScrollFrame,"Noclip + Fly (WASD + Space/Shift)","NoclipFlyEnabled")
