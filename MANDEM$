@@ -387,12 +387,9 @@ local function CircleToggle(parent, text, flag)
 end
 
 --------------------------------------------------
---// Aimbot Page
+--// Aimbot Page 
 --------------------------------------------------
--- Make Aimbot Page scrollable
-local AimbotPage = Page()
-
--- Scroll container
+-- Scroll container INSIDE existing AimbotPage
 local AimbotScroll = Instance.new("ScrollingFrame")
 AimbotScroll.Parent = AimbotPage
 AimbotScroll.Size = UDim2.new(1,0,1,0)
