@@ -1231,6 +1231,120 @@ end)
 
 
 --------------------------------------------------
+--// FPS BOOST PAGE
+--------------------------------------------------
+local FPSBoostPage = Page()
+Tab("FPS Boost", FPSBoostPage)
+
+-- Scrollable container
+local ScrollFrame = Instance.new("ScrollingFrame")
+ScrollFrame.Parent = FPSBoostPage
+ScrollFrame.Size = UDim2.new(1,0,1,0)
+ScrollFrame.Position = UDim2.new(0,0,0,0)
+ScrollFrame.BackgroundTransparency = 1
+ScrollFrame.ScrollBarThickness = 8
+ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+local Layout = Instance.new("UIListLayout", ScrollFrame)
+Layout.SortOrder = Enum.SortOrder.LayoutOrder
+Layout.Padding = UDim.new(0,8)
+
+-- Global flags
+_G.FPSBoostEnabled = _G.FPSBoostEnabled or false
+_G.RemoveShadows = _G.RemoveShadows or false
+_G.LowGraphics = _G.LowGraphics or false
+_G.DisableParticles = _G.DisableParticles or false
+_G.DisableWater = _G.DisableWater or false
+
+-- Helper function: toggle
+local function CircleToggle(parent,text,flag)
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,0,0,32)
+    holder.BackgroundTransparency = 1
+
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(1,-40,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local btn = Instance.new("TextButton", holder)
+    btn.Size = UDim2.new(0,22,0,22)
+    btn.Position = UDim2.new(1,-26,0.5,-11)
+    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    btn.Text = "○"
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.TextColor3 = Color3.fromRGB(200,200,200)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+
+    btn.MouseButton1Click:Connect(function()
+        _G[flag] = not _G[flag]
+        btn.Text = _G[flag] and "●" or "○"
+        btn.TextColor3 = _G[flag] and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+
+        -- apply FPS boost changes
+        if flag == "FPSBoostEnabled" then
+            game:GetService("Lighting").GlobalShadows = not _G.FPSBoostEnabled
+        end
+    end)
+end
+
+-- Add toggles
+CircleToggle(ScrollFrame,"Enable FPS Boost","FPSBoostEnabled")
+CircleToggle(ScrollFrame,"Remove Shadows","RemoveShadows")
+CircleToggle(ScrollFrame,"Low Graphics Mode","LowGraphics")
+CircleToggle(ScrollFrame,"Disable Particles","DisableParticles")
+CircleToggle(ScrollFrame,"Disable Water Effects","DisableWater")
+
+-- Functionality for toggles
+RunService.RenderStepped:Connect(function()
+    if _G.FPSBoostEnabled then
+        game:GetService("Lighting").GlobalShadows = false
+        game:GetService("Lighting").FogEnd = 1e10
+    else
+        game:GetService("Lighting").GlobalShadows = true
+        game:GetService("Lighting").FogEnd = 1000
+    end
+
+    if _G.RemoveShadows then
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("BasePart") then
+                obj.CastShadow = false
+            end
+        end
+    end
+
+    if _G.LowGraphics then
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("Texture") or obj:IsA("Decal") then
+                obj.Transparency = 1
+            end
+        end
+    end
+
+    if _G.DisableParticles then
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("ParticleEmitter") or obj:IsA("Trail") then
+                obj.Enabled = false
+            end
+        end
+    end
+
+    if _G.DisableWater then
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("Water") then
+                obj.Transparency = 1
+            end
+        end
+    end
+end)
+
+
+--------------------------------------------------
 --// SHOW / HIDE MENU
 --------------------------------------------------
 UserInputService.InputBegan:Connect(function(i,gp)
