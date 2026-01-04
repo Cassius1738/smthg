@@ -70,80 +70,41 @@ UserInputService.InputEnded:Connect(function(i)
 end)
 
 --------------------------------------------------
---// UNIVERSAL INSTANT AIMLOCK LOOP (R6, R15, CUSTOM RIGS)
+--// GET CLOSEST PLAYER
 --------------------------------------------------
-local function GetAimPart(character)
-    -- try the selected part
-    if character:FindFirstChild(_G.AimPart) then
-        return character[_G.AimPart]
-    end
-
-    -- fallback common parts
-    for _, partName in ipairs({"Head","UpperTorso","HumanoidRootPart"}) do
-        if character:FindFirstChild(partName) then
-            return character[partName]
-        end
-    end
-
-    -- last resort: first visible BasePart
-    for _, part in pairs(character:GetChildren()) do
-        if part:IsA("BasePart") then
-            return part
-        end
-    end
-
-    return nil
+local function GetClosestPlayer()
+	local closest, dist = nil, _G.CircleRadius
+	local mouse = UserInputService:GetMouseLocation()
+	for _,v in pairs(Players:GetPlayers()) do
+		if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 and (not _G.TeamCheck or v.Team ~= LocalPlayer.Team) then
+			local pos, onscreen = Camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+			if onscreen then
+				local mag = (Vector2.new(pos.X,pos.Y) - mouse).Magnitude
+				if mag < dist then
+					dist = mag
+					closest = v
+				end
+			end
+		end
+	end
+	return closest
 end
 
-local function GetClosestTarget()
-    local closest, dist = nil, _G.CircleRadius
-    local mousePos = UserInputService:GetMouseLocation()
-
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local hum = player.Character:FindFirstChildOfClass("Humanoid")
-            -- IGNORE DEAD TARGETS
-            if hum and hum.Health > 0 and (not _G.TeamCheck or player.Team ~= LocalPlayer.Team) then
-                local aimPart = GetAimPart(player.Character)
-                if aimPart then
-                    local pos, onScreen = Camera:WorldToViewportPoint(aimPart.Position)
-                    if onScreen then
-                        local mag = (Vector2.new(pos.X,pos.Y) - mousePos).Magnitude
-                        if mag < dist then
-                            closest = player
-                            dist = mag
-                        end
-                    end
-                end
-            end
-        end
-    end
-    return closest
-end
-
--- instant aimlock loop
+--------------------------------------------------
+--// AIMBOT LOOP
+--------------------------------------------------
 RunService.RenderStepped:Connect(function()
-    -- Only aim if enabled AND keybind held
-    if not _G.AimbotEnabled or not _G.AimbotGUIEnabled or not Holding then return end
-
-    -- stop if player dead
-    local myHum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-    if not myHum or myHum.Health <= 0 then return end
-
-    local target = GetClosestTarget()
-    if target and target.Character then
-        local hum = target.Character:FindFirstChildOfClass("Humanoid")
-        -- STOP if target dead (extra safety)
-        if not hum or hum.Health <= 0 then return end
-
-        local aimPart = GetAimPart(target.Character)
-        if aimPart then
-            -- instantly snap camera to target
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, aimPart.Position)
-        end
-    end
+	if Holding and _G.AimbotEnabled and _G.AimbotGUIEnabled then
+		local target = GetClosestPlayer()
+		if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
+			TweenService:Create(
+				Camera,
+				TweenInfo.new(_G.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+				{CFrame = CFrame.new(Camera.CFrame.Position, target.Character[_G.AimPart].Position)}
+			):Play()
+		end
+	end
 end)
-
 
 --------------------------------------------------
 --// FOV CIRCLE
@@ -465,60 +426,88 @@ AimbotCircleToggle(AimbotPage)
 
 -- Aim Part Dropdown
 local function AimPartDropdown(parent)
-	local holder = Instance.new("Frame", parent)
-	holder.Size = UDim2.new(1,0,0,32)
-	holder.BackgroundTransparency = 1
-	holder.LayoutOrder = 2 -- second element
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,0,0,32)
+    holder.BackgroundTransparency = 1
+    holder.LayoutOrder = 2 -- second element
 
-	local label = Instance.new("TextLabel", holder)
-	label.Size = UDim2.new(0.5,0,1,0)
-	label.BackgroundTransparency = 1
-	label.Text = "Aim Part"
-	label.Font = Enum.Font.Gotham
-	label.TextSize = 13
-	label.TextColor3 = Color3.new(1,1,1)
-	label.TextXAlignment = Enum.TextXAlignment.Left
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(0.5,0,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = "Aim Part"
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
 
-	local dropdown = Instance.new("TextButton", holder)
-	dropdown.Size = UDim2.new(0.45,0,1,0)
-	dropdown.Position = UDim2.new(0.5,0,0,0)
-	dropdown.BackgroundColor3 = Color3.fromRGB(35,35,35)
-	dropdown.Text = _G.AimPart
-	dropdown.TextColor3 = Color3.new(1,1,1)
-	dropdown.Font = Enum.Font.Gotham
-	dropdown.TextSize = 13
-	Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0,8)
-	local options = {"Head","UpperTorso","LowerTorso"}
-	local open = false
-	local listFrame
-	dropdown.MouseButton1Click:Connect(function()
-		if open then if listFrame then listFrame:Destroy() end open = false else
-			listFrame = Instance.new("Frame", parent)
-			listFrame.Position = UDim2.new(0,0,0,32)
-			listFrame.Size = UDim2.new(1,0,0,#options*30)
-			listFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
-			Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0,8)
-			local layout = Instance.new("UIListLayout", listFrame)
-			layout.Padding = UDim.new(0,2)
-			for _,opt in pairs(options) do
-				local btn = Instance.new("TextButton", listFrame)
-				btn.Size = UDim2.new(1,0,0,30)
-				btn.BackgroundColor3 = Color3.fromRGB(45,45,45)
-				btn.Text = opt
-				btn.TextColor3 = Color3.new(1,1,1)
-				btn.Font = Enum.Font.Gotham
-				btn.TextSize = 13
-				Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
-				btn.MouseButton1Click:Connect(function()
-					_G.AimPart = opt
-					dropdown.Text = opt
-					listFrame:Destroy()
-					open = false
-				end)
-			end
-			open = true
-		end
-	end)
+    local dropdown = Instance.new("TextButton", holder)
+    dropdown.Size = UDim2.new(0.45,0,1,0)
+    dropdown.Position = UDim2.new(0.5,0,0,0)
+    dropdown.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    dropdown.Text = _G.AimPart
+    dropdown.TextColor3 = Color3.new(1,1,1)
+    dropdown.Font = Enum.Font.Gotham
+    dropdown.TextSize = 13
+    Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0,8)
+
+    local options = {"Head","UpperTorso","LowerTorso"}
+    local open = false
+    local listFrame
+
+    dropdown.MouseButton1Click:Connect(function()
+        if open then
+            if listFrame then listFrame:Destroy() end
+            open = false
+        else
+            -- Create overlay frame at the top level (UI) instead of inside holder
+            listFrame = Instance.new("Frame", UI) -- parent it to the main UI, not holder
+            listFrame.Size = UDim2.new(0, holder.AbsoluteSize.X, 0, #options * 30)
+            local holderPos = holder:AbsolutePosition()
+            listFrame.Position = UDim2.new(0, holderPos.X, 0, holderPos.Y + holder.AbsoluteSize.Y)
+            listFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
+            listFrame.ZIndex = 10
+            Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0,8)
+
+            local layout = Instance.new("UIListLayout", listFrame)
+            layout.Padding = UDim.new(0,2)
+
+            for _, opt in pairs(options) do
+                local btn = Instance.new("TextButton", listFrame)
+                btn.Size = UDim2.new(1,0,0,30)
+                btn.BackgroundColor3 = Color3.fromRGB(45,45,45)
+                btn.Text = opt
+                btn.TextColor3 = Color3.new(1,1,1)
+                btn.Font = Enum.Font.Gotham
+                btn.TextSize = 13
+                Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
+
+                btn.MouseButton1Click:Connect(function()
+                    _G.AimPart = opt
+                    dropdown.Text = opt
+                    listFrame:Destroy()
+                    open = false
+                end)
+            end
+            open = true
+
+            -- Close dropdown if clicking outside
+            local conn
+            conn = UserInputService.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    if not listFrame or not input.Position then return end
+                    local pos = Vector2.new(input.Position.X, input.Position.Y)
+                    local framePos = listFrame.AbsolutePosition
+                    local frameSize = listFrame.AbsoluteSize
+                    if pos.X < framePos.X or pos.X > framePos.X + frameSize.X or
+                       pos.Y < framePos.Y or pos.Y > framePos.Y + frameSize.Y then
+                        if listFrame then listFrame:Destroy() end
+                        open = false
+                        conn:Disconnect()
+                    end
+                end
+            end)
+        end
+    end)
 end
 AimPartDropdown(AimbotPage)
 
