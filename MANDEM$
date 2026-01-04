@@ -613,6 +613,48 @@ local function KeybindButton(parent)
 end
 KeybindButton(AimbotPage)
 
+-- Keybind Button
+local function KeybindButton(parent)
+	local holder = Instance.new("Frame", parent)
+	holder.Size = UDim2.new(1,0,0,32)
+	holder.BackgroundTransparency = 1
+	holder.LayoutOrder = 4 -- last element
+	local label = Instance.new("TextLabel", holder)
+	label.Size = UDim2.new(0.5,0,1,0)
+	label.BackgroundTransparency = 1
+	label.Text = "Aimbot Key: ".._G.AimbotKey.Name
+	label.Font = Enum.Font.Gotham
+	label.TextSize = 13
+	label.TextColor3 = Color3.new(1,1,1)
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	local btn = Instance.new("TextButton", holder)
+	btn.Size = UDim2.new(0.45,0,1,0)
+	btn.Position = UDim2.new(0.5,0,0,0)
+	btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	btn.Text = "Set Key"
+	btn.TextColor3 = Color3.new(1,1,1)
+	btn.Font = Enum.Font.Gotham
+	btn.TextSize = 13
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
+	local waiting = false
+	btn.MouseButton1Click:Connect(function()
+		if waiting then return end
+		waiting = true
+		btn.Text = "Press Key..."
+		local conn
+		conn = UserInputService.InputBegan:Connect(function(input,gp)
+			if input.UserInputType == Enum.UserInputType.Keyboard then
+				_G.AimbotKey = input.KeyCode
+				label.Text = "Aimbot Key: ".._G.AimbotKey.Name
+				btn.Text = "Set Key"
+				waiting = false
+				conn:Disconnect()
+			end
+		end)
+	end)
+end
+KeybindButton(AimbotPage)
+
 --------------------------------------------------
 --// ESP Page
 --------------------------------------------------
