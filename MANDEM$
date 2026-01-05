@@ -1206,15 +1206,22 @@ end
 getgenv().AutoRespawnEnabled = false
 getgenv().AutoRespawnDelay = 1.5
 
--- Respawn hook function
+-- Services
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
+-- Respawn connection holder
 local RespawnConnection
+
+-- Hook function only active when toggle is ON
 local function HookCharacter(character)
     if RespawnConnection then
         RespawnConnection:Disconnect()
+        RespawnConnection = nil
     end
+
+    if not getgenv().AutoRespawnEnabled then return end
+
     local humanoid = character:WaitForChild("Humanoid",5)
     if not humanoid then return end
 
@@ -1228,20 +1235,24 @@ local function HookCharacter(character)
     end)
 end
 
--- Hook current character immediately
-if LocalPlayer.Character then
-    HookCharacter(LocalPlayer.Character)
-end
+-- Hook future characters only if toggle is ON
+LocalPlayer.CharacterAdded:Connect(function(char)
+    if getgenv().AutoRespawnEnabled then
+        HookCharacter(char)
+    end
+end)
 
--- Hook future characters
-LocalPlayer.CharacterAdded:Connect(HookCharacter)
-
--- Add toggle to GUI with immediate hook
+-- Add toggle to GUI
 CircleToggle(OtherScroll, "Auto Respawn", "AutoRespawnEnabled", function(enabled)
     if enabled and LocalPlayer.Character then
         HookCharacter(LocalPlayer.Character)
+    elseif not enabled and RespawnConnection then
+        -- Disconnect if disabled
+        RespawnConnection:Disconnect()
+        RespawnConnection = nil
     end
 end)
+
 
 --------------------------------------------------
 --// SHOW / HIDE MENU
