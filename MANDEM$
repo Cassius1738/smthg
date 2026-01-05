@@ -1484,7 +1484,7 @@ ClearBtn.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", ClearBtn)
 makeHover(ClearBtn, Color3.fromRGB(255,80,80), Color3.fromRGB(200,50,50))
 
--- OUTPUT SCROLL
+-- OUTPUT SCROLL (inside ExecutorPage)
 local OutputScroll = Instance.new("ScrollingFrame", PageScroll)
 OutputScroll.Size = UDim2.new(1, -2*PAGE_PADDING, 0, OUTPUT_HEIGHT)
 OutputScroll.BackgroundColor3 = Color3.fromRGB(25,25,25)
@@ -1494,24 +1494,28 @@ OutputScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 OutputScroll.ScrollBarImageTransparency = 0.5
 Instance.new("UICorner", OutputScroll)
 
-local OutputBox = Instance.new("TextLabel", OutputScroll)
-OutputBox.Size = UDim2.new(1, -10, 0, 0)
-OutputBox.Position = UDim2.new(0,5,0,5)
-OutputBox.BackgroundTransparency = 1
+-- Use TextBox instead of TextLabel for logging
+local OutputBox = Instance.new("TextBox", OutputScroll)
+OutputBox.Size = UDim2.new(1, -10, 0, OUTPUT_HEIGHT)
+OutputBox.Position = UDim2.new(0, 5, 0, 5)
+OutputBox.ClearTextOnFocus = false
+OutputBox.MultiLine = true
+OutputBox.TextWrapped = true
+OutputBox.ReadOnly = true -- make it read-only
 OutputBox.Font = Enum.Font.Code
 OutputBox.TextSize = 13
 OutputBox.TextColor3 = Color3.fromRGB(200,200,200)
-OutputBox.TextWrapped = true
-OutputBox.TextYAlignment = Enum.TextYAlignment.Top
+OutputBox.BackgroundTransparency = 1
 OutputBox.Text = "[ Output ]\n"
 
 -- Log function
 local function log(text)
     OutputBox.Text ..= tostring(text).."\n"
-    OutputBox.Size = UDim2.new(1,-10,0,OutputBox.TextBounds.Y + 10)
-    OutputScroll.CanvasSize = UDim2.new(0,0,0,OutputBox.Size.Y.Offset)
+    -- update scroll
+    OutputScroll.CanvasSize = UDim2.new(0,0,0,OutputBox.TextBounds.Y + 20)
     OutputScroll.CanvasPosition = Vector2.new(0,OutputScroll.CanvasSize.Y.Offset)
 end
+
 
 -- Hooks
 local oldPrint, oldWarn = print, warn
