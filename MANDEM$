@@ -1164,6 +1164,117 @@ Layout.SortOrder = Enum.SortOrder.LayoutOrder
 Layout.Padding = UDim.new(0,8)
 
 --------------------------------------------------
+--// MONEY DUPLICATOR - OTHER STUFF
+--------------------------------------------------
+-- Global variables
+_G.MoneyDupEnabled = false
+_G.MoneyAmount = 100 -- default per frame
+
+-- Toggle function
+local function MoneyToggle(parent)
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,0,0,32)
+    holder.BackgroundTransparency = 1
+    holder.LayoutOrder = 1
+
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(1,-40,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = "Enable Money Duplicator"
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local btn = Instance.new("TextButton", holder)
+    btn.Size = UDim2.new(0,22,0,22)
+    btn.Position = UDim2.new(1,-26,0.5,-11)
+    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    btn.Text = "○"
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.TextColor3 = Color3.fromRGB(200,200,200)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+
+    btn.MouseButton1Click:Connect(function()
+        _G.MoneyDupEnabled = not _G.MoneyDupEnabled
+        btn.Text = _G.MoneyDupEnabled and "●" or "○"
+        btn.TextColor3 = _G.MoneyDupEnabled and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+    end)
+end
+
+MoneyToggle(OtherScroll) -- insert toggle in OtherStuff scroll
+
+-- Slider function
+local function MoneySlider(parent)
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,0,0,40)
+    holder.BackgroundTransparency = 1
+    holder.LayoutOrder = 2
+
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(0.6,0,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = "Money Per Frame: ".._G.MoneyAmount
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local sliderBar = Instance.new("Frame", holder)
+    sliderBar.Size = UDim2.new(0.35,0,0.3,0)
+    sliderBar.Position = UDim2.new(0.6,0,0.35,0)
+    sliderBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
+    Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1,0)
+
+    local fill = Instance.new("Frame", sliderBar)
+    fill.Size = UDim2.new(_G.MoneyAmount/1000,0,1,0)
+    fill.BackgroundColor3 = Color3.fromRGB(0,255,120)
+    Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
+
+    local handle = Instance.new("Frame", sliderBar)
+    handle.Size = UDim2.new(0,16,0,16)
+    handle.Position = UDim2.new(fill.Size.X.Scale,0,0.5,-8)
+    handle.BackgroundColor3 = Color3.fromRGB(0,255,120)
+    Instance.new("UICorner", handle).CornerRadius = UDim.new(1,0)
+
+    local dragging = false
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end
+    end)
+    handle.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local mouseX = math.clamp(input.Position.X - sliderBar.AbsolutePosition.X,0,sliderBar.AbsoluteSize.X)
+            local val = mouseX / sliderBar.AbsoluteSize.X
+            _G.MoneyAmount = math.floor(val * 1000)
+            fill.Size = UDim2.new(val,0,1,0)
+            handle.Position = UDim2.new(val,0,0.5,-8)
+            label.Text = "Money Per Frame: ".._G.MoneyAmount
+        end
+    end)
+end
+
+MoneySlider(OtherScroll)
+
+-- Money duplication loop
+RunService.RenderStepped:Connect(function()
+    if _G.MoneyDupEnabled then
+        local stats = LocalPlayer:FindFirstChild("leaderstats")
+        if stats then
+            local money = stats:FindFirstChild("Money") or stats:FindFirstChild("Cash")
+            if money and money:IsA("NumberValue") then
+                money.Value += _G.MoneyAmount
+            end
+        end
+    end
+end)
+
+
+--------------------------------------------------
 --// SHOW / HIDE MENU
 --------------------------------------------------
 UserInputService.InputBegan:Connect(function(i,gp)
