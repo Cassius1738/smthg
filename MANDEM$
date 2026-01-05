@@ -1386,7 +1386,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
---// CLEAN EXECUTOR WITH CONDITIONAL SCROLLBAR + COPY
+--// CLEAN EXECUTOR WITH SCROLLABLE PAGE + COPY
 --------------------------------------------------
 
 local PAGE_PADDING = 10
@@ -1396,7 +1396,7 @@ local SCRIPT_HEIGHT = 150
 local OUTPUT_HEIGHT = 120
 local MAX_SCRIPT_HEIGHT = 200
 
--- Make the whole ExecutorPage scrollable
+-- Main Scrollable Executor Page
 local PageScroll = Instance.new("ScrollingFrame", ExecutorPage)
 PageScroll.Size = UDim2.new(1,0,1,0)
 PageScroll.Position = UDim2.new(0,0,0,0)
@@ -1406,16 +1406,17 @@ PageScroll.ScrollBarThickness = 8
 PageScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 PageScroll.ScrollBarImageTransparency = 0.5
 PageScroll.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
-Instance.new("UICorner", PageScroll)
 
--- UIListLayout for automatic vertical layout
+-- Layout for vertical stacking
 local PageLayout = Instance.new("UIListLayout", PageScroll)
 PageLayout.Padding = UDim.new(0, PAGE_PADDING)
 PageLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- SCRIPT INPUT SCROLL
+--------------------------------------------------
+-- Script Input
+--------------------------------------------------
 local ScriptScroll = Instance.new("ScrollingFrame", PageScroll)
-ScriptScroll.Size = UDim2.new(1, -2*PAGE_PADDING, 0, SCRIPT_HEIGHT)
+ScriptScroll.Size = UDim2.new(1,-2*PAGE_PADDING,0,SCRIPT_HEIGHT)
 ScriptScroll.BackgroundColor3 = Color3.fromRGB(35,35,35)
 ScriptScroll.BorderSizePixel = 0
 ScriptScroll.ScrollBarThickness = 8
@@ -1424,7 +1425,7 @@ ScriptScroll.ScrollBarImageTransparency = 0.5
 Instance.new("UICorner", ScriptScroll)
 
 local ScriptBox = Instance.new("TextBox", ScriptScroll)
-ScriptBox.Size = UDim2.new(1, -10, 0, SCRIPT_HEIGHT)
+ScriptBox.Size = UDim2.new(1,-10,0,SCRIPT_HEIGHT)
 ScriptBox.Position = UDim2.new(0,5,0,5)
 ScriptBox.ClearTextOnFocus = false
 ScriptBox.MultiLine = true
@@ -1437,28 +1438,28 @@ ScriptBox.Text = 'print("Solara Executor Ready")'
 ScriptBox.PlaceholderText = "Enter Lua code here..."
 Instance.new("UICorner", ScriptBox)
 
--- Auto-expand ScriptBox & auto-scroll
+-- Auto-expand ScriptBox
 ScriptBox:GetPropertyChangedSignal("Text"):Connect(function()
     local textHeight = ScriptBox.TextBounds.Y + 10
     if textHeight < MAX_SCRIPT_HEIGHT then
-        ScriptBox.Size = UDim2.new(1, -10, 0, textHeight)
-        ScriptScroll.CanvasSize = UDim2.new(0,0,0,textHeight + 10)
+        ScriptBox.Size = UDim2.new(1,-10,0,textHeight)
+        ScriptScroll.CanvasSize = UDim2.new(0,0,0,textHeight+10)
     else
-        ScriptBox.Size = UDim2.new(1, -10, 0, MAX_SCRIPT_HEIGHT)
-        ScriptScroll.CanvasSize = UDim2.new(0,0,0,textHeight + 10)
+        ScriptBox.Size = UDim2.new(1,-10,0,MAX_SCRIPT_HEIGHT)
+        ScriptScroll.CanvasSize = UDim2.new(0,0,0,textHeight+10)
     end
-    -- auto-scroll to bottom if overflowing
-    ScriptScroll.CanvasPosition = Vector2.new(0, math.max(0, ScriptScroll.CanvasSize.Y.Offset - ScriptScroll.AbsoluteSize.Y))
 end)
 
--- BUTTONS HOLDER
+--------------------------------------------------
+-- Buttons
+--------------------------------------------------
 local BtnHolder = Instance.new("Frame", PageScroll)
-BtnHolder.Size = UDim2.new(1, -2*PAGE_PADDING, 0, BUTTON_HEIGHT)
+BtnHolder.Size = UDim2.new(1,-2*PAGE_PADDING,0,BUTTON_HEIGHT)
 BtnHolder.BackgroundTransparency = 1
 
 local BtnLayout = Instance.new("UIListLayout", BtnHolder)
 BtnLayout.FillDirection = Enum.FillDirection.Horizontal
-BtnLayout.Padding = UDim.new(0, BUTTON_SPACING)
+BtnLayout.Padding = UDim.new(0,BUTTON_SPACING)
 BtnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
 local function makeHover(button, baseColor, hoverColor)
@@ -1496,9 +1497,11 @@ CopyBtn.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", CopyBtn)
 makeHover(CopyBtn, Color3.fromRGB(80,160,255), Color3.fromRGB(60,130,220))
 
--- OUTPUT SCROLL
+--------------------------------------------------
+-- Output (TextLabel inside ScrollingFrame)
+--------------------------------------------------
 local OutputScroll = Instance.new("ScrollingFrame", PageScroll)
-OutputScroll.Size = UDim2.new(1, -2*PAGE_PADDING, 0, OUTPUT_HEIGHT)
+OutputScroll.Size = UDim2.new(1,-2*PAGE_PADDING,0,OUTPUT_HEIGHT)
 OutputScroll.BackgroundColor3 = Color3.fromRGB(25,25,25)
 OutputScroll.BorderSizePixel = 0
 OutputScroll.ScrollBarThickness = 8
@@ -1506,41 +1509,39 @@ OutputScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 OutputScroll.ScrollBarImageTransparency = 0.5
 Instance.new("UICorner", OutputScroll)
 
-local OutputBox = Instance.new("TextBox", OutputScroll)
-OutputBox.Size = UDim2.new(1, -10, 0, OUTPUT_HEIGHT)
-OutputBox.Position = UDim2.new(0, 5, 0, 5)
-OutputBox.ClearTextOnFocus = false
-OutputBox.MultiLine = true
-OutputBox.TextWrapped = true
-OutputBox.ReadOnly = true
+local OutputBox = Instance.new("TextLabel", OutputScroll)
+OutputBox.Size = UDim2.new(1,-10,0,0)
+OutputBox.Position = UDim2.new(0,5,0,5)
+OutputBox.BackgroundTransparency = 1
 OutputBox.Font = Enum.Font.Code
 OutputBox.TextSize = 13
 OutputBox.TextColor3 = Color3.fromRGB(200,200,200)
-OutputBox.BackgroundTransparency = 1
+OutputBox.TextWrapped = true
+OutputBox.TextYAlignment = Enum.TextYAlignment.Top
 OutputBox.Text = "[ Output ]\n"
 
 -- Log function
 local function log(text)
     OutputBox.Text ..= tostring(text).."\n"
-    OutputScroll.CanvasSize = UDim2.new(0,0,0,OutputBox.TextBounds.Y + 20)
+    OutputBox.Size = UDim2.new(1,-10,0,OutputBox.TextBounds.Y + 10)
+    OutputScroll.CanvasSize = UDim2.new(0,0,0,OutputBox.Size.Y.Offset)
     OutputScroll.CanvasPosition = Vector2.new(0,OutputScroll.CanvasSize.Y.Offset)
 end
 
--- Clear Output
-ClearBtn.MouseButton1Click:Connect(function()
-    ClearBtn.Size = UDim2.new(0.28,0,1,0)
-    task.wait(0.05)
-    ClearBtn.Size = UDim2.new(0.3,0,1,0)
-    OutputBox.Text = "[ Output ]\n"
-    OutputBox.Size = UDim2.new(1,-10,0,OUTPUT_HEIGHT)
-    OutputScroll.CanvasSize = UDim2.new(0,0,0,OUTPUT_HEIGHT)
-end)
-
--- Copy Output
-CopyBtn.MouseButton1Click:Connect(function()
-    setclipboard(OutputBox.Text)
-    log("[INFO] Output copied to clipboard")
-end)
+-- Hooks
+local oldPrint, oldWarn = print, warn
+print = function(...)
+    local t = {}
+    for _,v in ipairs({...}) do table.insert(t,tostring(v)) end
+    log(table.concat(t," "))
+    oldPrint(...)
+end
+warn = function(...)
+    local t = {}
+    for _,v in ipairs({...}) do table.insert(t,tostring(v)) end
+    log("[WARN] "..table.concat(t," "))
+    oldWarn(...)
+end
 
 -- Execute with custom environment
 ExecuteBtn.MouseButton1Click:Connect(function()
@@ -1555,7 +1556,6 @@ ExecuteBtn.MouseButton1Click:Connect(function()
         return log("[COMPILE ERROR] "..tostring(err))
     end
 
-    -- Custom environment
     local env = {
         print = log,
         warn = function(...) log("[WARN] "..table.concat({...}, " ")) end,
@@ -1582,8 +1582,18 @@ ExecuteBtn.MouseButton1Click:Connect(function()
     if not ok then log("[RUNTIME ERROR] "..tostring(runtimeErr)) end
 end)
 
+-- Clear Output
+ClearBtn.MouseButton1Click:Connect(function()
+    OutputBox.Text = "[ Output ]\n"
+    OutputBox.Size = UDim2.new(1,-10,0,0)
+    OutputScroll.CanvasSize = UDim2.new(0,0,0,0)
+end)
 
-
+-- Copy Output
+CopyBtn.MouseButton1Click:Connect(function()
+    setclipboard(OutputBox.Text)
+    log("[INFO] Output copied to clipboard")
+end)
 
 --------------------------------------------------
 --// SHOW / HIDE MENU
