@@ -1167,7 +1167,7 @@ local Layout = Instance.new("UIListLayout", OtherScroll)
 Layout.SortOrder = Enum.SortOrder.LayoutOrder
 Layout.Padding = UDim.new(0,8)
 
--- Single reusable CircleToggle function
+-- CircleToggle function
 local function CircleToggle(parent, text, flag, callback)
     local holder = Instance.new("Frame", parent)
     holder.Size = UDim2.new(1,0,0,32)
@@ -1202,30 +1202,20 @@ local function CircleToggle(parent, text, flag, callback)
     end)
 end
 
--- Global variables
+-- Globals
 getgenv().AutoRespawnEnabled = false
 
--- Services
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- Respawn connection holder
-local RespawnConnection
-
--- Hook function (instant respawn)
-local function HookCharacter(character)
-    -- Disconnect old connection if any
-    if RespawnConnection then
-        RespawnConnection:Disconnect()
-        RespawnConnection = nil
-    end
-
-    local humanoid = character:FindFirstChildOfClass("Humanoid") or character:WaitForChild("Humanoid", 5)
+-- Function to hook respawn to a character
+local function HookCharacter(char)
+    local humanoid = char:WaitForChild("Humanoid", 5)
     if not humanoid then return end
 
-    RespawnConnection = humanoid.Died:Connect(function()
+    humanoid.Died:Connect(function()
         if getgenv().AutoRespawnEnabled then
-            -- INSTANT respawn, no delay
+            -- Instant respawn
             pcall(function()
                 LocalPlayer:LoadCharacter()
             end)
@@ -1233,30 +1223,25 @@ local function HookCharacter(character)
     end)
 end
 
--- Hook CharacterAdded always, but only respawn if toggle ON
-LocalPlayer.CharacterAdded:Connect(function(char)
-    if getgenv().AutoRespawnEnabled then
-        HookCharacter(char)
-    end
-end)
+-- Always hook CharacterAdded
+LocalPlayer.CharacterAdded:Connect(HookCharacter)
 
--- CircleToggle GUI
+-- GUI toggle
 CircleToggle(OtherScroll, "Auto Respawn", "AutoRespawnEnabled", function(enabled)
     if enabled then
-        -- Hook current character immediately
+        -- If dead now, respawn immediately
+        if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("Humanoid") or LocalPlayer.Character.Humanoid.Health <= 0 then
+            pcall(function()
+                LocalPlayer:LoadCharacter()
+            end)
+        end
+
+        -- Hook current character if alive
         if LocalPlayer.Character then
             HookCharacter(LocalPlayer.Character)
         end
-    else
-        -- Disconnect if disabled to save FPS
-        if RespawnConnection then
-            RespawnConnection:Disconnect()
-            RespawnConnection = nil
-        end
     end
 end)
-
-
 
 --------------------------------------------------
 --// SHOW / HIDE MENU
