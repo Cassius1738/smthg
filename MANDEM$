@@ -1164,7 +1164,7 @@ Layout.SortOrder = Enum.SortOrder.LayoutOrder
 Layout.Padding = UDim.new(0,8)
 
 --------------------------------------------------
---// REMOTEEVENT SCANNER (UI OUTPUT)
+--// REMOTEEVENT SCANNER (UI OUTPUT + COPY)
 --------------------------------------------------
 
 local function RemoteScannerUI(parent)
@@ -1175,7 +1175,7 @@ local function RemoteScannerUI(parent)
     holder.LayoutOrder = 60
 
     local label = Instance.new("TextLabel", holder)
-    label.Size = UDim2.new(1,-80,1,0)
+    label.Size = UDim2.new(1,-140,1,0)
     label.BackgroundTransparency = 1
     label.Text = "Scan RemoteEvents"
     label.Font = Enum.Font.Gotham
@@ -1183,15 +1183,27 @@ local function RemoteScannerUI(parent)
     label.TextColor3 = Color3.new(1,1,1)
     label.TextXAlignment = Enum.TextXAlignment.Left
 
-    local btn = Instance.new("TextButton", holder)
-    btn.Size = UDim2.new(0,60,0,22)
-    btn.Position = UDim2.new(1,-66,0.5,-11)
-    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    btn.Text = "SCAN"
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 12
-    btn.TextColor3 = Color3.fromRGB(0,255,120)
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
+    -- SCAN button
+    local scanBtn = Instance.new("TextButton", holder)
+    scanBtn.Size = UDim2.new(0,60,0,22)
+    scanBtn.Position = UDim2.new(1,-132,0.5,-11)
+    scanBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    scanBtn.Text = "SCAN"
+    scanBtn.Font = Enum.Font.GothamBold
+    scanBtn.TextSize = 12
+    scanBtn.TextColor3 = Color3.fromRGB(0,255,120)
+    Instance.new("UICorner", scanBtn).CornerRadius = UDim.new(0,6)
+
+    -- COPY button
+    local copyBtn = Instance.new("TextButton", holder)
+    copyBtn.Size = UDim2.new(0,60,0,22)
+    copyBtn.Position = UDim2.new(1,-66,0.5,-11)
+    copyBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    copyBtn.Text = "COPY"
+    copyBtn.Font = Enum.Font.GothamBold
+    copyBtn.TextSize = 12
+    copyBtn.TextColor3 = Color3.fromRGB(120,180,255)
+    Instance.new("UICorner", copyBtn).CornerRadius = UDim.new(0,6)
 
     -- Output frame
     local outputFrame = Instance.new("Frame", parent)
@@ -1212,7 +1224,10 @@ local function RemoteScannerUI(parent)
     output.TextColor3 = Color3.fromRGB(200,200,200)
     output.Text = "Click SCAN to list RemoteEvents..."
 
-    btn.MouseButton1Click:Connect(function()
+    local lastResult = ""
+
+    -- SCAN logic
+    scanBtn.MouseButton1Click:Connect(function()
         local lines = {}
         local count = 0
 
@@ -1224,17 +1239,35 @@ local function RemoteScannerUI(parent)
         end
 
         if count == 0 then
-            output.Text = "No RemoteEvents visible to the client."
+            lastResult = "No RemoteEvents visible to the client."
         else
-            output.Text =
+            lastResult =
                 "RemoteEvents Found: "..count.."\n\n"..
                 table.concat(lines, "\n")
+        end
+
+        output.Text = lastResult
+    end)
+
+    -- COPY logic
+    copyBtn.MouseButton1Click:Connect(function()
+        if lastResult == "" then
+            output.Text = "Nothing to copy. Scan first."
+            return
+        end
+
+        if setclipboard then
+            setclipboard(lastResult)
+            output.Text = "✔ RemoteEvent list copied to clipboard.\n\n"..lastResult
+        else
+            output.Text = "Clipboard not supported by this executor."
         end
     end)
 end
 
 -- Insert into Other Stuff page
 RemoteScannerUI(OtherScroll)
+
 
 
 --------------------------------------------------
