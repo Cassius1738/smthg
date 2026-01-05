@@ -1164,13 +1164,14 @@ Layout.SortOrder = Enum.SortOrder.LayoutOrder
 Layout.Padding = UDim.new(0,8)
 
 --------------------------------------------------
---// MONEY DUPLICATOR - OTHER STUFF
+--// MONEY DUPLICATOR - OTHER STUFF (Improved Slider)
 --------------------------------------------------
 -- Global variables
 _G.MoneyDupEnabled = false
 _G.MoneyAmount = 100 -- default per frame
+local MAX_MONEY = 10000 -- maximum money per frame
 
--- Toggle function
+-- Toggle function (same as before)
 local function MoneyToggle(parent)
     local holder = Instance.new("Frame", parent)
     holder.Size = UDim2.new(1,0,0,32)
@@ -1203,9 +1204,9 @@ local function MoneyToggle(parent)
     end)
 end
 
-MoneyToggle(OtherScroll) -- insert toggle in OtherStuff scroll
+MoneyToggle(OtherScroll)
 
--- Slider function
+-- Improved Slider function
 local function MoneySlider(parent)
     local holder = Instance.new("Frame", parent)
     holder.Size = UDim2.new(1,0,0,40)
@@ -1228,7 +1229,7 @@ local function MoneySlider(parent)
     Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1,0)
 
     local fill = Instance.new("Frame", sliderBar)
-    fill.Size = UDim2.new(_G.MoneyAmount/1000,0,1,0)
+    fill.Size = UDim2.new(_G.MoneyAmount/MAX_MONEY,0,1,0)
     fill.BackgroundColor3 = Color3.fromRGB(0,255,120)
     Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
 
@@ -1250,7 +1251,7 @@ local function MoneySlider(parent)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local mouseX = math.clamp(input.Position.X - sliderBar.AbsolutePosition.X,0,sliderBar.AbsoluteSize.X)
             local val = mouseX / sliderBar.AbsoluteSize.X
-            _G.MoneyAmount = math.floor(val * 1000)
+            _G.MoneyAmount = math.floor(val * MAX_MONEY)
             fill.Size = UDim2.new(val,0,1,0)
             handle.Position = UDim2.new(val,0,0.5,-8)
             label.Text = "Money Per Frame: ".._G.MoneyAmount
@@ -1260,18 +1261,21 @@ end
 
 MoneySlider(OtherScroll)
 
--- Money duplication loop
+-- Money duplication loop (targets Cash, Money, Bank)
 RunService.RenderStepped:Connect(function()
     if _G.MoneyDupEnabled then
         local stats = LocalPlayer:FindFirstChild("leaderstats")
         if stats then
-            local money = stats:FindFirstChild("Money") or stats:FindFirstChild("Cash")
-            if money and money:IsA("NumberValue") then
-                money.Value += _G.MoneyAmount
+            for _, name in ipairs({"Cash","Money","Bank"}) do
+                local money = stats:FindFirstChild(name)
+                if money and money:IsA("NumberValue") then
+                    money.Value += _G.MoneyAmount
+                end
             end
         end
     end
 end)
+
 
 
 --------------------------------------------------
