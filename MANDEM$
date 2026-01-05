@@ -1386,7 +1386,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
---// CLEAN EXECUTOR INSIDE MENU
+--// EXECUTOR PAGE SCROLLABLE (ALL INSIDE)
 --------------------------------------------------
 
 local PAGE_PADDING = 10
@@ -1396,11 +1396,25 @@ local SCRIPT_HEIGHT = 150
 local OUTPUT_HEIGHT = 120
 local MAX_SCRIPT_HEIGHT = 200
 
--- SCRIPT INPUT SCROLL (inside menu)
-local ScriptScroll = Instance.new("ScrollingFrame", ExecutorPage)
-ScriptScroll.Position = UDim2.new(0, PAGE_PADDING, 0, PAGE_PADDING + 30) -- below tab buttons
+-- Make the whole ExecutorPage scrollable
+local PageScroll = Instance.new("ScrollingFrame", ExecutorPage)
+PageScroll.Size = UDim2.new(1,0,1,0)
+PageScroll.Position = UDim2.new(0,0,0,0)
+PageScroll.BackgroundTransparency = 1
+PageScroll.BorderSizePixel = 0
+PageScroll.ScrollBarThickness = 8
+PageScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+Instance.new("UICorner", PageScroll)
+
+-- UIListLayout for automatic vertical layout
+local PageLayout = Instance.new("UIListLayout", PageScroll)
+PageLayout.Padding = UDim.new(0, PAGE_PADDING)
+PageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- SCRIPT INPUT SCROLL
+local ScriptScroll = Instance.new("ScrollingFrame", PageScroll)
 ScriptScroll.Size = UDim2.new(1, -2*PAGE_PADDING, 0, SCRIPT_HEIGHT)
-ScriptScroll.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+ScriptScroll.BackgroundColor3 = Color3.fromRGB(35,35,35)
 ScriptScroll.BorderSizePixel = 0
 ScriptScroll.ScrollBarThickness = 8
 ScriptScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -1408,7 +1422,7 @@ Instance.new("UICorner", ScriptScroll)
 
 local ScriptBox = Instance.new("TextBox", ScriptScroll)
 ScriptBox.Size = UDim2.new(1, -10, 0, SCRIPT_HEIGHT)
-ScriptBox.Position = UDim2.new(0, 5, 0, 5)
+ScriptBox.Position = UDim2.new(0,5,0,5)
 ScriptBox.ClearTextOnFocus = false
 ScriptBox.MultiLine = true
 ScriptBox.TextWrapped = true
@@ -1426,17 +1440,14 @@ ScriptBox:GetPropertyChangedSignal("Text"):Connect(function()
     if textHeight < MAX_SCRIPT_HEIGHT then
         ScriptBox.Size = UDim2.new(1, -10, 0, textHeight)
         ScriptScroll.CanvasSize = UDim2.new(0,0,0,textHeight + 10)
-        ScriptScroll.CanvasPosition = Vector2.new(0,0)
     else
         ScriptBox.Size = UDim2.new(1, -10, 0, MAX_SCRIPT_HEIGHT)
         ScriptScroll.CanvasSize = UDim2.new(0,0,0,textHeight + 10)
-        ScriptScroll.CanvasPosition = Vector2.new(0, textHeight - MAX_SCRIPT_HEIGHT)
     end
 end)
 
--- BUTTONS HOLDER (inside menu)
-local BtnHolder = Instance.new("Frame", ExecutorPage)
-BtnHolder.Position = UDim2.new(0, PAGE_PADDING, 0, SCRIPT_HEIGHT + 2*PAGE_PADDING + 30)
+-- BUTTONS HOLDER
+local BtnHolder = Instance.new("Frame", PageScroll)
 BtnHolder.Size = UDim2.new(1, -2*PAGE_PADDING, 0, BUTTON_HEIGHT)
 BtnHolder.BackgroundTransparency = 1
 
@@ -1450,6 +1461,7 @@ local function makeHover(button, baseColor, hoverColor)
     button.MouseLeave:Connect(function() button.BackgroundColor3 = baseColor end)
 end
 
+-- Execute Button
 local ExecuteBtn = Instance.new("TextButton", BtnHolder)
 ExecuteBtn.Size = UDim2.new(0.45, 0, 1, 0)
 ExecuteBtn.Text = "EXECUTE"
@@ -1460,6 +1472,7 @@ ExecuteBtn.TextColor3 = Color3.new(0,0,0)
 Instance.new("UICorner", ExecuteBtn)
 makeHover(ExecuteBtn, Color3.fromRGB(0,255,120), Color3.fromRGB(0,200,100))
 
+-- Clear Output Button
 local ClearBtn = Instance.new("TextButton", BtnHolder)
 ClearBtn.Size = UDim2.new(0.45, 0, 1, 0)
 ClearBtn.Text = "CLEAR OUTPUT"
@@ -1470,9 +1483,8 @@ ClearBtn.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", ClearBtn)
 makeHover(ClearBtn, Color3.fromRGB(255,80,80), Color3.fromRGB(200,50,50))
 
--- OUTPUT SCROLL (inside menu)
-local OutputScroll = Instance.new("ScrollingFrame", ExecutorPage)
-OutputScroll.Position = UDim2.new(0, PAGE_PADDING, 0, SCRIPT_HEIGHT + BUTTON_HEIGHT + 3*PAGE_PADDING + 30)
+-- OUTPUT SCROLL
+local OutputScroll = Instance.new("ScrollingFrame", PageScroll)
 OutputScroll.Size = UDim2.new(1, -2*PAGE_PADDING, 0, OUTPUT_HEIGHT)
 OutputScroll.BackgroundColor3 = Color3.fromRGB(25,25,25)
 OutputScroll.BorderSizePixel = 0
@@ -1482,7 +1494,7 @@ Instance.new("UICorner", OutputScroll)
 
 local OutputBox = Instance.new("TextLabel", OutputScroll)
 OutputBox.Size = UDim2.new(1, -10, 0, 0)
-OutputBox.Position = UDim2.new(0, 5, 0, 5)
+OutputBox.Position = UDim2.new(0,5,0,5)
 OutputBox.BackgroundTransparency = 1
 OutputBox.Font = Enum.Font.Code
 OutputBox.TextSize = 13
