@@ -1386,42 +1386,39 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
---// CLEAN EXECUTOR WITH SCROLLABLE PAGE + COPY
+--// CLEAN EXECUTOR (F9 TOGGLE LOG VIEW)
 --------------------------------------------------
+
+local UserInputService = game:GetService("UserInputService")
 
 local PAGE_PADDING = 10
 local BUTTON_HEIGHT = 35
-local BUTTON_SPACING = 10
 local SCRIPT_HEIGHT = 150
 local OUTPUT_HEIGHT = 120
 local MAX_SCRIPT_HEIGHT = 200
 
--- Main Scrollable Executor Page
+--------------------------------------------------
+-- Main Scroll Page
+--------------------------------------------------
 local PageScroll = Instance.new("ScrollingFrame", ExecutorPage)
 PageScroll.Size = UDim2.new(1,0,1,0)
-PageScroll.Position = UDim2.new(0,0,0,0)
 PageScroll.BackgroundTransparency = 1
 PageScroll.BorderSizePixel = 0
 PageScroll.ScrollBarThickness = 8
 PageScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-PageScroll.ScrollBarImageTransparency = 0.5
-PageScroll.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
 
--- Layout for vertical stacking
 local PageLayout = Instance.new("UIListLayout", PageScroll)
 PageLayout.Padding = UDim.new(0, PAGE_PADDING)
-PageLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 --------------------------------------------------
 -- Script Input
 --------------------------------------------------
 local ScriptScroll = Instance.new("ScrollingFrame", PageScroll)
-ScriptScroll.Size = UDim2.new(1,-2*PAGE_PADDING,0,SCRIPT_HEIGHT)
+ScriptScroll.Size = UDim2.new(1,-20,0,SCRIPT_HEIGHT)
 ScriptScroll.BackgroundColor3 = Color3.fromRGB(35,35,35)
 ScriptScroll.BorderSizePixel = 0
 ScriptScroll.ScrollBarThickness = 8
 ScriptScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-ScriptScroll.ScrollBarImageTransparency = 0.5
 Instance.new("UICorner", ScriptScroll)
 
 local ScriptBox = Instance.new("TextBox", ScriptScroll)
@@ -1434,79 +1431,37 @@ ScriptBox.Font = Enum.Font.Code
 ScriptBox.TextSize = 14
 ScriptBox.TextColor3 = Color3.new(1,1,1)
 ScriptBox.BackgroundTransparency = 1
-ScriptBox.Text = 'print("Solara Executor Ready")'
+ScriptBox.Text = 'print("Executor Ready")'
 ScriptBox.PlaceholderText = "Enter Lua code here..."
 Instance.new("UICorner", ScriptBox)
 
--- Auto-expand ScriptBox
 ScriptBox:GetPropertyChangedSignal("Text"):Connect(function()
-    local textHeight = ScriptBox.TextBounds.Y + 10
-    if textHeight < MAX_SCRIPT_HEIGHT then
-        ScriptBox.Size = UDim2.new(1,-10,0,textHeight)
-        ScriptScroll.CanvasSize = UDim2.new(0,0,0,textHeight+10)
-    else
-        ScriptBox.Size = UDim2.new(1,-10,0,MAX_SCRIPT_HEIGHT)
-        ScriptScroll.CanvasSize = UDim2.new(0,0,0,textHeight+10)
-    end
+    local h = math.min(ScriptBox.TextBounds.Y + 10, MAX_SCRIPT_HEIGHT)
+    ScriptBox.Size = UDim2.new(1,-10,0,h)
+    ScriptScroll.CanvasSize = UDim2.new(0,0,0,h+10)
 end)
 
 --------------------------------------------------
--- Buttons
+-- Execute Button
 --------------------------------------------------
-local BtnHolder = Instance.new("Frame", PageScroll)
-BtnHolder.Size = UDim2.new(1,-2*PAGE_PADDING,0,BUTTON_HEIGHT)
-BtnHolder.BackgroundTransparency = 1
-
-local BtnLayout = Instance.new("UIListLayout", BtnHolder)
-BtnLayout.FillDirection = Enum.FillDirection.Horizontal
-BtnLayout.Padding = UDim.new(0,BUTTON_SPACING)
-BtnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
-local function makeHover(button, baseColor, hoverColor)
-    button.MouseEnter:Connect(function() button.BackgroundColor3 = hoverColor end)
-    button.MouseLeave:Connect(function() button.BackgroundColor3 = baseColor end)
-end
-
-local ExecuteBtn = Instance.new("TextButton", BtnHolder)
-ExecuteBtn.Size = UDim2.new(0.3,0,1,0)
+local ExecuteBtn = Instance.new("TextButton", PageScroll)
+ExecuteBtn.Size = UDim2.new(1,-20,0,BUTTON_HEIGHT)
 ExecuteBtn.Text = "EXECUTE"
 ExecuteBtn.Font = Enum.Font.GothamBold
 ExecuteBtn.TextSize = 16
 ExecuteBtn.BackgroundColor3 = Color3.fromRGB(0,255,120)
 ExecuteBtn.TextColor3 = Color3.new(0,0,0)
 Instance.new("UICorner", ExecuteBtn)
-makeHover(ExecuteBtn, Color3.fromRGB(0,255,120), Color3.fromRGB(0,200,100))
-
-local ClearBtn = Instance.new("TextButton", BtnHolder)
-ClearBtn.Size = UDim2.new(0.3,0,1,0)
-ClearBtn.Text = "CLEAR OUTPUT"
-ClearBtn.Font = Enum.Font.GothamBold
-ClearBtn.TextSize = 16
-ClearBtn.BackgroundColor3 = Color3.fromRGB(255,80,80)
-ClearBtn.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", ClearBtn)
-makeHover(ClearBtn, Color3.fromRGB(255,80,80), Color3.fromRGB(200,50,50))
-
-local CopyBtn = Instance.new("TextButton", BtnHolder)
-CopyBtn.Size = UDim2.new(0.3,0,1,0)
-CopyBtn.Text = "COPY OUTPUT"
-CopyBtn.Font = Enum.Font.GothamBold
-CopyBtn.TextSize = 16
-CopyBtn.BackgroundColor3 = Color3.fromRGB(80,160,255)
-CopyBtn.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", CopyBtn)
-makeHover(CopyBtn, Color3.fromRGB(80,160,255), Color3.fromRGB(60,130,220))
 
 --------------------------------------------------
--- Output (TextLabel inside ScrollingFrame)
+-- Output (HIDDEN BY DEFAULT)
 --------------------------------------------------
 local OutputScroll = Instance.new("ScrollingFrame", PageScroll)
-OutputScroll.Size = UDim2.new(1,-2*PAGE_PADDING,0,OUTPUT_HEIGHT)
+OutputScroll.Size = UDim2.new(1,-20,0,OUTPUT_HEIGHT)
 OutputScroll.BackgroundColor3 = Color3.fromRGB(25,25,25)
 OutputScroll.BorderSizePixel = 0
 OutputScroll.ScrollBarThickness = 8
-OutputScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-OutputScroll.ScrollBarImageTransparency = 0.5
+OutputScroll.Visible = false
 Instance.new("UICorner", OutputScroll)
 
 local OutputBox = Instance.new("TextLabel", OutputScroll)
@@ -1518,81 +1473,44 @@ OutputBox.TextSize = 13
 OutputBox.TextColor3 = Color3.fromRGB(200,200,200)
 OutputBox.TextWrapped = true
 OutputBox.TextYAlignment = Enum.TextYAlignment.Top
-OutputBox.Text = "[ Output ]\n"
+OutputBox.Text = ""
 
--- Log function
-local function log(text)
-    OutputBox.Text ..= tostring(text).."\n"
+--------------------------------------------------
+-- Log helper (ONLY visible when F9 toggled)
+--------------------------------------------------
+local function log(txt)
+    OutputBox.Text ..= tostring(txt).."\n"
     OutputBox.Size = UDim2.new(1,-10,0,OutputBox.TextBounds.Y + 10)
     OutputScroll.CanvasSize = UDim2.new(0,0,0,OutputBox.Size.Y.Offset)
-    OutputScroll.CanvasPosition = Vector2.new(0,OutputScroll.CanvasSize.Y.Offset)
 end
 
--- Hooks
-local oldPrint, oldWarn = print, warn
-print = function(...)
-    local t = {}
-    for _,v in ipairs({...}) do table.insert(t,tostring(v)) end
-    log(table.concat(t," "))
-    oldPrint(...)
-end
-warn = function(...)
-    local t = {}
-    for _,v in ipairs({...}) do table.insert(t,tostring(v)) end
-    log("[WARN] "..table.concat(t," "))
-    oldWarn(...)
-end
-
--- Execute with custom environment
+--------------------------------------------------
+-- Execute Script
+--------------------------------------------------
 ExecuteBtn.MouseButton1Click:Connect(function()
-    ExecuteBtn.Size = UDim2.new(0.28,0,1,0)
-    task.wait(0.05)
-    ExecuteBtn.Size = UDim2.new(0.3,0,1,0)
-
     local src = ScriptBox.Text
     if src == "" then return end
-    local func, err = loadstring(src)
-    if not func then
-        return log("[COMPILE ERROR] "..tostring(err))
+
+    local fn, err = loadstring(src)
+    if not fn then
+        log("[COMPILE ERROR] "..tostring(err))
+        return
     end
 
-    local env = {
-        print = log,
-        warn = function(...) log("[WARN] "..table.concat({...}, " ")) end,
-        ipairs = ipairs,
-        pairs = pairs,
-        tonumber = tonumber,
-        tostring = tostring,
-        type = type,
-        math = math,
-        table = table,
-        string = string,
-        task = task,
-        wait = wait,
-        tick = tick,
-        os = os,
-        Vector3 = Vector3,
-        Color3 = Color3,
-    }
-    setmetatable(env, {__index = _G})
-
-    local ok, runtimeErr = pcall(function()
-        setfenv(func, env)()
-    end)
-    if not ok then log("[RUNTIME ERROR] "..tostring(runtimeErr)) end
+    local ok, runtimeErr = pcall(fn)
+    if not ok then
+        log("[RUNTIME ERROR] "..tostring(runtimeErr))
+    end
 end)
 
--- Clear Output
-ClearBtn.MouseButton1Click:Connect(function()
-    OutputBox.Text = "[ Output ]\n"
-    OutputBox.Size = UDim2.new(1,-10,0,0)
-    OutputScroll.CanvasSize = UDim2.new(0,0,0,0)
-end)
-
--- Copy Output
-CopyBtn.MouseButton1Click:Connect(function()
-    setclipboard(OutputBox.Text)
-    log("[INFO] Output copied to clipboard")
+--------------------------------------------------
+-- F9 TOGGLE OUTPUT VISIBILITY
+--------------------------------------------------
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.KeyCode == Enum.KeyCode.F9 then
+        OutputScroll.Visible = not OutputScroll.Visible
+    end
 end)
 
 
