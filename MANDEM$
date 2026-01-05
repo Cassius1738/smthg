@@ -1386,7 +1386,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
---// EXECUTOR PAGE
+--// EXECUTOR PAGE (Solara Compatible)
 --------------------------------------------------
 
 -- Scrollable frame for executor
@@ -1397,7 +1397,8 @@ ExecutorScroll.BackgroundTransparency = 1
 ExecutorScroll.ScrollBarThickness = 8
 ExecutorScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
-local Layout = Instance.new("UIListLayout", ExecutorScroll)
+local Layout = Instance.new("UIListLayout")
+Layout.Parent = ExecutorScroll
 Layout.SortOrder = Enum.SortOrder.LayoutOrder
 Layout.Padding = UDim.new(0,8)
 
@@ -1406,7 +1407,7 @@ local ScriptBox = Instance.new("TextBox")
 ScriptBox.Parent = ExecutorScroll
 ScriptBox.Size = UDim2.new(1,0,0,200)
 ScriptBox.ClearTextOnFocus = false
-ScriptBox.Text = ScriptBox.Text = 'print("MANDEM$ EXECUTOR IS NOW READY!")'
+ScriptBox.Text = 'print("MANDEM$ EXECUTOR IS NOW READY!")'
 ScriptBox.Font = Enum.Font.Gotham
 ScriptBox.TextSize = 14
 ScriptBox.TextColor3 = Color3.new(1,1,1)
@@ -1428,18 +1429,29 @@ ExecuteBtn.TextSize = 14
 ExecuteBtn.TextColor3 = Color3.fromRGB(0,0,0)
 Instance.new("UICorner", ExecuteBtn).CornerRadius = UDim.new(0,6)
 
--- Execute function
+-- Execute function (Solara-compatible)
 ExecuteBtn.MouseButton1Click:Connect(function()
     local scriptText = ScriptBox.Text
     if scriptText and scriptText ~= "" then
-        local success, err = pcall(function()
-            loadstring(scriptText)()
-        end)
+        local func
+        -- Check for executor support
+        if syn and syn.loadstring then
+            func = syn.loadstring(scriptText)
+        elseif loadstring then
+            func = loadstring(scriptText)
+        else
+            warn("Executor Error: loadstring not supported in this environment!")
+            return
+        end
+
+        -- Run the script safely
+        local success, err = pcall(func)
         if not success then
             warn("Executor Error:", err)
         end
     end
 end)
+
 
 --------------------------------------------------
 --// SHOW / HIDE MENU
