@@ -1204,7 +1204,6 @@ end
 
 -- Global variables
 getgenv().AutoRespawnEnabled = false
-getgenv().AutoRespawnDelay = 1.5
 
 -- Services
 local Players = game:GetService("Players")
@@ -1213,21 +1212,20 @@ local LocalPlayer = Players.LocalPlayer
 -- Respawn connection holder
 local RespawnConnection
 
--- Hook function only active when toggle is ON
+-- Hook function (instant respawn)
 local function HookCharacter(character)
+    -- Disconnect old connection if any
     if RespawnConnection then
         RespawnConnection:Disconnect()
         RespawnConnection = nil
     end
 
-    if not getgenv().AutoRespawnEnabled then return end
-
-    local humanoid = character:WaitForChild("Humanoid",5)
+    local humanoid = character:FindFirstChildOfClass("Humanoid") or character:WaitForChild("Humanoid", 5)
     if not humanoid then return end
 
     RespawnConnection = humanoid.Died:Connect(function()
         if getgenv().AutoRespawnEnabled then
-            task.wait(getgenv().AutoRespawnDelay)
+            -- INSTANT respawn, no delay
             pcall(function()
                 LocalPlayer:LoadCharacter()
             end)
@@ -1235,23 +1233,29 @@ local function HookCharacter(character)
     end)
 end
 
--- Hook future characters only if toggle is ON
+-- Hook CharacterAdded always, but only respawn if toggle ON
 LocalPlayer.CharacterAdded:Connect(function(char)
     if getgenv().AutoRespawnEnabled then
         HookCharacter(char)
     end
 end)
 
--- Add toggle to GUI
+-- CircleToggle GUI
 CircleToggle(OtherScroll, "Auto Respawn", "AutoRespawnEnabled", function(enabled)
-    if enabled and LocalPlayer.Character then
-        HookCharacter(LocalPlayer.Character)
-    elseif not enabled and RespawnConnection then
-        -- Disconnect if disabled
-        RespawnConnection:Disconnect()
-        RespawnConnection = nil
+    if enabled then
+        -- Hook current character immediately
+        if LocalPlayer.Character then
+            HookCharacter(LocalPlayer.Character)
+        end
+    else
+        -- Disconnect if disabled to save FPS
+        if RespawnConnection then
+            RespawnConnection:Disconnect()
+            RespawnConnection = nil
+        end
     end
 end)
+
 
 
 --------------------------------------------------
