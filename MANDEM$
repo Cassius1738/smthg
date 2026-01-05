@@ -43,10 +43,6 @@ _G.ESP_Tracer = false
 _G.NoclipFlyEnabled = false
 _G.FlySpeed = 50
 
-_G.AutoRespawnEnabled = false
-_G.AutoRespawnDelay = 1.5
-
-
 --------------------------------------------------
 --// INPUT HANDLING
 --------------------------------------------------
@@ -1154,7 +1150,7 @@ end)
 --------------------------------------------------
 --// OTHER STUFF - MANDEM$ - Cassius1738
 --------------------------------------------------
-
+-- OtherStuffPage Scroll Setup
 local OtherScroll = Instance.new("ScrollingFrame")
 OtherScroll.Parent = OtherStuffPage
 OtherScroll.Size = UDim2.new(1,0,1,0)
@@ -1166,7 +1162,6 @@ OtherScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 local Layout = Instance.new("UIListLayout", OtherScroll)
 Layout.SortOrder = Enum.SortOrder.LayoutOrder
 Layout.Padding = UDim.new(0,8)
-
 
 --------------------------------------------------
 --// SHOW / HIDE MENU
