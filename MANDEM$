@@ -1155,24 +1155,20 @@ end)
 --// OTHER STUFF - MANDEM$ - Cassius1738
 --------------------------------------------------
 
--- scroll container
-local ScrollFrame = Instance.new("ScrollingFrame")
-ScrollFrame.Parent = OtherStuffPage
-ScrollFrame.Size = UDim2.new(1,0,1,0)
-ScrollFrame.Position = UDim2.new(0,0,0,0)
-ScrollFrame.BackgroundTransparency = 1
-ScrollFrame.ScrollBarThickness = 8
-ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+local OtherScroll = Instance.new("ScrollingFrame")
+OtherScroll.Parent = OtherStuffPage
+OtherScroll.Size = UDim2.new(1,0,1,0)
+OtherScroll.Position = UDim2.new(0,0,0,0)
+OtherScroll.BackgroundTransparency = 1
+OtherScroll.ScrollBarThickness = 8
+OtherScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
-local Layout = Instance.new("UIListLayout", ScrollFrame)
+local Layout = Instance.new("UIListLayout", OtherScroll)
 Layout.SortOrder = Enum.SortOrder.LayoutOrder
 Layout.Padding = UDim.new(0,8)
 
---------------------------------------------------
---// AUTO RESPAWN TOGGLE BUTTON
---------------------------------------------------
--- helper function (reuses your CircleToggle style)
-local function CircleToggle(parent, text, flag)
+-- Single reusable CircleToggle function
+local function CircleToggle(parent, text, flag, callback)
     local holder = Instance.new("Frame", parent)
     holder.Size = UDim2.new(1,0,0,32)
     holder.BackgroundTransparency = 1
@@ -1200,53 +1196,52 @@ local function CircleToggle(parent, text, flag)
         getgenv()[flag] = not getgenv()[flag]
         btn.Text = getgenv()[flag] and "●" or "○"
         btn.TextColor3 = getgenv()[flag] and Color3.fromRGB(0,255,120) or Color3.fromRGB(200,200,200)
+        if callback then
+            callback(getgenv()[flag])
+        end
     end)
 end
 
--- add toggle
+-- Global variables
 getgenv().AutoRespawnEnabled = false
-CircleToggle(ScrollFrame, "Auto Respawn", "AutoRespawnEnabled")
+getgenv().AutoRespawnDelay = 1.5
 
---------------------------------------------------
---// AUTO RESPAWN LOGIC
---------------------------------------------------
+-- Respawn hook function
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
-getgenv().AutoRespawnDelay = 1.5 -- seconds
-
 local RespawnConnection
-
 local function HookCharacter(character)
-	if RespawnConnection then
-		RespawnConnection:Disconnect()
-	end
+    if RespawnConnection then
+        RespawnConnection:Disconnect()
+    end
+    local humanoid = character:WaitForChild("Humanoid",5)
+    if not humanoid then return end
 
-	local humanoid = character:WaitForChild("Humanoid", 5)
-	if not humanoid then return end
-
-	RespawnConnection = humanoid.Died:Connect(function()
-		if getgenv().AutoRespawnEnabled then
-			task.wait(getgenv().AutoRespawnDelay)
-			pcall(function()
-				LocalPlayer:LoadCharacter()
-			end)
-		end
-	end)
+    RespawnConnection = humanoid.Died:Connect(function()
+        if getgenv().AutoRespawnEnabled then
+            task.wait(getgenv().AutoRespawnDelay)
+            pcall(function()
+                LocalPlayer:LoadCharacter()
+            end)
+        end
+    end)
 end
 
--- hook current character
+-- Hook current character immediately
 if LocalPlayer.Character then
-	HookCharacter(LocalPlayer.Character)
+    HookCharacter(LocalPlayer.Character)
 end
 
--- hook future respawns
-LocalPlayer.CharacterAdded:Connect(function(character)
-	if getgenv().AutoRespawnEnabled then
-		HookCharacter(character)
-	end
-end)
+-- Hook future characters
+LocalPlayer.CharacterAdded:Connect(HookCharacter)
 
+-- Add toggle to GUI with immediate hook
+CircleToggle(OtherScroll, "Auto Respawn", "AutoRespawnEnabled", function(enabled)
+    if enabled and LocalPlayer.Character then
+        HookCharacter(LocalPlayer.Character)
+    end
+end)
 
 --------------------------------------------------
 --// SHOW / HIDE MENU
