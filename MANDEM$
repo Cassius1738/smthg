@@ -1386,19 +1386,19 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
---// EXECUTOR PAGE (Solara – Interactive Buttons)
+--// CLEAN EXECUTOR INSIDE MENU
 --------------------------------------------------
 
 local PAGE_PADDING = 10
 local BUTTON_HEIGHT = 35
 local BUTTON_SPACING = 10
 local SCRIPT_HEIGHT = 150
-local OUTPUT_HEIGHT = 160
-local MAX_SCRIPT_HEIGHT = 250
+local OUTPUT_HEIGHT = 120
+local MAX_SCRIPT_HEIGHT = 200
 
--- SCRIPT INPUT SCROLL
+-- SCRIPT INPUT SCROLL (inside menu)
 local ScriptScroll = Instance.new("ScrollingFrame", ExecutorPage)
-ScriptScroll.Position = UDim2.new(0, PAGE_PADDING, 0, PAGE_PADDING)
+ScriptScroll.Position = UDim2.new(0, PAGE_PADDING, 0, PAGE_PADDING + 30) -- below tab buttons
 ScriptScroll.Size = UDim2.new(1, -2*PAGE_PADDING, 0, SCRIPT_HEIGHT)
 ScriptScroll.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 ScriptScroll.BorderSizePixel = 0
@@ -1406,7 +1406,6 @@ ScriptScroll.ScrollBarThickness = 8
 ScriptScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 Instance.new("UICorner", ScriptScroll)
 
--- Script TextBox inside scroll
 local ScriptBox = Instance.new("TextBox", ScriptScroll)
 ScriptBox.Size = UDim2.new(1, -10, 0, SCRIPT_HEIGHT)
 ScriptBox.Position = UDim2.new(0, 5, 0, 5)
@@ -1435,9 +1434,9 @@ ScriptBox:GetPropertyChangedSignal("Text"):Connect(function()
     end
 end)
 
--- BUTTONS HOLDER (inside menu, below ScriptScroll)
+-- BUTTONS HOLDER (inside menu)
 local BtnHolder = Instance.new("Frame", ExecutorPage)
-BtnHolder.Position = UDim2.new(0, PAGE_PADDING, 0, SCRIPT_HEIGHT + 2*PAGE_PADDING)
+BtnHolder.Position = UDim2.new(0, PAGE_PADDING, 0, SCRIPT_HEIGHT + 2*PAGE_PADDING + 30)
 BtnHolder.Size = UDim2.new(1, -2*PAGE_PADDING, 0, BUTTON_HEIGHT)
 BtnHolder.BackgroundTransparency = 1
 
@@ -1446,13 +1445,11 @@ BtnLayout.FillDirection = Enum.FillDirection.Horizontal
 BtnLayout.Padding = UDim.new(0, BUTTON_SPACING)
 BtnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
--- Hover helper
 local function makeHover(button, baseColor, hoverColor)
     button.MouseEnter:Connect(function() button.BackgroundColor3 = hoverColor end)
     button.MouseLeave:Connect(function() button.BackgroundColor3 = baseColor end)
 end
 
--- Execute Button
 local ExecuteBtn = Instance.new("TextButton", BtnHolder)
 ExecuteBtn.Size = UDim2.new(0.45, 0, 1, 0)
 ExecuteBtn.Text = "EXECUTE"
@@ -1463,7 +1460,6 @@ ExecuteBtn.TextColor3 = Color3.new(0,0,0)
 Instance.new("UICorner", ExecuteBtn)
 makeHover(ExecuteBtn, Color3.fromRGB(0,255,120), Color3.fromRGB(0,200,100))
 
--- Clear Output Button
 local ClearBtn = Instance.new("TextButton", BtnHolder)
 ClearBtn.Size = UDim2.new(0.45, 0, 1, 0)
 ClearBtn.Text = "CLEAR OUTPUT"
@@ -1474,9 +1470,9 @@ ClearBtn.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", ClearBtn)
 makeHover(ClearBtn, Color3.fromRGB(255,80,80), Color3.fromRGB(200,50,50))
 
--- OUTPUT SCROLL
+-- OUTPUT SCROLL (inside menu)
 local OutputScroll = Instance.new("ScrollingFrame", ExecutorPage)
-OutputScroll.Position = UDim2.new(0, PAGE_PADDING, 0, SCRIPT_HEIGHT + BUTTON_HEIGHT + 3*PAGE_PADDING)
+OutputScroll.Position = UDim2.new(0, PAGE_PADDING, 0, SCRIPT_HEIGHT + BUTTON_HEIGHT + 3*PAGE_PADDING + 30)
 OutputScroll.Size = UDim2.new(1, -2*PAGE_PADDING, 0, OUTPUT_HEIGHT)
 OutputScroll.BackgroundColor3 = Color3.fromRGB(25,25,25)
 OutputScroll.BorderSizePixel = 0
@@ -1484,7 +1480,6 @@ OutputScroll.ScrollBarThickness = 8
 OutputScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 Instance.new("UICorner", OutputScroll)
 
--- Output TextLabel
 local OutputBox = Instance.new("TextLabel", OutputScroll)
 OutputBox.Size = UDim2.new(1, -10, 0, 0)
 OutputBox.Position = UDim2.new(0, 5, 0, 5)
@@ -1519,7 +1514,7 @@ warn = function(...)
     oldWarn(...)
 end
 
--- Execute button logic
+-- Execute
 ExecuteBtn.MouseButton1Click:Connect(function()
     ExecuteBtn.Size = UDim2.new(0.44,0,1,0)
     task.wait(0.05)
@@ -1532,7 +1527,7 @@ ExecuteBtn.MouseButton1Click:Connect(function()
     if not ok then log("[RUNTIME ERROR] "..tostring(runtimeErr)) end
 end)
 
--- Clear Output logic
+-- Clear Output
 ClearBtn.MouseButton1Click:Connect(function()
     ClearBtn.Size = UDim2.new(0.44,0,1,0)
     task.wait(0.05)
