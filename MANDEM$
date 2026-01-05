@@ -1386,71 +1386,73 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
---// EXECUTOR PAGE (Solara Compatible)
+--// EXECUTOR PAGE (NO loadstring, Solara-safe)
 --------------------------------------------------
 
--- Scrollable frame for executor
-local ExecutorScroll = Instance.new("ScrollingFrame")
+local ExecutorScroll = Instance.new("Frame")
 ExecutorScroll.Parent = ExecutorPage
 ExecutorScroll.Size = UDim2.new(1,0,1,0)
 ExecutorScroll.BackgroundTransparency = 1
-ExecutorScroll.ScrollBarThickness = 8
-ExecutorScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
-local Layout = Instance.new("UIListLayout")
-Layout.Parent = ExecutorScroll
-Layout.SortOrder = Enum.SortOrder.LayoutOrder
-Layout.Padding = UDim.new(0,8)
-
--- Multi-line TextBox for scripts
+-- Script selector box (NOT code execution)
 local ScriptBox = Instance.new("TextBox")
 ScriptBox.Parent = ExecutorScroll
-ScriptBox.Size = UDim2.new(1,0,0,200)
+ScriptBox.Size = UDim2.new(1,-20,0,40)
+ScriptBox.Position = UDim2.new(0,10,0,10)
+ScriptBox.PlaceholderText = "Type script name (hello / fps / notify)"
 ScriptBox.ClearTextOnFocus = false
-ScriptBox.Text = 'print("MANDEM$ EXECUTOR IS NOW READY!")'
-ScriptBox.Font = Enum.Font.Gotham
-ScriptBox.TextSize = 14
-ScriptBox.TextColor3 = Color3.new(1,1,1)
+ScriptBox.Text = ""
 ScriptBox.BackgroundColor3 = Color3.fromRGB(35,35,35)
-ScriptBox.TextWrapped = true
-ScriptBox.MultiLine = true
-ScriptBox.PlaceholderText = "Enter Lua code..."
-Instance.new("UICorner", ScriptBox).CornerRadius = UDim.new(0,6)
+ScriptBox.TextColor3 = Color3.new(1,1,1)
 
--- Execute Button
+-- Execute button
 local ExecuteBtn = Instance.new("TextButton")
 ExecuteBtn.Parent = ExecutorScroll
-ExecuteBtn.Size = UDim2.new(0.3,0,0,32)
-ExecuteBtn.Position = UDim2.new(0.35,0,0,210)
-ExecuteBtn.BackgroundColor3 = Color3.fromRGB(0,255,120)
+ExecuteBtn.Size = UDim2.new(0.4,0,0,35)
+ExecuteBtn.Position = UDim2.new(0.3,0,0,60)
 ExecuteBtn.Text = "Execute"
-ExecuteBtn.Font = Enum.Font.GothamBold
-ExecuteBtn.TextSize = 14
-ExecuteBtn.TextColor3 = Color3.fromRGB(0,0,0)
-Instance.new("UICorner", ExecuteBtn).CornerRadius = UDim.new(0,6)
+ExecuteBtn.BackgroundColor3 = Color3.fromRGB(0,255,120)
+ExecuteBtn.TextColor3 = Color3.new(0,0,0)
 
--- Execute function (Solara-compatible)
+--------------------------------------------------
+--// PREDEFINED LUA SCRIPTS (REAL EXECUTION)
+--------------------------------------------------
+
+local Scripts = {}
+
+Scripts.hello = function()
+	print("MANDEM$ EXECUTOR IS NOW READY!")
+end
+
+Scripts.notify = function()
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Executor",
+		Text = "Solara-compatible executor",
+		Duration = 3
+	})
+end
+
+Scripts.fps = function()
+	for _,v in pairs(workspace:GetDescendants()) do
+		if v:IsA("ParticleEmitter") or v:IsA("Trail") then
+			v.Enabled = false
+		end
+	end
+end
+
+--------------------------------------------------
+--// EXECUTE
+--------------------------------------------------
+
 ExecuteBtn.MouseButton1Click:Connect(function()
-    local scriptText = ScriptBox.Text
-    if scriptText and scriptText ~= "" then
-        local func
-        -- Check for executor support
-        if syn and syn.loadstring then
-            func = syn.loadstring(scriptText)
-        elseif loadstring then
-            func = loadstring(scriptText)
-        else
-            warn("Executor Error: loadstring not supported in this environment!")
-            return
-        end
-
-        -- Run the script safely
-        local success, err = pcall(func)
-        if not success then
-            warn("Executor Error:", err)
-        end
-    end
+	local key = string.lower(ScriptBox.Text)
+	if Scripts[key] then
+		pcall(Scripts[key])
+	else
+		warn("Script not found:", key)
+	end
 end)
+
 
 
 --------------------------------------------------
