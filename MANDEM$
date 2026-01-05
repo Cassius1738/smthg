@@ -1386,24 +1386,13 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
---// EXECUTOR PAGE (Solara – Enhanced UI)
+--// EXECUTOR PAGE (Solara – Interactive Buttons)
 --------------------------------------------------
 
--- Scroll frame
-local ExecutorScroll = Instance.new("ScrollingFrame", ExecutorPage)
-ExecutorScroll.Size = UDim2.new(1,0,1,0)
-ExecutorScroll.BackgroundTransparency = 1
-ExecutorScroll.ScrollBarThickness = 6
-ExecutorScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-
-local Layout = Instance.new("UIListLayout", ExecutorScroll)
-Layout.Padding = UDim.new(0,8)
-
---------------------------------------------------
--- Script Input
---------------------------------------------------
-local ScriptBox = Instance.new("TextBox", ExecutorScroll)
-ScriptBox.Size = UDim2.new(1,-12,0,200)
+-- Script Input Box
+local ScriptBox = Instance.new("TextBox", ExecutorPage)
+ScriptBox.Position = UDim2.new(0,10,0,10)
+ScriptBox.Size = UDim2.new(1,-20,0,200)
 ScriptBox.ClearTextOnFocus = false
 ScriptBox.MultiLine = true
 ScriptBox.TextWrapped = true
@@ -1415,11 +1404,53 @@ ScriptBox.Text = 'print("Solara Executor Ready")'
 ScriptBox.PlaceholderText = "Enter Lua code here..."
 Instance.new("UICorner", ScriptBox)
 
---------------------------------------------------
--- Output Log
---------------------------------------------------
-local OutputBox = Instance.new("TextBox", ExecutorScroll)
-OutputBox.Size = UDim2.new(1,-12,0,160)
+-- Buttons Holder
+local BtnHolder = Instance.new("Frame", ExecutorPage)
+BtnHolder.Position = UDim2.new(0,10,0,220)
+BtnHolder.Size = UDim2.new(1,-20,0,40)
+BtnHolder.BackgroundTransparency = 1
+
+local BtnLayout = Instance.new("UIListLayout", BtnHolder)
+BtnLayout.FillDirection = Enum.FillDirection.Horizontal
+BtnLayout.Padding = UDim.new(0,10)
+BtnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+-- Helper function for hover effect
+local function makeHover(button, baseColor, hoverColor)
+    button.MouseEnter:Connect(function()
+        button.BackgroundColor3 = hoverColor
+    end)
+    button.MouseLeave:Connect(function()
+        button.BackgroundColor3 = baseColor
+    end)
+end
+
+-- Execute Button
+local ExecuteBtn = Instance.new("TextButton", BtnHolder)
+ExecuteBtn.Size = UDim2.new(0.45,0,1,0)
+ExecuteBtn.Text = "EXECUTE"
+ExecuteBtn.Font = Enum.Font.GothamBold
+ExecuteBtn.TextSize = 16
+ExecuteBtn.BackgroundColor3 = Color3.fromRGB(0,255,120)
+ExecuteBtn.TextColor3 = Color3.new(0,0,0)
+Instance.new("UICorner", ExecuteBtn)
+makeHover(ExecuteBtn, Color3.fromRGB(0,255,120), Color3.fromRGB(0,200,100))
+
+-- Clear Output Button
+local ClearBtn = Instance.new("TextButton", BtnHolder)
+ClearBtn.Size = UDim2.new(0.45,0,1,0)
+ClearBtn.Text = "CLEAR OUTPUT"
+ClearBtn.Font = Enum.Font.GothamBold
+ClearBtn.TextSize = 16
+ClearBtn.BackgroundColor3 = Color3.fromRGB(255,80,80)
+ClearBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", ClearBtn)
+makeHover(ClearBtn, Color3.fromRGB(255,80,80), Color3.fromRGB(200,50,50))
+
+-- Output Box
+local OutputBox = Instance.new("TextBox", ExecutorPage)
+OutputBox.Position = UDim2.new(0,10,0,270)
+OutputBox.Size = UDim2.new(1,-20,0,160)
 OutputBox.ClearTextOnFocus = false
 OutputBox.MultiLine = true
 OutputBox.TextWrapped = true
@@ -1432,43 +1463,9 @@ OutputBox.Text = "[ Output ]\n"
 Instance.new("UICorner", OutputBox)
 
 --------------------------------------------------
--- Buttons (Below ScriptBox)
+-- Output Hooks
 --------------------------------------------------
-local BtnHolder = Instance.new("Frame", ExecutorScroll)
-BtnHolder.Size = UDim2.new(1,0,0,40)
-BtnHolder.BackgroundTransparency = 1
-BtnHolder.Position = UDim2.new(0,0,0,210)
-
-local BtnLayout = Instance.new("UIListLayout", BtnHolder)
-BtnLayout.FillDirection = Enum.FillDirection.Horizontal
-BtnLayout.Padding = UDim.new(0,8)
-BtnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
--- Execute Button
-local ExecuteBtn = Instance.new("TextButton", BtnHolder)
-ExecuteBtn.Size = UDim2.new(0.45,0,1,0)
-ExecuteBtn.Text = "EXECUTE"
-ExecuteBtn.Font = Enum.Font.GothamBold
-ExecuteBtn.TextSize = 16
-ExecuteBtn.BackgroundColor3 = Color3.fromRGB(0,255,120)
-ExecuteBtn.TextColor3 = Color3.new(0,0,0)
-Instance.new("UICorner", ExecuteBtn)
-
--- Clear Output Button
-local ClearBtn = Instance.new("TextButton", BtnHolder)
-ClearBtn.Size = UDim2.new(0.45,0,1,0)
-ClearBtn.Text = "CLEAR OUTPUT"
-ClearBtn.Font = Enum.Font.GothamBold
-ClearBtn.TextSize = 16
-ClearBtn.BackgroundColor3 = Color3.fromRGB(255,80,80)
-ClearBtn.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", ClearBtn)
-
---------------------------------------------------
--- Output Hook (print / warn)
---------------------------------------------------
-local oldPrint = print
-local oldWarn = warn
+local oldPrint, oldWarn = print, warn
 
 local function log(text)
     OutputBox.Text ..= tostring(text) .. "\n"
@@ -1476,18 +1473,14 @@ end
 
 print = function(...)
     local t = {}
-    for _,v in ipairs({...}) do
-        table.insert(t, tostring(v))
-    end
+    for _,v in ipairs({...}) do table.insert(t, tostring(v)) end
     log(table.concat(t, " "))
     oldPrint(...)
 end
 
 warn = function(...)
     local t = {}
-    for _,v in ipairs({...}) do
-        table.insert(t, tostring(v))
-    end
+    for _,v in ipairs({...}) do table.insert(t, tostring(v)) end
     log("[WARN] "..table.concat(t, " "))
     oldWarn(...)
 end
@@ -1496,21 +1489,23 @@ end
 -- Execute Logic
 --------------------------------------------------
 ExecuteBtn.MouseButton1Click:Connect(function()
+    ExecuteBtn.Size = UDim2.new(0.44,0,1,0) -- click shrink effect
+    task.wait(0.05)
+    ExecuteBtn.Size = UDim2.new(0.45,0,1,0)
+
     local src = ScriptBox.Text
     if src == "" then return end
-
     local func, err = loadstring(src)
-    if not func then
-        return log("[COMPILE ERROR] "..tostring(err))
-    end
-
+    if not func then return log("[COMPILE ERROR] "..tostring(err)) end
     local ok, runtimeErr = pcall(func)
-    if not ok then
-        log("[RUNTIME ERROR] "..tostring(runtimeErr))
-    end
+    if not ok then log("[RUNTIME ERROR] "..tostring(runtimeErr)) end
 end)
 
 ClearBtn.MouseButton1Click:Connect(function()
+    ClearBtn.Size = UDim2.new(0.44,0,1,0)
+    task.wait(0.05)
+    ClearBtn.Size = UDim2.new(0.45,0,1,0)
+
     OutputBox.Text = "[ Output ]\n"
 end)
 
