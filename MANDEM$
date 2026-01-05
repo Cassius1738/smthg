@@ -1386,7 +1386,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
---// EXECUTOR PAGE SCROLLABLE (ALL INSIDE)
+--// CLEAN EXECUTOR WITH CONDITIONAL SCROLLBAR
 --------------------------------------------------
 
 local PAGE_PADDING = 10
@@ -1404,6 +1404,8 @@ PageScroll.BackgroundTransparency = 1
 PageScroll.BorderSizePixel = 0
 PageScroll.ScrollBarThickness = 8
 PageScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+PageScroll.ScrollBarImageTransparency = 0.5 -- subtle scrollbar
+PageScroll.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
 Instance.new("UICorner", PageScroll)
 
 -- UIListLayout for automatic vertical layout
@@ -1418,6 +1420,7 @@ ScriptScroll.BackgroundColor3 = Color3.fromRGB(35,35,35)
 ScriptScroll.BorderSizePixel = 0
 ScriptScroll.ScrollBarThickness = 8
 ScriptScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+ScriptScroll.ScrollBarImageTransparency = 0.5
 Instance.new("UICorner", ScriptScroll)
 
 local ScriptBox = Instance.new("TextBox", ScriptScroll)
@@ -1461,9 +1464,8 @@ local function makeHover(button, baseColor, hoverColor)
     button.MouseLeave:Connect(function() button.BackgroundColor3 = baseColor end)
 end
 
--- Execute Button
 local ExecuteBtn = Instance.new("TextButton", BtnHolder)
-ExecuteBtn.Size = UDim2.new(0.45, 0, 1, 0)
+ExecuteBtn.Size = UDim2.new(0.45,0,1,0)
 ExecuteBtn.Text = "EXECUTE"
 ExecuteBtn.Font = Enum.Font.GothamBold
 ExecuteBtn.TextSize = 16
@@ -1472,9 +1474,8 @@ ExecuteBtn.TextColor3 = Color3.new(0,0,0)
 Instance.new("UICorner", ExecuteBtn)
 makeHover(ExecuteBtn, Color3.fromRGB(0,255,120), Color3.fromRGB(0,200,100))
 
--- Clear Output Button
 local ClearBtn = Instance.new("TextButton", BtnHolder)
-ClearBtn.Size = UDim2.new(0.45, 0, 1, 0)
+ClearBtn.Size = UDim2.new(0.45,0,1,0)
 ClearBtn.Text = "CLEAR OUTPUT"
 ClearBtn.Font = Enum.Font.GothamBold
 ClearBtn.TextSize = 16
@@ -1490,6 +1491,7 @@ OutputScroll.BackgroundColor3 = Color3.fromRGB(25,25,25)
 OutputScroll.BorderSizePixel = 0
 OutputScroll.ScrollBarThickness = 8
 OutputScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+OutputScroll.ScrollBarImageTransparency = 0.5
 Instance.new("UICorner", OutputScroll)
 
 local OutputBox = Instance.new("TextLabel", OutputScroll)
@@ -1548,6 +1550,7 @@ ClearBtn.MouseButton1Click:Connect(function()
     OutputBox.Size = UDim2.new(1,-10,0,0)
     OutputScroll.CanvasSize = UDim2.new(0,0,0,0)
 end)
+
 
 
 --------------------------------------------------
