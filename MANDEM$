@@ -1386,7 +1386,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
---// EXECUTOR PAGE (Solara Compatible – Advanced)
+--// EXECUTOR PAGE (Solara – Enhanced UI)
 --------------------------------------------------
 
 -- Scroll frame
@@ -1432,36 +1432,34 @@ OutputBox.Text = "[ Output ]\n"
 Instance.new("UICorner", OutputBox)
 
 --------------------------------------------------
--- Buttons Holder
+-- Buttons (Below ScriptBox)
 --------------------------------------------------
 local BtnHolder = Instance.new("Frame", ExecutorScroll)
-BtnHolder.Size = UDim2.new(1,0,0,36)
+BtnHolder.Size = UDim2.new(1,0,0,40)
 BtnHolder.BackgroundTransparency = 1
+BtnHolder.Position = UDim2.new(0,0,0,210)
 
 local BtnLayout = Instance.new("UIListLayout", BtnHolder)
 BtnLayout.FillDirection = Enum.FillDirection.Horizontal
 BtnLayout.Padding = UDim.new(0,8)
+BtnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
---------------------------------------------------
 -- Execute Button
---------------------------------------------------
 local ExecuteBtn = Instance.new("TextButton", BtnHolder)
-ExecuteBtn.Size = UDim2.new(0.5,-4,1,0)
+ExecuteBtn.Size = UDim2.new(0.45,0,1,0)
 ExecuteBtn.Text = "EXECUTE"
 ExecuteBtn.Font = Enum.Font.GothamBold
-ExecuteBtn.TextSize = 14
+ExecuteBtn.TextSize = 16
 ExecuteBtn.BackgroundColor3 = Color3.fromRGB(0,255,120)
 ExecuteBtn.TextColor3 = Color3.new(0,0,0)
 Instance.new("UICorner", ExecuteBtn)
 
---------------------------------------------------
 -- Clear Output Button
---------------------------------------------------
 local ClearBtn = Instance.new("TextButton", BtnHolder)
-ClearBtn.Size = UDim2.new(0.5,-4,1,0)
+ClearBtn.Size = UDim2.new(0.45,0,1,0)
 ClearBtn.Text = "CLEAR OUTPUT"
 ClearBtn.Font = Enum.Font.GothamBold
-ClearBtn.TextSize = 14
+ClearBtn.TextSize = 16
 ClearBtn.BackgroundColor3 = Color3.fromRGB(255,80,80)
 ClearBtn.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", ClearBtn)
@@ -1495,31 +1493,6 @@ warn = function(...)
 end
 
 --------------------------------------------------
--- Remote Helper (Solara Safe)
---------------------------------------------------
-_G.fireRemote = function(path, ...)
-    local r = path
-    if typeof(path) == "string" then
-        r = game
-        for _,v in ipairs(string.split(path,".")) do
-            r = r:FindFirstChild(v)
-            if not r then return warn("Remote not found") end
-        end
-    end
-
-    if r:IsA("RemoteEvent") then
-        r:FireServer(...)
-        print("Fired RemoteEvent:", r:GetFullName())
-    elseif r:IsA("RemoteFunction") then
-        local res = r:InvokeServer(...)
-        print("Invoked RemoteFunction:", r:GetFullName(), res)
-        return res
-    else
-        warn("Not a remote")
-    end
-end
-
---------------------------------------------------
 -- Execute Logic
 --------------------------------------------------
 ExecuteBtn.MouseButton1Click:Connect(function()
@@ -1540,6 +1513,7 @@ end)
 ClearBtn.MouseButton1Click:Connect(function()
     OutputBox.Text = "[ Output ]\n"
 end)
+
 
 --------------------------------------------------
 --// SHOW / HIDE MENU
