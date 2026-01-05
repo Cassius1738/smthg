@@ -1406,7 +1406,7 @@ local ScriptBox = Instance.new("TextBox")
 ScriptBox.Parent = ExecutorScroll
 ScriptBox.Size = UDim2.new(1,0,0,200)
 ScriptBox.ClearTextOnFocus = false
-ScriptBox.Text = "print("MANDEM$ EXECUTOR IS NOW READY!")
+ScriptBox.Text = ScriptBox.Text = 'print("MANDEM$ EXECUTOR IS NOW READY!")'
 ScriptBox.Font = Enum.Font.Gotham
 ScriptBox.TextSize = 14
 ScriptBox.TextColor3 = Color3.new(1,1,1)
