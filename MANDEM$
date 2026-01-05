@@ -1386,7 +1386,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
---// CLEAN EXECUTOR WITH CONDITIONAL SCROLLBAR
+--// CLEAN EXECUTOR WITH CONDITIONAL SCROLLBAR + COPY
 --------------------------------------------------
 
 local PAGE_PADDING = 10
@@ -1404,7 +1404,7 @@ PageScroll.BackgroundTransparency = 1
 PageScroll.BorderSizePixel = 0
 PageScroll.ScrollBarThickness = 8
 PageScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-PageScroll.ScrollBarImageTransparency = 0.5 -- subtle scrollbar
+PageScroll.ScrollBarImageTransparency = 0.5
 PageScroll.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
 Instance.new("UICorner", PageScroll)
 
@@ -1437,7 +1437,7 @@ ScriptBox.Text = 'print("Solara Executor Ready")'
 ScriptBox.PlaceholderText = "Enter Lua code here..."
 Instance.new("UICorner", ScriptBox)
 
--- Auto-expand ScriptBox
+-- Auto-expand ScriptBox & auto-scroll
 ScriptBox:GetPropertyChangedSignal("Text"):Connect(function()
     local textHeight = ScriptBox.TextBounds.Y + 10
     if textHeight < MAX_SCRIPT_HEIGHT then
@@ -1447,6 +1447,8 @@ ScriptBox:GetPropertyChangedSignal("Text"):Connect(function()
         ScriptBox.Size = UDim2.new(1, -10, 0, MAX_SCRIPT_HEIGHT)
         ScriptScroll.CanvasSize = UDim2.new(0,0,0,textHeight + 10)
     end
+    -- auto-scroll to bottom if overflowing
+    ScriptScroll.CanvasPosition = Vector2.new(0, math.max(0, ScriptScroll.CanvasSize.Y.Offset - ScriptScroll.AbsoluteSize.Y))
 end)
 
 -- BUTTONS HOLDER
@@ -1465,7 +1467,7 @@ local function makeHover(button, baseColor, hoverColor)
 end
 
 local ExecuteBtn = Instance.new("TextButton", BtnHolder)
-ExecuteBtn.Size = UDim2.new(0.45,0,1,0)
+ExecuteBtn.Size = UDim2.new(0.3,0,1,0)
 ExecuteBtn.Text = "EXECUTE"
 ExecuteBtn.Font = Enum.Font.GothamBold
 ExecuteBtn.TextSize = 16
@@ -1475,7 +1477,7 @@ Instance.new("UICorner", ExecuteBtn)
 makeHover(ExecuteBtn, Color3.fromRGB(0,255,120), Color3.fromRGB(0,200,100))
 
 local ClearBtn = Instance.new("TextButton", BtnHolder)
-ClearBtn.Size = UDim2.new(0.45,0,1,0)
+ClearBtn.Size = UDim2.new(0.3,0,1,0)
 ClearBtn.Text = "CLEAR OUTPUT"
 ClearBtn.Font = Enum.Font.GothamBold
 ClearBtn.TextSize = 16
@@ -1484,7 +1486,17 @@ ClearBtn.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", ClearBtn)
 makeHover(ClearBtn, Color3.fromRGB(255,80,80), Color3.fromRGB(200,50,50))
 
--- OUTPUT SCROLL (inside ExecutorPage)
+local CopyBtn = Instance.new("TextButton", BtnHolder)
+CopyBtn.Size = UDim2.new(0.3,0,1,0)
+CopyBtn.Text = "COPY OUTPUT"
+CopyBtn.Font = Enum.Font.GothamBold
+CopyBtn.TextSize = 16
+CopyBtn.BackgroundColor3 = Color3.fromRGB(80,160,255)
+CopyBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", CopyBtn)
+makeHover(CopyBtn, Color3.fromRGB(80,160,255), Color3.fromRGB(60,130,220))
+
+-- OUTPUT SCROLL
 local OutputScroll = Instance.new("ScrollingFrame", PageScroll)
 OutputScroll.Size = UDim2.new(1, -2*PAGE_PADDING, 0, OUTPUT_HEIGHT)
 OutputScroll.BackgroundColor3 = Color3.fromRGB(25,25,25)
@@ -1494,14 +1506,13 @@ OutputScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 OutputScroll.ScrollBarImageTransparency = 0.5
 Instance.new("UICorner", OutputScroll)
 
--- Use TextBox instead of TextLabel for logging
 local OutputBox = Instance.new("TextBox", OutputScroll)
 OutputBox.Size = UDim2.new(1, -10, 0, OUTPUT_HEIGHT)
 OutputBox.Position = UDim2.new(0, 5, 0, 5)
 OutputBox.ClearTextOnFocus = false
 OutputBox.MultiLine = true
 OutputBox.TextWrapped = true
-OutputBox.ReadOnly = true -- make it read-only
+OutputBox.ReadOnly = true
 OutputBox.Font = Enum.Font.Code
 OutputBox.TextSize = 13
 OutputBox.TextColor3 = Color3.fromRGB(200,200,200)
@@ -1511,49 +1522,66 @@ OutputBox.Text = "[ Output ]\n"
 -- Log function
 local function log(text)
     OutputBox.Text ..= tostring(text).."\n"
-    -- update scroll
     OutputScroll.CanvasSize = UDim2.new(0,0,0,OutputBox.TextBounds.Y + 20)
     OutputScroll.CanvasPosition = Vector2.new(0,OutputScroll.CanvasSize.Y.Offset)
 end
 
-
--- Hooks
-local oldPrint, oldWarn = print, warn
-print = function(...)
-    local t = {}
-    for _,v in ipairs({...}) do table.insert(t,tostring(v)) end
-    log(table.concat(t," "))
-    oldPrint(...)
-end
-warn = function(...)
-    local t = {}
-    for _,v in ipairs({...}) do table.insert(t,tostring(v)) end
-    log("[WARN] "..table.concat(t," "))
-    oldWarn(...)
-end
-
--- Execute
-ExecuteBtn.MouseButton1Click:Connect(function()
-    ExecuteBtn.Size = UDim2.new(0.44,0,1,0)
+-- Clear Output
+ClearBtn.MouseButton1Click:Connect(function()
+    ClearBtn.Size = UDim2.new(0.28,0,1,0)
     task.wait(0.05)
-    ExecuteBtn.Size = UDim2.new(0.45,0,1,0)
+    ClearBtn.Size = UDim2.new(0.3,0,1,0)
+    OutputBox.Text = "[ Output ]\n"
+    OutputBox.Size = UDim2.new(1,-10,0,OUTPUT_HEIGHT)
+    OutputScroll.CanvasSize = UDim2.new(0,0,0,OUTPUT_HEIGHT)
+end)
+
+-- Copy Output
+CopyBtn.MouseButton1Click:Connect(function()
+    setclipboard(OutputBox.Text)
+    log("[INFO] Output copied to clipboard")
+end)
+
+-- Execute with custom environment
+ExecuteBtn.MouseButton1Click:Connect(function()
+    ExecuteBtn.Size = UDim2.new(0.28,0,1,0)
+    task.wait(0.05)
+    ExecuteBtn.Size = UDim2.new(0.3,0,1,0)
+
     local src = ScriptBox.Text
     if src == "" then return end
     local func, err = loadstring(src)
-    if not func then return log("[COMPILE ERROR] "..tostring(err)) end
-    local ok, runtimeErr = pcall(func)
+    if not func then
+        return log("[COMPILE ERROR] "..tostring(err))
+    end
+
+    -- Custom environment
+    local env = {
+        print = log,
+        warn = function(...) log("[WARN] "..table.concat({...}, " ")) end,
+        ipairs = ipairs,
+        pairs = pairs,
+        tonumber = tonumber,
+        tostring = tostring,
+        type = type,
+        math = math,
+        table = table,
+        string = string,
+        task = task,
+        wait = wait,
+        tick = tick,
+        os = os,
+        Vector3 = Vector3,
+        Color3 = Color3,
+    }
+    setmetatable(env, {__index = _G})
+
+    local ok, runtimeErr = pcall(function()
+        setfenv(func, env)()
+    end)
     if not ok then log("[RUNTIME ERROR] "..tostring(runtimeErr)) end
 end)
 
--- Clear Output
-ClearBtn.MouseButton1Click:Connect(function()
-    ClearBtn.Size = UDim2.new(0.44,0,1,0)
-    task.wait(0.05)
-    ClearBtn.Size = UDim2.new(0.45,0,1,0)
-    OutputBox.Text = "[ Output ]\n"
-    OutputBox.Size = UDim2.new(1,-10,0,0)
-    OutputScroll.CanvasSize = UDim2.new(0,0,0,0)
-end)
 
 
 
