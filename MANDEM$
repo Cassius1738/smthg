@@ -1595,6 +1595,7 @@ CopyBtn.MouseButton1Click:Connect(function()
     log("[INFO] Output copied to clipboard")
 end)
 
+
 --------------------------------------------------
 --// SHOW / HIDE MENU
 --------------------------------------------------
