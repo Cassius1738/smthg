@@ -1164,6 +1164,80 @@ Layout.SortOrder = Enum.SortOrder.LayoutOrder
 Layout.Padding = UDim.new(0,8)
 
 --------------------------------------------------
+--// REMOTEEVENT SCANNER (UI OUTPUT)
+--------------------------------------------------
+
+local function RemoteScannerUI(parent)
+    -- Button holder
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,0,0,32)
+    holder.BackgroundTransparency = 1
+    holder.LayoutOrder = 60
+
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(1,-80,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = "Scan RemoteEvents"
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local btn = Instance.new("TextButton", holder)
+    btn.Size = UDim2.new(0,60,0,22)
+    btn.Position = UDim2.new(1,-66,0.5,-11)
+    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    btn.Text = "SCAN"
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 12
+    btn.TextColor3 = Color3.fromRGB(0,255,120)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
+
+    -- Output frame
+    local outputFrame = Instance.new("Frame", parent)
+    outputFrame.Size = UDim2.new(1,0,0,160)
+    outputFrame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+    outputFrame.LayoutOrder = 61
+    Instance.new("UICorner", outputFrame).CornerRadius = UDim.new(0,6)
+
+    local output = Instance.new("TextLabel", outputFrame)
+    output.Size = UDim2.new(1,-10,1,-10)
+    output.Position = UDim2.new(0,5,0,5)
+    output.BackgroundTransparency = 1
+    output.TextWrapped = true
+    output.TextYAlignment = Enum.TextYAlignment.Top
+    output.TextXAlignment = Enum.TextXAlignment.Left
+    output.Font = Enum.Font.Code
+    output.TextSize = 12
+    output.TextColor3 = Color3.fromRGB(200,200,200)
+    output.Text = "Click SCAN to list RemoteEvents..."
+
+    btn.MouseButton1Click:Connect(function()
+        local lines = {}
+        local count = 0
+
+        for _,v in ipairs(game:GetDescendants()) do
+            if v:IsA("RemoteEvent") then
+                count += 1
+                table.insert(lines, count..". "..v:GetFullName())
+            end
+        end
+
+        if count == 0 then
+            output.Text = "No RemoteEvents visible to the client."
+        else
+            output.Text =
+                "RemoteEvents Found: "..count.."\n\n"..
+                table.concat(lines, "\n")
+        end
+    end)
+end
+
+-- Insert into Other Stuff page
+RemoteScannerUI(OtherScroll)
+
+
+--------------------------------------------------
 --// MONEY DUPLICATOR - OTHER STUFF (Improved Slider)
 --------------------------------------------------
 -- Global variables
