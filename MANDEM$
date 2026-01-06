@@ -1268,7 +1268,7 @@ end
 -- Insert into Other Stuff page
 RemoteScannerUI(OtherScroll)
 
-BigHeadCircleToggle(ScrollFrame)
+BigHeadCircleToggle(OtherScroll)
 --------------------------------------------------
 --// GUN SHOP TOGGLE (OTHER STUFF)
 --------------------------------------------------
