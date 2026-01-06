@@ -1270,6 +1270,142 @@ end
 -- Insert into Other Stuff page
 RemoteScannerUI(OtherScroll)
 
+--------------------------------------------------
+--// GUN SHOP TOGGLE (OTHER STUFF)
+--------------------------------------------------
+
+local GunShopUI -- reference holder
+
+local function GunShopToggle(parent)
+    local holder = Instance.new("Frame", parent)
+    holder.Size = UDim2.new(1,0,0,32)
+    holder.BackgroundTransparency = 1
+    holder.LayoutOrder = 10
+
+    local label = Instance.new("TextLabel", holder)
+    label.Size = UDim2.new(1,-40,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = "Gun Shop UI"
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local btn = Instance.new("TextButton", holder)
+    btn.Size = UDim2.new(0,22,0,22)
+    btn.Position = UDim2.new(1,-26,0.5,-11)
+    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    btn.Text = "○"
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.TextColor3 = Color3.fromRGB(200,200,200)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+
+    btn.MouseButton1Click:Connect(function()
+        if GunShopUI then
+            GunShopUI:Destroy()
+            GunShopUI = nil
+            btn.Text = "○"
+            btn.TextColor3 = Color3.fromRGB(200,200,200)
+        else
+            -- CREATE GUN SHOP UI
+            local Players = game:GetService("Players")
+            local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+            local ScreenGui = Instance.new("ScreenGui")
+            ScreenGui.Name = "GunSpawnerUI"
+            ScreenGui.ResetOnSpawn = false
+            ScreenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+            GunShopUI = ScreenGui
+
+            local Frame = Instance.new("Frame", ScreenGui)
+            Frame.Size = UDim2.new(0,250,0,180)
+            Frame.Position = UDim2.new(0.5,-125,0.5,-90)
+            Frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+            Frame.BorderSizePixel = 0
+            Frame.Active = true
+            Frame.Draggable = true
+
+            Instance.new("UICorner", Frame).CornerRadius = UDim.new(0,8)
+            local stroke = Instance.new("UIStroke", Frame)
+            stroke.Thickness = 2
+            stroke.Color = Color3.fromRGB(50,138,220)
+
+            local title = Instance.new("TextLabel", Frame)
+            title.Size = UDim2.new(1,-40,0,30)
+            title.Position = UDim2.new(0,10,0,0)
+            title.BackgroundTransparency = 1
+            title.Text = "GUN SHOP [MANDEM$]"
+            title.Font = Enum.Font.GothamBold
+            title.TextSize = 18
+            title.TextColor3 = Color3.fromRGB(240,240,240)
+            title.TextXAlignment = Enum.TextXAlignment.Left
+
+            local close = Instance.new("TextButton", Frame)
+            close.Size = UDim2.new(0,30,0,30)
+            close.Position = UDim2.new(1,-35,0,0)
+            close.Text = "X"
+            close.Font = Enum.Font.GothamBold
+            close.TextSize = 18
+            close.TextColor3 = Color3.new(1,1,1)
+            close.BackgroundColor3 = Color3.fromRGB(180,50,50)
+            close.BorderSizePixel = 0
+            Instance.new("UICorner", close).CornerRadius = UDim.new(0,6)
+
+            close.MouseButton1Click:Connect(function()
+                ScreenGui:Destroy()
+                GunShopUI = nil
+                btn.Text = "○"
+                btn.TextColor3 = Color3.fromRGB(200,200,200)
+            end)
+
+            local gunBox = Instance.new("TextBox", Frame)
+            gunBox.Size = UDim2.new(1,-20,0,30)
+            gunBox.Position = UDim2.new(0,10,0,40)
+            gunBox.PlaceholderText = "Enter Gun Name"
+            gunBox.BackgroundColor3 = Color3.fromRGB(35,35,35)
+            gunBox.TextColor3 = Color3.new(1,1,1)
+            gunBox.BorderSizePixel = 0
+            Instance.new("UICorner", gunBox)
+
+            local amountBox = Instance.new("TextBox", Frame)
+            amountBox.Size = UDim2.new(1,-20,0,30)
+            amountBox.Position = UDim2.new(0,10,0,80)
+            amountBox.PlaceholderText = "Enter Amount"
+            amountBox.BackgroundColor3 = Color3.fromRGB(35,35,35)
+            amountBox.TextColor3 = Color3.new(1,1,1)
+            amountBox.BorderSizePixel = 0
+            Instance.new("UICorner", amountBox)
+
+            local spawn = Instance.new("TextButton", Frame)
+            spawn.Size = UDim2.new(1,-20,0,35)
+            spawn.Position = UDim2.new(0,10,0,130)
+            spawn.Text = "Spawn Gun"
+            spawn.Font = Enum.Font.GothamBold
+            spawn.TextSize = 16
+            spawn.TextColor3 = Color3.new(1,1,1)
+            spawn.BackgroundColor3 = Color3.fromRGB(50,138,220)
+            spawn.BorderSizePixel = 0
+            Instance.new("UICorner", spawn)
+
+            spawn.MouseButton1Click:Connect(function()
+                local gun = gunBox.Text
+                local amt = tonumber(amountBox.Text)
+                if gun ~= "" and amt and amt > 0 then
+                    local shop = ReplicatedStorage:FindFirstChild("GunShop")
+                    if shop and shop:FindFirstChild("Events") and shop.Events:FindFirstChild("Purchase") then
+                        shop.Events.Purchase:FireServer(gun, amt)
+                    end
+                end
+            end)
+
+            btn.Text = "●"
+            btn.TextColor3 = Color3.fromRGB(0,255,120)
+        end
+    end)
+end
+
+GunShopToggle(OtherScroll)
 
 
 --------------------------------------------------
