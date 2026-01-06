@@ -965,7 +965,6 @@ Slider(ScrollFrame,"Fly Speed","FlySpeed",10,200)
 CircleToggle(ScrollFrame,"No Jump Cooldown","NoCooldownJumpEnabled")
 CircleToggle(ScrollFrame,"Enable Walk Speed","SpeedEnabled")
 Slider(ScrollFrame,"Walk Speed","WalkSpeedValue",16,100)
-BigHeadCircleToggle(ScrollFrame)
 
 --------------------------------------------------
 --// MOVEMENT PAGE
@@ -1270,6 +1269,7 @@ end
 -- Insert into Other Stuff page
 RemoteScannerUI(OtherScroll)
 
+BigHeadCircleToggle(ScrollFrame)
 --------------------------------------------------
 --// GUN SHOP TOGGLE (OTHER STUFF)
 --------------------------------------------------
