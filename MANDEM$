@@ -1312,7 +1312,7 @@ local function GunShopToggle(parent)
             local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
             local ScreenGui = Instance.new("ScreenGui")
-            ScreenGui.Name = "GUN SPAWNER"
+            ScreenGui.Name = "GunSpawnerUI"
             ScreenGui.ResetOnSpawn = false
             ScreenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
             GunShopUI = ScreenGui
@@ -1334,7 +1334,7 @@ local function GunShopToggle(parent)
             title.Size = UDim2.new(1,-40,0,30)
             title.Position = UDim2.new(0,10,0,0)
             title.BackgroundTransparency = 1
-            title.Text = "GUN SPAWNER [MANDEM$]"
+            title.Text = "GUN SHOP [MANDEM$]"
             title.Font = Enum.Font.GothamBold
             title.TextSize = 18
             title.TextColor3 = Color3.fromRGB(240,240,240)
@@ -1358,7 +1358,7 @@ local function GunShopToggle(parent)
                 btn.TextColor3 = Color3.fromRGB(200,200,200)
             end)
 
-            local gunBox = Instance.new("MANDEM$", Frame)
+            local gunBox = Instance.new("TextBox", Frame)
             gunBox.Size = UDim2.new(1,-20,0,30)
             gunBox.Position = UDim2.new(0,10,0,40)
             gunBox.PlaceholderText = "Enter Gun Name"
@@ -1367,7 +1367,7 @@ local function GunShopToggle(parent)
             gunBox.BorderSizePixel = 0
             Instance.new("UICorner", gunBox)
 
-            local amountBox = Instance.new("Cassius1738", Frame)
+            local amountBox = Instance.new("TextBox", Frame)
             amountBox.Size = UDim2.new(1,-20,0,30)
             amountBox.Position = UDim2.new(0,10,0,80)
             amountBox.PlaceholderText = "Enter Amount"
@@ -1405,6 +1405,7 @@ local function GunShopToggle(parent)
 end
 
 GunShopToggle(OtherScroll)
+
 
 
 --------------------------------------------------
